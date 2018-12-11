@@ -1,13 +1,13 @@
-use stm32::{I2C1, RCC};
+use crate::stm32::{I2C1, RCC};
 
-use hal::blocking::i2c::{Write, WriteRead};
+use embedded_hal::blocking::i2c::{Write, WriteRead};
 
 use core::cmp;
-use gpio::gpioa::{PA10, PA11, PA12, PA9};
-use gpio::gpiob::{PB10, PB11, PB13, PB14, PB6, PB7, PB8, PB9};
-use gpio::gpiof::{PF0, PF1};
-use gpio::{Alternate, AF1, AF4, AF5};
-use time::{KiloHertz, U32Ext};
+use crate::gpio::gpioa::{PA10, PA11, PA12, PA9};
+use crate::gpio::gpiob::{PB10, PB11, PB13, PB14, PB6, PB7, PB8, PB9};
+use crate::gpio::gpiof::{PF0, PF1};
+use crate::gpio::{Alternate, AF1, AF4, AF5};
+use crate::time::{KiloHertz, U32Ext};
 
 /// I2C abstraction
 pub struct I2c<I2C, PINS> {

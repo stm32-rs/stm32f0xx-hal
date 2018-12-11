@@ -2,18 +2,17 @@ use core::fmt::{Result, Write};
 use core::marker::PhantomData;
 use core::ptr;
 
-use hal;
-use hal::prelude::*;
-use nb;
+use embedded_hal::prelude::*;
+use nb::block;
 use void::Void;
 
-use stm32::{RCC, USART1, USART2};
+use crate::stm32::{RCC, USART1, USART2};
 
-use gpio::gpioa::{PA10, PA14, PA15, PA2, PA3, PA9};
-use gpio::gpiob::{PB6, PB7};
-use gpio::{Alternate, AF0, AF1};
-use rcc::Clocks;
-use time::Bps;
+use crate::gpio::gpioa::{PA10, PA14, PA15, PA2, PA3, PA9};
+use crate::gpio::gpiob::{PB6, PB7};
+use crate::gpio::{Alternate, AF0, AF1};
+use crate::rcc::Clocks;
+use crate::time::Bps;
 
 /// Interrupt event
 pub enum Event {
@@ -107,7 +106,7 @@ impl<PINS> Serial<USART1, PINS> {
     }
 }
 
-impl hal::serial::Read<u8> for Rx<USART1> {
+impl embedded_hal::serial::Read<u8> for Rx<USART1> {
     type Error = Error;
 
     fn read(&mut self) -> nb::Result<u8, Error> {
@@ -131,7 +130,7 @@ impl hal::serial::Read<u8> for Rx<USART1> {
     }
 }
 
-impl hal::serial::Write<u8> for Tx<USART1> {
+impl embedded_hal::serial::Write<u8> for Tx<USART1> {
     type Error = Void;
 
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
@@ -201,7 +200,7 @@ impl<PINS> Serial<USART2, PINS> {
     }
 }
 
-impl hal::serial::Read<u8> for Rx<USART2> {
+impl embedded_hal::serial::Read<u8> for Rx<USART2> {
     type Error = Error;
 
     fn read(&mut self) -> nb::Result<u8, Error> {
@@ -225,7 +224,7 @@ impl hal::serial::Read<u8> for Rx<USART2> {
     }
 }
 
-impl hal::serial::Write<u8> for Tx<USART2> {
+impl embedded_hal::serial::Write<u8> for Tx<USART2> {
     type Error = Void;
 
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
@@ -256,14 +255,10 @@ impl hal::serial::Write<u8> for Tx<USART2> {
 
 impl<USART> Write for Tx<USART>
 where
-    Tx<USART>: hal::serial::Write<u8>,
+    Tx<USART>: embedded_hal::serial::Write<u8>,
 {
     fn write_str(&mut self, s: &str) -> Result {
-        let _ = s
-            .as_bytes()
-            .iter()
-            .map(|c| block!(self.write(*c)))
-            .last();
+        let _ = s.as_bytes().iter().map(|c| block!(self.write(*c))).last();
         Ok(())
     }
 }

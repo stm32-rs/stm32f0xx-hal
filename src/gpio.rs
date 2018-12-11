@@ -57,10 +57,10 @@ macro_rules! gpio {
         pub mod $gpiox {
             use core::marker::PhantomData;
 
-            use hal::digital::{InputPin, OutputPin, StatefulOutputPin};
-            use stm32::$GPIOX;
+            use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin};
+            use crate::stm32::$GPIOX;
 
-            use stm32::RCC;
+            use crate::stm32::RCC;
             use super::{
                 Alternate, Floating, GpioExt, Input, OpenDrain, Output,
                 PullDown, PullUp, PushPull, AF0, AF1, AF2, AF3, AF4, AF5, AF6, AF7,

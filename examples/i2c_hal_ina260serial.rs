@@ -1,20 +1,14 @@
 #![no_main]
 #![no_std]
 
-extern crate cortex_m;
-extern crate cortex_m_rt;
-extern crate embedded_hal;
-extern crate panic_halt;
+use panic_halt;
 
-extern crate stm32f0xx_hal as hal;
+use stm32f0xx_hal as hal;
 
-extern crate ina260;
-extern crate numtoa;
-
-use hal::i2c::*;
-use hal::prelude::*;
-use hal::serial::*;
-use hal::stm32;
+use crate::hal::i2c::*;
+use crate::hal::prelude::*;
+use crate::hal::serial::*;
+use crate::hal::stm32;
 
 use numtoa::NumToA;
 
@@ -28,7 +22,7 @@ fn main() -> ! {
     if let Some(p) = stm32::Peripherals::take() {
         let gpiof = p.GPIOF.split();
         let gpioa = p.GPIOA.split();
-        let mut clocks = p.RCC.constrain().cfgr.freeze();
+        let clocks = p.RCC.constrain().cfgr.freeze();
 
         /* Initialise serial pins */
         let tx = gpioa.pa9.into_alternate_af1();
@@ -51,7 +45,7 @@ fn main() -> ! {
             .set_open_drain();
 
         /* Setup I2C1 */
-        let mut i2c = I2c::i2c1(p.I2C1, (scl, sda), 1.khz());
+        let i2c = I2c::i2c1(p.I2C1, (scl, sda), 1.khz());
         let mut ina260 = INA260::new(i2c, 0x40).unwrap();
 
         /* Endless loop */

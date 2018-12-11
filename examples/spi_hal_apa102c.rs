@@ -1,16 +1,14 @@
 #![no_main]
 #![no_std]
 
-extern crate cortex_m;
-extern crate cortex_m_rt;
-extern crate panic_halt;
+use panic_halt;
 
-extern crate stm32f0xx_hal as hal;
+use stm32f0xx_hal as hal;
 
-use hal::prelude::*;
-use hal::spi::Spi;
-use hal::spi::{Mode, Phase, Polarity};
-use hal::stm32;
+use crate::hal::prelude::*;
+use crate::hal::spi::Spi;
+use crate::hal::spi::{Mode, Phase, Polarity};
+use crate::hal::stm32;
 
 use cortex_m_rt::entry;
 
@@ -22,9 +20,9 @@ fn main() -> ! {
     };
 
     if let Some(p) = stm32::Peripherals::take() {
-        let mut rcc = p.RCC.constrain();
+        let rcc = p.RCC.constrain();
         let clocks = rcc.cfgr.freeze();
-        let mut gpioa = p.GPIOA.split();
+        let gpioa = p.GPIOA.split();
 
         // Configure pins for SPI
         let sck = gpioa.pa5.into_alternate_af0();

@@ -2,15 +2,15 @@ use core::ptr;
 
 use nb;
 
-pub use hal::spi::{Mode, Phase, Polarity};
-use rcc::Clocks;
+pub use embedded_hal::spi::{Mode, Phase, Polarity};
 
-use stm32::{RCC, SPI1};
+use crate::stm32::{RCC, SPI1};
 
-use gpio::gpioa::{PA5, PA6, PA7};
-use gpio::gpiob::{PB3, PB4, PB5};
-use gpio::{Alternate, AF0};
-use time::Hertz;
+use crate::gpio::gpioa::{PA5, PA6, PA7};
+use crate::gpio::gpiob::{PB3, PB4, PB5};
+use crate::gpio::{Alternate, AF0};
+use crate::rcc::Clocks;
+use crate::time::Hertz;
 
 /// SPI error
 #[derive(Debug)]
@@ -126,7 +126,7 @@ impl<PINS> Spi<SPI1, PINS> {
     }
 }
 
-impl<PINS> ::hal::spi::FullDuplex<u8> for Spi<SPI1, PINS> {
+impl<PINS> ::embedded_hal::spi::FullDuplex<u8> for Spi<SPI1, PINS> {
     type Error = Error;
 
     fn read(&mut self) -> nb::Result<u8, Error> {
@@ -166,5 +166,5 @@ impl<PINS> ::hal::spi::FullDuplex<u8> for Spi<SPI1, PINS> {
     }
 }
 
-impl<PINS> ::hal::blocking::spi::transfer::Default<u8> for Spi<SPI1, PINS> {}
-impl<PINS> ::hal::blocking::spi::write::Default<u8> for Spi<SPI1, PINS> {}
+impl<PINS> ::embedded_hal::blocking::spi::transfer::Default<u8> for Spi<SPI1, PINS> {}
+impl<PINS> ::embedded_hal::blocking::spi::write::Default<u8> for Spi<SPI1, PINS> {}

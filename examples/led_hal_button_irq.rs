@@ -1,23 +1,21 @@
 #![no_main]
 #![no_std]
 
-extern crate cortex_m;
-extern crate cortex_m_rt;
-extern crate panic_halt;
+use panic_halt;
 
-#[macro_use]
-extern crate stm32f0xx_hal as hal;
+use stm32f0xx_hal as hal;
 
-use hal::delay::Delay;
-use hal::gpio::*;
-use hal::prelude::*;
+use crate::hal::delay::Delay;
+use crate::hal::gpio::*;
+use crate::hal::prelude::*;
 
 use cortex_m::interrupt::Mutex;
 use cortex_m::peripheral::Peripherals as c_m_Peripherals;
 use cortex_m_rt::entry;
 
-pub use hal::stm32;
-pub use hal::stm32::*;
+pub use crate::hal::interrupt;
+pub use crate::hal::stm32;
+pub use crate::hal::stm32::*;
 
 use core::cell::RefCell;
 use core::ops::DerefMut;
@@ -39,7 +37,7 @@ fn main() -> ! {
         let exti = p.EXTI;
 
         // Enable clock for SYSCFG
-        let mut rcc = p.RCC;
+        let rcc = p.RCC;
         rcc.apb2enr.modify(|_, w| w.syscfgen().set_bit());
 
         // Configure PB1 as input (button)
@@ -55,7 +53,7 @@ fn main() -> ! {
         let clocks = rcc.constrain().cfgr.sysclk(8.mhz()).freeze();
 
         // Initialise delay provider
-        let mut delay = Delay::new(cp.SYST, clocks);
+        let delay = Delay::new(cp.SYST, clocks);
 
         // Enable external interrupt for PB1
         syscfg

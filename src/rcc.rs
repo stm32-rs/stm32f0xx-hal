@@ -18,6 +18,7 @@ impl RccExt for RCC {
                 hclk: None,
                 pclk: None,
                 sysclk: None,
+                enable_hsi48: None,
             },
         }
     }
@@ -29,11 +30,28 @@ pub struct Rcc {
 }
 
 const HSI: u32 = 8_000_000; // Hz
+const HSI14: u32 = 14_000_000; // Hz - ADC clock.
+const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
+
+pub enum SysClkSource {
+    HSI = 0b00,
+    HSE = 0b01,
+    PLL = 0b10,
+    HSI48 = 0b11,
+}
+
+pub enum PllSource {
+    HSI_2 = 0b00,
+    HSI = 0b01,
+    HSE = 0b10,
+    HSI48 = 0b11,
+}
 
 pub struct CFGR {
     hclk: Option<u32>,
     pclk: Option<u32>,
     sysclk: Option<u32>,
+    enable_hsi48: Option<bool>,
 }
 
 impl CFGR {
@@ -61,20 +79,35 @@ impl CFGR {
         self
     }
 
-    pub fn freeze(self) -> Clocks {
-        let pllmul = (4 * self.sysclk.unwrap_or(HSI) + HSI) / HSI / 2;
-        let pllmul = cmp::min(cmp::max(pllmul, 2), 16);
-        let sysclk = pllmul * HSI / 2;
+    pub fn enable_hsi48(mut self, enable: bool) -> Self {
+        self.enable_hsi48 = Some(enable);
+        self
+    }
 
-        let pllmul_bits = if pllmul == 2 {
-            None
+    pub fn freeze(self) -> Clocks {
+        let sysclk = self.sysclk.unwrap_or(HSI);
+
+        // For F04x, F07x, F09x parts, use HSI48 for sysclk if someone requests sysclk == HSI48;
+        let r_sysclock; // The "real" sysclock value, calculated below
+        let pllmul_bits;
+        if sysclk == HSI48 {
+            pllmul_bits = None;
+            r_sysclk == HSI48;
         } else {
-            Some(pllmul as u8 - 2)
-        };
+            let pllmul = (4 * self.sysclk.unwrap_or(HSI) + HSI) / HSI / 2;
+            let pllmul = cmp::min(cmp::max(pllmul, 2), 16);
+            let r_sysclk = pllmul * HSI / 2;
+
+            pllmul_bits = if pllmul == 2 {
+                None
+            } else {
+                Some(pllmul as u8 - 2)
+            };
+        }
 
         let hpre_bits = self
             .hclk
-            .map(|hclk| match sysclk / hclk {
+            .map(|hclk| match r_sysclk / hclk {
                 0 => unreachable!(),
                 1 => 0b0111,
                 2 => 0b1000,
@@ -105,6 +138,15 @@ impl CFGR {
         let ppre: u8 = 1 << (ppre_bits - 0b011);
         let pclk = hclk / u32(ppre);
 
+        hprintln!(
+            "H: {:x} HP: {:x) P: {:x} PP: {:x} PP2: {:x}",
+            hclk,
+            hpre_bits,
+            pclk,
+            ppre
+        )
+        .unwrap();
+
         // adjust flash wait states
         unsafe {
             let flash = &*FLASH::ptr();
@@ -130,12 +172,30 @@ impl CFGR {
             while rcc.cr.read().pllrdy().bit_is_clear() {}
 
             rcc.cfgr.modify(|_, w| unsafe {
-                w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().bits(2)
+                w.ppre()
+                    .bits(ppre_bits)
+                    .hpre()
+                    .bits(hpre_bits)
+                    .sw()
+                    .bits(SysClkSource::PLL as u8)
             });
+            hprintln!("PLL: {:x}", rcc.cfgr.read()).unwrap();
+        } else if r_sysclk == HSI48 {
+            // Set HSI48 as system clock.
+            rcc.cfgr.modify(|_, w| unsafe {
+                w.ppre()
+                    .bits(ppre_bits)
+                    .hpre()
+                    .bits(hpre_bits)
+                    .sw()
+                    .bits(SysClkSource::HSI48 as u8)
+            });
+            hprintln!("HSI48: {:x}", rcc.cfgr.read()).unwrap();
         } else {
             // use HSI as source
             rcc.cfgr
                 .write(|w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().bits(0) });
+            hprintln!("HSI: {:x}", rcc.cfgr.read()).unwrap();
         }
 
         Clocks {

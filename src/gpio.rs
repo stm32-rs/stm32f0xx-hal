@@ -49,8 +49,8 @@ pub struct Output<MODE> {
 /// Push pull output (type state)
 pub struct PushPull;
 
-use hal::digital::{InputPin, OutputPin, StatefulOutputPin};
-use stm32;
+use crate::stm32;
+use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin};
 
 /// Fully erased pin
 // We can just pretend it's gpioa. It's modified using the bits and it can only be constructed out of already existing pins
@@ -119,7 +119,7 @@ macro_rules! gpio {
             use crate::stm32::RCC;
             use super::{
                 Alternate, Floating, GpioExt, Input, OpenDrain, Output,
-                PullDown, PullUp, PushPull, AF0, AF1, AF2, AF3, AF4, AF5, AF6, AF7,
+                PullDown, PullUp, PushPull, AF0, AF1, AF2, AF3, AF4, AF5, AF6, AF7, Pin
             };
 
             /// GPIO parts
@@ -203,7 +203,7 @@ macro_rules! gpio {
                 /// This is useful when you want to collect the pins into an array where you
                 /// need all the elements to have the same type
                 pub fn downgrade(self) -> Pin<Input<MODE>> {
-                    use stm32::gpioa;
+                    use crate::stm32::gpioa;
                     use core::intrinsics::transmute;
                     Pin {
                         i: self.i,
@@ -219,7 +219,7 @@ macro_rules! gpio {
                 /// This is useful when you want to collect the pins into an array where you
                 /// need all the elements to have the same type
                 pub fn downgrade(self) -> Pin<Output<MODE>> {
-                    use stm32::gpioa;
+                    use crate::stm32::gpioa;
                     use core::intrinsics::transmute;
                     Pin {
                         i: self.i,

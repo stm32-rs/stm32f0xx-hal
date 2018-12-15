@@ -204,10 +204,9 @@ macro_rules! gpio {
                 /// need all the elements to have the same type
                 pub fn downgrade(self) -> Pin<Input<MODE>> {
                     use crate::stm32::gpioa;
-                    use core::intrinsics::transmute;
                     Pin {
                         i: self.i,
-                        port: unsafe{ transmute::<_, *const gpioa::RegisterBlock>($GPIOX::ptr())},
+                        port: $GPIOX::ptr() as * const gpioa::RegisterBlock,
                         _mode: self._mode,
                     }
                 }
@@ -220,10 +219,9 @@ macro_rules! gpio {
                 /// need all the elements to have the same type
                 pub fn downgrade(self) -> Pin<Output<MODE>> {
                     use crate::stm32::gpioa;
-                    use core::intrinsics::transmute;
                     Pin {
                         i: self.i,
-                        port: unsafe{ transmute::<_, *const gpioa::RegisterBlock>($GPIOX::ptr())},
+                        port: $GPIOX::ptr() as * const gpioa::RegisterBlock,
                         _mode: self._mode,
                     }
                 }

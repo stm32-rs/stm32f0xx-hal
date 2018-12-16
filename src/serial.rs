@@ -39,14 +39,41 @@ pub enum Error {
 
 pub trait Pins<USART> {}
 
+#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
 impl Pins<USART1> for (PA9<Alternate<AF1>>, PA10<Alternate<AF1>>) {}
+#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
 impl Pins<USART1> for (PB6<Alternate<AF0>>, PB7<Alternate<AF0>>) {}
+#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
 impl Pins<USART1> for (PA9<Alternate<AF1>>, PB7<Alternate<AF0>>) {}
+#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
 impl Pins<USART1> for (PB6<Alternate<AF0>>, PA10<Alternate<AF1>>) {}
 
+#[cfg(feature = "stm32f030x6")]
+impl Pins<USART1> for (PA2<Alternate<AF1>>, PA3<Alternate<AF1>>) {}
+
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+))]
 impl Pins<USART2> for (PA2<Alternate<AF1>>, PA3<Alternate<AF1>>) {}
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+))]
 impl Pins<USART2> for (PA2<Alternate<AF1>>, PA15<Alternate<AF1>>) {}
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+))]
 impl Pins<USART2> for (PA14<Alternate<AF1>>, PA15<Alternate<AF1>>) {}
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+))]
 impl Pins<USART2> for (PA14<Alternate<AF1>>, PA3<Alternate<AF1>>) {}
 
 /// Serial abstraction

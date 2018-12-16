@@ -3,6 +3,7 @@ use crate::stm32::{I2C1, RCC};
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
+use core::cmp;
 #[cfg(feature = "stm32f042")]
 use crate::gpio::gpioa::{PA10, PA11, PA12, PA9};
 #[cfg(feature = "stm32f042")]
@@ -12,7 +13,6 @@ use crate::gpio::gpiof::{PF0, PF1};
 #[cfg(feature = "stm32f042")]
 use crate::gpio::{Alternate, AF1, AF4, AF5};
 use crate::time::{KiloHertz, U32Ext};
-use core::cmp;
 
 /// I2C abstraction
 pub struct I2c<I2C, PINS> {

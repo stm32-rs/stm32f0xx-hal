@@ -11,9 +11,8 @@ use crate::hal::prelude::*;
 
 use cortex_m::interrupt::Mutex;
 use cortex_m::peripheral::Peripherals as c_m_Peripherals;
-use cortex_m_rt::entry;
+use cortex_m_rt::{entry, interrupt};
 
-pub use crate::hal::interrupt;
 pub use crate::hal::stm32;
 pub use crate::hal::stm32::*;
 
@@ -87,9 +86,10 @@ fn main() -> ! {
 
 /* Define an intterupt handler, i.e. function to call when exception occurs. Here if our external
  * interrupt trips the flash function which will be called */
-interrupt!(EXTI0_1, button_press);
+//interrupt!(EXTI0_1, button_press);
 
-fn button_press() {
+#[interrupt]
+fn EXTI0_1() {
     // Enter critical section
     cortex_m::interrupt::free(|cs| {
         // Obtain all Mutex protected resources

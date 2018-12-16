@@ -39,8 +39,7 @@ impl Pins<SPI1>
         gpioa::PA6<Alternate<AF0>>,
         gpioa::PA7<Alternate<AF0>>,
     )
-{
-}
+{}
 #[cfg(feature = "stm32f042")]
 impl Pins<SPI1>
     for (
@@ -48,8 +47,7 @@ impl Pins<SPI1>
         gpiob::PB4<Alternate<AF0>>,
         gpiob::PB5<Alternate<AF0>>,
     )
-{
-}
+{}
 
 #[cfg(feature = "stm32f042")]
 impl<PINS> Spi<SPI1, PINS> {

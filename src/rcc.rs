@@ -1,8 +1,8 @@
 use core::cmp;
 
+use cast::u32;
 #[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
 use crate::stm32::{FLASH, RCC};
-use cast::u32;
 
 use crate::time::Hertz;
 

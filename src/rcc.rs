@@ -1,6 +1,6 @@
 use core::cmp;
 
-#[cfg(feature = "stm32f042")]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
 use crate::stm32::{FLASH, RCC};
 use cast::u32;
 
@@ -12,7 +12,7 @@ pub trait RccExt {
     fn constrain(self) -> Rcc;
 }
 
-#[cfg(feature = "stm32f042")]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
 impl RccExt for RCC {
     fn constrain(self) -> Rcc {
         Rcc {
@@ -38,7 +38,7 @@ pub struct CFGR {
     sysclk: Option<u32>,
 }
 
-#[cfg(feature = "stm32f042")]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
 impl CFGR {
     pub fn hclk<F>(mut self, freq: F) -> Self
     where

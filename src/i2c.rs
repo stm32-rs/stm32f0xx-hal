@@ -1,13 +1,18 @@
+#[cfg(feature = "stm32f042")]
 use crate::stm32::{I2C1, RCC};
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use core::cmp;
+#[cfg(feature = "stm32f042")]
 use crate::gpio::gpioa::{PA10, PA11, PA12, PA9};
+#[cfg(feature = "stm32f042")]
 use crate::gpio::gpiob::{PB10, PB11, PB13, PB14, PB6, PB7, PB8, PB9};
+#[cfg(feature = "stm32f042")]
 use crate::gpio::gpiof::{PF0, PF1};
+#[cfg(feature = "stm32f042")]
 use crate::gpio::{Alternate, AF1, AF4, AF5};
 use crate::time::{KiloHertz, U32Ext};
+use core::cmp;
 
 /// I2C abstraction
 pub struct I2c<I2C, PINS> {
@@ -17,12 +22,19 @@ pub struct I2c<I2C, PINS> {
 
 pub trait Pins<I2c> {}
 
+#[cfg(feature = "stm32f042")]
 impl Pins<I2C1> for (PA9<Alternate<AF4>>, PA10<Alternate<AF4>>) {}
+#[cfg(feature = "stm32f042")]
 impl Pins<I2C1> for (PA11<Alternate<AF5>>, PA12<Alternate<AF5>>) {}
+#[cfg(feature = "stm32f042")]
 impl Pins<I2C1> for (PB6<Alternate<AF1>>, PB7<Alternate<AF1>>) {}
+#[cfg(feature = "stm32f042")]
 impl Pins<I2C1> for (PB8<Alternate<AF1>>, PB9<Alternate<AF1>>) {}
+#[cfg(feature = "stm32f042")]
 impl Pins<I2C1> for (PB10<Alternate<AF1>>, PB11<Alternate<AF1>>) {}
+#[cfg(feature = "stm32f042")]
 impl Pins<I2C1> for (PB13<Alternate<AF5>>, PB14<Alternate<AF5>>) {}
+#[cfg(feature = "stm32f042")]
 impl Pins<I2C1> for (PF1<Alternate<AF1>>, PF0<Alternate<AF1>>) {}
 
 #[derive(Debug)]
@@ -31,6 +43,7 @@ pub enum Error {
     NACK,
 }
 
+#[cfg(feature = "stm32f042")]
 impl<PINS> I2c<I2C1, PINS> {
     pub fn i2c1(i2c: I2C1, pins: PINS, speed: KiloHertz) -> Self
     where
@@ -123,6 +136,7 @@ impl<PINS> I2c<I2C1, PINS> {
     }
 }
 
+#[cfg(feature = "stm32f042")]
 impl<PINS> WriteRead for I2c<I2C1, PINS> {
     type Error = Error;
 
@@ -200,6 +214,7 @@ impl<PINS> WriteRead for I2c<I2C1, PINS> {
     }
 }
 
+#[cfg(feature = "stm32f042")]
 impl<PINS> Write for I2c<I2C1, PINS> {
     type Error = Error;
 

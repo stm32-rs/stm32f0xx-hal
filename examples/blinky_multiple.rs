@@ -19,10 +19,10 @@ fn main() -> ! {
         let gpiob = p.GPIOB.split();
 
         /* (Re-)configure PA1 as output */
-        let mut led1 = gpioa.pa1.into_push_pull_output();
+        let led1 = gpioa.pa1.into_push_pull_output();
 
         /* (Re-)configure PB1 as output */
-        let mut led2 = gpiob.pb1.into_push_pull_output();
+        let led2 = gpiob.pb1.into_push_pull_output();
 
         /* Constrain clocking registers */
         let rcc = p.RCC.constrain();

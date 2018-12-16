@@ -7,6 +7,11 @@ API for the STMicro STM32F0xx family of microcontrollers. It replaces the
 
 Currently supported configuration are:
 * stm32f042
+* stm32f030
+* stm32f030x4
+* stm32f030x6
+* stm32f030x8
+* stm32f030xc
 
 The idea behind this crate is to gloss over the slight differences in the
 various peripherals available on those MCUs so a HAL can be written for all

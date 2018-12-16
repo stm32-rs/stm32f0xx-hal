@@ -44,6 +44,11 @@ panic-halt = "0.2.0"
 [features]
 rt = ["stm32f0/rt"]
 stm32f042 = ["stm32f0/stm32f0x2"]
+stm32f030 = ["stm32f0/stm32f0x0"]
+stm32f030x4 = ["stm32f030x6"]
+stm32f030x6 = ["stm32f030"]
+stm32f030x8 = ["stm32f0/stm32f0x0"]
+stm32f030xc = ["stm32f0/stm32f0x0"]
 
 [profile.dev]
 debug = true
@@ -52,3 +57,7 @@ debug = true
 debug = true
 lto = true
 opt-level = "s"
+
+[[example]]
+name = "led_hal_button_irq"
+required-features = ["stm32f042"]

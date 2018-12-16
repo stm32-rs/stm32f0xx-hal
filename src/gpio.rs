@@ -450,6 +450,7 @@ macro_rules! gpio {
     }
 }
 
+#[cfg(any(feature = "stm32f042", feature = "stm32f030",))]
 gpio!(GPIOA, gpioa, iopaen, PA, [
     PA0: (pa0, 0, Input<Floating>),
     PA1: (pa1, 1, Input<Floating>),
@@ -469,6 +470,7 @@ gpio!(GPIOA, gpioa, iopaen, PA, [
     PA15: (pa15, 15, Input<Floating>),
 ]);
 
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
 gpio!(GPIOB, gpiob, iopben, PB, [
     PB0: (pb0, 0, Input<Floating>),
     PB1: (pb1, 1, Input<Floating>),
@@ -488,14 +490,53 @@ gpio!(GPIOB, gpiob, iopben, PB, [
     PB15: (pb15, 15, Input<Floating>),
 ]);
 
+#[cfg(feature = "stm32f042")]
 gpio!(GPIOC, gpioc, iopcen, PC, [
     PC13: (pc13, 13, Input<Floating>),
     PC14: (pc14, 14, Input<Floating>),
     PC15: (pc15, 15, Input<Floating>),
 ]);
 
+#[cfg(feature = "stm32f030")]
+gpio!(GPIOC, gpioc, iopcen, PC, [
+    PC0: (pb0, 0, Input<Floating>),
+    PC1: (pb1, 1, Input<Floating>),
+    PC2: (pb2, 2, Input<Floating>),
+    PC3: (pb3, 3, Input<Floating>),
+    PC4: (pb4, 4, Input<Floating>),
+    PC5: (pb5, 5, Input<Floating>),
+    PC6: (pb6, 6, Input<Floating>),
+    PC7: (pb7, 7, Input<Floating>),
+    PC8: (pb8, 8, Input<Floating>),
+    PC9: (pb9, 9, Input<Floating>),
+    PC10: (pb10, 10, Input<Floating>),
+    PC11: (pb11, 11, Input<Floating>),
+    PC12: (pb12, 12, Input<Floating>),
+    PC13: (pb13, 13, Input<Floating>),
+    PC14: (pb14, 14, Input<Floating>),
+    PC15: (pb15, 15, Input<Floating>),
+]);
+
+// TODO Check if the bit is implemented yet
+// In the device crate the iopden bit is missing, so it won't compile
+// #[cfg(feature = "stm32f030")]
+// gpio!(GPIOD, gpiod, iopden, PD, [
+//     PD2: (pd2, 2, Input<Floating>),
+// ]);
+
+#[cfg(feature = "stm32f042")]
 gpio!(GPIOF, gpiof, iopfen, PF, [
     PF0: (pf0, 0, Input<Floating>),
     PF1: (pf1, 1, Input<Floating>),
     PF11: (pf11, 11, Input<Floating>),
+]);
+
+#[cfg(feature = "stm32f030")]
+gpio!(GPIOF, gpiof, iopfen, PF, [
+    PF0: (pf0, 0, Input<Floating>),
+    PF1: (pf1, 1, Input<Floating>),
+    PF4: (pf4, 4, Input<Floating>),
+    PF5: (pf5, 5, Input<Floating>),
+    PF6: (pf6, 5, Input<Floating>),
+    PF7: (pf7, 5, Input<Floating>),
 ]);

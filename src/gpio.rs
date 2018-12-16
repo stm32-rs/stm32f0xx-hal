@@ -50,7 +50,7 @@ pub struct Output<MODE> {
 pub struct PushPull;
 
 use crate::stm32;
-use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin};
+use embedded_hal::digital::{toggleable, InputPin, OutputPin, StatefulOutputPin};
 
 /// Fully erased pin
 // We can just pretend it's gpioa. It's modified using the bits and it can only be constructed out of already existing pins
@@ -105,6 +105,8 @@ impl<MODE> InputPin for Pin<Input<MODE>> {
     }
 }
 
+impl<MODE> toggleable::Default for Pin<Output<MODE>> {}
+
 macro_rules! gpio {
     ($GPIOX:ident, $gpiox:ident, $iopxenr:ident, $PXx:ident, [
         $($PXi:ident: ($pxi:ident, $i:expr, $MODE:ty),)+
@@ -113,7 +115,7 @@ macro_rules! gpio {
         pub mod $gpiox {
             use core::marker::PhantomData;
 
-            use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin};
+            use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin, toggleable};
             use crate::stm32::$GPIOX;
 
             use crate::stm32::RCC;
@@ -185,6 +187,8 @@ macro_rules! gpio {
                     unsafe { (*$GPIOX::ptr()).idr.read().bits() & (1 << self.i) == 0 }
                 }
             }
+
+            impl<MODE> toggleable::Default for $PXx<Output<MODE>> {}
 
             impl<MODE> InputPin for $PXx<Input<MODE>> {
                 fn is_high(&self) -> bool {
@@ -518,6 +522,8 @@ macro_rules! gpio {
                         unsafe { (*$GPIOX::ptr()).idr.read().bits() & (1 << $i) == 0 }
                     }
                 }
+
+                impl<MODE> toggleable::Default for $PXi<Output<MODE>> {}
 
                 impl<MODE> $PXi<Input<MODE>> {
                     /// Erases the pin number from the type

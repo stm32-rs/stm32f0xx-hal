@@ -30,10 +30,7 @@ fn main() -> ! {
         let mut delay = Delay::new(cp.SYST, clocks);
 
         loop {
-            led.set_high();
-            delay.delay_ms(1_000_u16);
-
-            led.set_low();
+            led.toggle();
             delay.delay_ms(1_000_u16);
         }
     }

@@ -3,15 +3,16 @@ rust:
   - stable
   - nightly
 cache: cargo
+env:
+- MCU=stm32f042
+- MCU=stm32f040
+- MCU=stm32f040x6
+- MCU=stm32f040x8
+- MCU=stm32f040xc
 matrix:
   allow_failures:
     - rust: nightly
   fast_finish: true
 script:
   - rustup target add thumbv6m-none-eabi
-  - cargo build --features=stm32f042
-  - cargo build --features=stm32f030
-  - cargo build --features=stm32f030x6
-  - cargo build --features=stm32f030x8
-  - cargo build --features=stm32f030xc
-  - cargo build
+  - cargo build --features=$MCU

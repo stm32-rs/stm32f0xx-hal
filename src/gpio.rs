@@ -57,7 +57,7 @@ macro_rules! gpio {
         pub mod $gpiox {
             use core::marker::PhantomData;
 
-            use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin};
+            use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin, toggleable};
             use crate::stm32::$GPIOX;
 
             use crate::stm32::RCC;
@@ -118,6 +118,8 @@ macro_rules! gpio {
                     unsafe { (*$GPIOX::ptr()).bsrr.write(|w| w.bits(1 << (self.i + 16))) }
                 }
             }
+
+            impl<MODE> toggleable::Default for $PXx<Output<MODE>> {}
 
             impl<MODE> InputPin for $PXx<Input<MODE>> {
                 fn is_high(&self) -> bool {
@@ -410,6 +412,8 @@ macro_rules! gpio {
                         unsafe { (*$GPIOX::ptr()).bsrr.write(|w| w.bits(1 << ($i + 16))) }
                     }
                 }
+
+                impl<MODE> toggleable::Default for $PXi<Output<MODE>> {}
 
                 impl<MODE> $PXi<Input<MODE>> {
                     /// Erases the pin number from the type

@@ -56,8 +56,7 @@ pub struct Output<MODE> {
 /// Push pull output (type state)
 pub struct PushPull;
 
-use crate::stm32;
-use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin};
+use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin, toggleable};
 
 /// Fully erased pin
 pub struct Pin<MODE> {
@@ -85,6 +84,8 @@ impl<MODE> OutputPin for Pin<Output<MODE>> {
         unsafe { (*self.port).set_low(self.i) }
     }
 }
+
+impl<MODE> toggleable::Default for Pin<Output<MODE>> {}
 
 impl InputPin for Pin<Output<OpenDrain>> {
     fn is_high(&self) -> bool {

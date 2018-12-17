@@ -34,14 +34,16 @@ fn main() -> ! {
         let mut delay = Delay::new(cp.SYST, clocks);
 
         /* Store them together */
-        let mut leds = [led1.downgrade().downgrade(), led2.downgrade().downgrade()];
+        let mut leds = [led1.downgrade(), led2.downgrade()];
         loop {
-            leds[0].set_high();
-            leds[1].set_high();
+            for l in &mut leds {
+                l.set_high();
+            }
             delay.delay_ms(1_000_u16);
 
-            leds[0].set_low();
-            leds[1].set_low();
+            for l in &mut leds {
+                l.set_low();
+            }
             delay.delay_ms(1_000_u16);
         }
     }

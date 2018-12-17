@@ -1,10 +1,6 @@
 #![no_std]
 #![allow(non_camel_case_types)]
 
-use bare_metal;
-use cast;
-use cortex_m;
-
 pub use stm32f0;
 
 #[cfg(feature = "stm32f042")]

@@ -106,6 +106,35 @@ impl<MODE> InputPin for Pin<Input<MODE>> {
     }
 }
 
+macro_rules! gpio_trait {
+    ($gpiox:ident) => {
+          impl Gpio for crate::stm32::$gpiox::RegisterBlock {
+                fn in_low(&self, pos :u8) -> bool {
+                    // NOTE(unsafe) atomic read with no side effects
+                    self.idr.read().bits() & (1 << pos) == 0
+                }
+
+                fn out_low(&self, pos: u8) -> bool {
+                    // NOTE(unsafe) atomic read with no side effects
+                    self.odr.read().bits() & (1 << pos) == 0
+                }
+
+                fn set_high(&self, pos: u8) {
+                    // NOTE(unsafe) atomic write to a stateless register
+                    unsafe { self.bsrr.write(|w| w.bits(1 << pos)) }
+                }
+
+                fn set_low(&self, pos: u8) {
+                    // NOTE(unsafe) atomic write to a stateless register
+                    unsafe { self.bsrr.write(|w| w.bits(1 << (pos + 16))) }
+                }
+          }
+    }
+}
+
+gpio_trait!(gpioa);
+gpio_trait!(gpiof);
+
 macro_rules! gpio {
     ($GPIOX:ident, $gpiox:ident, $iopxenr:ident, $PXx:ident, [
         $($PXi:ident: ($pxi:ident, $i:expr, $MODE:ty),)+
@@ -116,7 +145,6 @@ macro_rules! gpio {
 
             use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin, toggleable};
             use crate::stm32::$GPIOX;
-            use crate::stm32::$gpiox::RegisterBlock;
 
             use crate::stm32::RCC;
             use super::{
@@ -146,28 +174,6 @@ macro_rules! gpio {
                             $pxi: $PXi { _mode: PhantomData },
                         )+
                     }
-                }
-            }
-
-            impl Gpio for RegisterBlock {
-                fn in_low(&self, pos :u8) -> bool {
-                    // NOTE(unsafe) atomic read with no side effects
-                    unsafe { self.idr.read().bits() & (1 << pos) == 0 }
-                }
-
-                fn out_low(&self, pos: u8) -> bool {
-                    // NOTE(unsafe) atomic read with no side effects
-                    unsafe { self.odr.read().bits() & (1 << pos) == 0 }
-                }
-
-                fn set_high(&self, pos: u8) {
-                    // NOTE(unsafe) atomic write to a stateless register
-                    unsafe { self.bsrr.write(|w| w.bits(1 << pos)) }
-                }
-
-                fn set_low(&self, pos: u8) {
-                    // NOTE(unsafe) atomic write to a stateless register
-                    unsafe { self.bsrr.write(|w| w.bits(1 << (pos + 16))) }
                 }
             }
 

@@ -443,17 +443,17 @@ macro_rules! gpio {
                     }
 
                     fn is_set_low(&self) -> bool {
-                        (*$GPIOX::ptr()).out_low($i)
+                        unsafe { (*$GPIOX::ptr()).out_low($i) }
                     }
                 }
 
                 impl<MODE> OutputPin for $PXi<Output<MODE>> {
                     fn set_high(&mut self) {
-                        (*$GPIOX::ptr()).set_high($i)
+                        unsafe { (*$GPIOX::ptr()).set_high($i) }
                     }
 
                     fn set_low(&mut self) {
-                        (*$GPIOX::ptr()).set_low($i)
+                        unsafe { (*$GPIOX::ptr()).set_low($i) }
                     }
                 }
 
@@ -465,7 +465,7 @@ macro_rules! gpio {
                     }
 
                     fn is_low(&self) -> bool {
-                        (*$GPIOX::ptr()).in_low($i)
+                        unsafe { (*$GPIOX::ptr()).in_low($i) }
                     }
                 }
 
@@ -489,7 +489,7 @@ macro_rules! gpio {
                     }
 
                     fn is_low(&self) -> bool {
-                        (*$GPIOX::ptr()).in_low($i)
+                        unsafe { (*$GPIOX::ptr()).in_low($i) }
                     }
                 }
             )+

@@ -1,3 +1,29 @@
+//! API for the integrated timers
+//!
+//! This only implements basic functions, a lot of things are missing
+//!
+//! # Example
+//! Blink the led with 1Hz
+//! ``` no_run
+//! use stm32f0xx_hal as hal;
+//!
+//! use crate::hal::stm32;
+//! use crate::hal::prelude::*;
+//! use crate::hal::time::*;
+//! use crate::hal::timers::*;
+//! use nb::block;
+//!
+//! let mut p = stm32::Peripherals::take().unwrap();
+//!
+//! let mut led = gpioa.pa1.into_push_pull_pull_output();
+//! let rcc = p.RCC.constrain().cfgr.freeze();
+//! let mut timer = Timer::tim1(p.TIM1, Hertz(1), clocks);
+//! loop {
+//!     led.toggle();
+//!     block!(timer.wait()).ok();
+//! }
+//! ```
+
 #[cfg(feature = "stm32f030")]
 use crate::stm32::{RCC, TIM1, TIM14, TIM15, TIM16, TIM17, TIM3, TIM6, TIM7};
 #[cfg(feature = "stm32f042")]
@@ -55,6 +81,7 @@ impl Timer<SYST> {
 impl CountDown for Timer<SYST> {
     type Time = Hertz;
 
+    /// Start the timer with a `timeout`
     fn start<T>(&mut self, timeout: T)
     where
         T: Into<Hertz>,
@@ -68,6 +95,8 @@ impl CountDown for Timer<SYST> {
         self.tim.enable_counter();
     }
 
+    /// Return `Ok` if the timer has wrapped
+    /// Automatically clears the flag and restarts the time
     fn wait(&mut self) -> nb::Result<(), Void> {
         if self.tim.has_wrapped() {
             Ok(())
@@ -143,6 +172,7 @@ macro_rules! timers {
             impl CountDown for Timer<$TIM> {
                 type Time = Hertz;
 
+                /// Start the timer with a `timeout`
                 fn start<T>(&mut self, timeout: T)
                 where
                     T: Into<Hertz>,
@@ -165,6 +195,8 @@ macro_rules! timers {
                     self.tim.cr1.modify(|_, w| w.cen().set_bit());
                 }
 
+                /// Return `Ok` if the timer has wrapped
+                /// Automatically clears the flag and restarts the time
                 fn wait(&mut self) -> nb::Result<(), Void> {
                     if self.tim.sr.read().uif().bit_is_clear() {
                         Err(nb::Error::WouldBlock)

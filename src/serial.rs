@@ -65,23 +65,34 @@ pub trait TxPin<USART> {}
 pub trait RxPin<USART> {}
 
 macro_rules! usart_pins {
-    ($($USART:ident: ($tx:ty, $rx:ty),)+) => {
+    ($($USART:ident => {
+        tx => [$($tx:ty),+ $(,)*],
+        rx => [$($rx:ty),+ $(,)*],
+    })+) => {
         $(
-            impl TxPin<stm32::$USART> for $tx {}
-            impl RxPin<stm32::$USART> for $rx {}
+            $(
+                impl TxPin<stm32::$USART> for $tx {}
+            )+
+            $(
+                impl RxPin<stm32::$USART> for $rx {}
+            )+
         )+
     }
 }
 
 #[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
 usart_pins! {
-    USART1: (gpioa::PA9<Alternate<AF1>>, gpioa::PA10<Alternate<AF1>>),
-    USART1: (gpiob::PB6<Alternate<AF0>>, gpiob::PB6<Alternate<AF0>>),
+    USART1 =>  {
+        tx => [gpioa::PA9<Alternate<AF1>>, gpiob::PB6<Alternate<AF0>>],
+        rx => [gpioa::PA10<Alternate<AF1>>, gpiob::PB6<Alternate<AF0>>],
+    }
 }
 #[cfg(feature = "stm32f030x6")]
 usart_pins! {
-    USART1: (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>),
-    USART1: (gpioa::PA14<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>),
+    USART1 => {
+        tx => [gpioa::PA2<Alternate<AF1>>, gpioa::PA14<Alternate<AF1>>],
+        rx => [gpioa::PA3<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>],
+    }
 }
 #[cfg(any(
     feature = "stm32f042",
@@ -89,21 +100,31 @@ usart_pins! {
     feature = "stm32f030xc",
 ))]
 usart_pins! {
-    USART2: (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>),
-    USART2: (gpioa::PA14<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>),
+    USART2 => {
+        tx => [gpioa::PA2<Alternate<AF1>>, gpioa::PA14<Alternate<AF1>>],
+        rx => [gpioa::PA3<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>],
+    }
 }
 #[cfg(feature = "stm32f030xc")]
 usart_pins! {
     // TODO WTF look at this again, in the datasheet PB10 is both tx and rx
     // USART3: (gpiob::PB10, AF4, gpiob::PA11, AF4),
-    USART3: (gpioc::PC4<Alternate<AF1>>, gpioc::PC5<Alternate<AF1>>),
-    USART3: (gpioc::PC10<Alternate<AF1>>, gpioc::PC11<Alternate<AF1>>),
-    USART4: (gpioa::PA0<Alternate<AF4>>, gpioa::PA1<Alternate<AF4>>),
-    USART4: (gpioc::PC10<Alternate<AF0>>, gpioc::PC11<Alternate<AF0>>),
-    USART5: (gpiob::PB3<Alternate<AF4>>, gpiob::PB4<Alternate<AF4>>),
-    USART5: (gpioc::PC12<Alternate<AF2>>, gpiod::PD2<Alternate<AF2>>),
-    USART6: (gpioa::PA4<Alternate<AF5>>, gpioa::PA5<Alternate<AF5>>),
-    USART6: (gpioc::PC0<Alternate<AF2>>, gpioc::PC1<Alternate<AF2>>),
+    USART3 => {
+        tx => [gpioc::PC4<Alternate<AF1>>, gpioc::PC10<Alternate<AF1>>],
+        rx => [gpioc::PC5<Alternate<AF1>>, gpioc::PC11<Alternate<AF1>>],
+    }
+    USART4 => {
+        tx => [gpioa::PA0<Alternate<AF4>>, gpioc::PC10<Alternate<AF0>>],
+        rx => [gpioa::PA1<Alternate<AF4>>, gpioc::PC11<Alternate<AF0>>],
+    }
+    USART5 => {
+        tx => [gpiob::PB3<Alternate<AF4>>, gpioc::PC12<Alternate<AF2>>],
+        rx => [gpiob::PB4<Alternate<AF4>>, gpiod::PD2<Alternate<AF2>>],
+    }
+    USART6 => {
+        tx => [gpioa::PA4<Alternate<AF5>>, gpioc::PC0<Alternate<AF2>>],
+        rx => [gpioa::PA5<Alternate<AF5>>, gpioc::PC1<Alternate<AF2>>],
+    }
 }
 
 /// Serial abstraction

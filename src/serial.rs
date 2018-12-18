@@ -108,8 +108,8 @@ usart_pins! {
 #[cfg(feature = "stm32f030xc")]
 usart_pins! {
     USART3 => {
-        // TODO WTF look at this again, in the datasheet PB10 is both tx and rx
-        tx => [/*gpiob::PB10<Alternate<AF4>>,*/ gpioc::PC4<Alternate<AF1>>, gpioc::PC10<Alternate<AF1>>],
+        // According to the datasheet PB10 is both tx and rx, but in stm32cubemx it's only tx
+        tx => [gpiob::PB10<Alternate<AF4>>, gpioc::PC4<Alternate<AF1>>, gpioc::PC10<Alternate<AF1>>],
         rx => [gpiob::PB11<Alternate<AF4>>, gpioc::PC5<Alternate<AF1>>, gpioc::PC11<Alternate<AF1>>],
     }
     USART4 => {

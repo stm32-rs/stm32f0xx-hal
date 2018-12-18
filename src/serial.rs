@@ -7,7 +7,7 @@ use nb::block;
 use void::Void;
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-use crate::stm32::{usart1, RCC, USART1, USART2};
+use crate::stm32;
 
 use crate::gpio::*;
 use crate::rcc::Clocks;
@@ -39,41 +39,41 @@ pub enum Error {
 pub trait Pins<USART> {}
 
 #[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
-impl Pins<USART1> for (gpioa::PA9<Alternate<AF1>>, gpioa::PA10<Alternate<AF1>>) {}
+impl Pins<stm32::USART1> for (gpioa::PA9<Alternate<AF1>>, gpioa::PA10<Alternate<AF1>>) {}
 #[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
-impl Pins<USART1> for (gpiob::PB6<Alternate<AF0>>, gpiob::PB7<Alternate<AF0>>) {}
+impl Pins<stm32::USART1> for (gpiob::PB6<Alternate<AF0>>, gpiob::PB7<Alternate<AF0>>) {}
 #[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
-impl Pins<USART1> for (gpioa::PA9<Alternate<AF1>>, gpiob::PB7<Alternate<AF0>>) {}
+impl Pins<stm32::USART1> for (gpioa::PA9<Alternate<AF1>>, gpiob::PB7<Alternate<AF0>>) {}
 #[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
-impl Pins<USART1> for (gpiob::PB6<Alternate<AF0>>, gpioa::PA10<Alternate<AF1>>) {}
+impl Pins<stm32::USART1> for (gpiob::PB6<Alternate<AF0>>, gpioa::PA10<Alternate<AF1>>) {}
 
 #[cfg(feature = "stm32f030x6")]
-impl Pins<USART1> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
+impl Pins<stm32::USART1> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
 
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
 ))]
-impl Pins<USART2> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
+impl Pins<stm32::USART2> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
 ))]
-impl Pins<USART2> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>) {}
+impl Pins<stm32::USART2> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>) {}
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
 ))]
-impl Pins<USART2> for (gpioa::PA14<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>) {}
+impl Pins<stm32::USART2> for (gpioa::PA14<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>) {}
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
 ))]
-impl Pins<USART2> for (gpioa::PA14<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
+impl Pins<stm32::USART2> for (gpioa::PA14<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
 
 /// Serial abstraction
 pub struct Serial<USART, PINS> {
@@ -93,69 +93,63 @@ pub struct Tx<USART> {
     usart: *const USART,
 }
 
-/// USART1
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-impl<PINS> Serial<USART1, PINS> {
-    pub fn usart1(usart: USART1, pins: PINS, baud_rate: Bps, clocks: Clocks) -> Self
-    where
-        PINS: Pins<USART1>,
-    {
-        // NOTE(unsafe) This executes only during initialisation
-        let rcc = unsafe { &(*RCC::ptr()) };
+macro_rules! usart {
+    ($($USART:ident: ($usart:ident, $usartXen:ident, $apbenr:ident),)+) => {
+        $(
+            use crate::stm32::$USART;
+            impl<PINS> Serial<$USART, PINS> {
+            pub fn $usart(usart: $USART, pins: PINS, baud_rate: Bps, clocks: Clocks) -> Self
+            where
+                PINS: Pins<$USART>,
+            {
+                // NOTE(unsafe) This executes only during initialisation
+                let rcc = unsafe { &(*stm32::RCC::ptr()) };
 
-        /* Enable clock for USART */
-        rcc.apb2enr.modify(|_, w| w.usart1en().set_bit());
+                /* Enable clock for USART */
+                rcc.$apbenr.modify(|_, w| w.$usartXen().set_bit());
 
-        // Calculate correct baudrate divisor on the fly
-        let brr = clocks.pclk().0 / baud_rate.0;
-        usart.brr.write(|w| unsafe { w.bits(brr) });
+                // Calculate correct baudrate divisor on the fly
+                let brr = clocks.pclk().0 / baud_rate.0;
+                usart.brr.write(|w| unsafe { w.bits(brr) });
 
-        /* Reset other registers to disable advanced USART features */
-        usart.cr2.reset();
-        usart.cr3.reset();
+                /* Reset other registers to disable advanced USART features */
+                usart.cr2.reset();
+                usart.cr3.reset();
 
-        /* Enable transmission and receiving */
-        usart.cr1.modify(|_, w| unsafe { w.bits(0xD) });
+                /* Enable transmission and receiving */
+                usart.cr1.modify(|_, w| unsafe { w.bits(0xD) });
 
-        Serial { usart, pins }
+                Serial { usart, pins }
+            }
+                }
+        )+
     }
 }
 
-/// USART2
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+usart! {
+    USART1: (usart1, usart1en, apb2enr),
+}
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
-    feature = "stm32f030x8"
+    feature = "stm32f030xc"
 ))]
-impl<PINS> Serial<USART2, PINS> {
-    pub fn usart2(usart: USART2, pins: PINS, baud_rate: Bps, clocks: Clocks) -> Self
-    where
-        PINS: Pins<USART2>,
-    {
-        // NOTE(unsafe) This executes only during initialisation
-        let rcc = unsafe { &(*RCC::ptr()) };
-
-        /* Enable clock for USART */
-        rcc.apb1enr.modify(|_, w| w.usart2en().set_bit());
-
-        // Calculate correct baudrate divisor on the fly
-        let brr = clocks.pclk().0 / baud_rate.0;
-        usart.brr.write(|w| unsafe { w.bits(brr) });
-
-        /* Reset other registers to disable advanced USART features */
-        usart.cr2.reset();
-        usart.cr3.reset();
-
-        /* Enable transmission and receiving */
-        usart.cr1.modify(|_, w| unsafe { w.bits(0xD) });
-
-        Serial { usart, pins }
-    }
+usart! {
+    USART2: (usart2, usart2en, apb1enr),
+}
+#[cfg(any(feature = "stm32f030xc"))]
+usart! {
+    USART3: (usart3, usart3en, apb1enr),
+    USART4: (usart4, usart4en, apb1enr),
+    USART5: (usart5, usart5en, apb1enr),
+    // the usart6en bit is missing
+    // USART6: (usart6, usart6en, apb2enr),
 }
 
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
-type SerialRegisterBlock = usart1::RegisterBlock;
+type SerialRegisterBlock = stm32::usart1::RegisterBlock;
 
 impl<USART> embedded_hal::serial::Read<u8> for Rx<USART>
 where

@@ -564,12 +564,10 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
     PC15: (pb15, 15, Input<Floating>),
 ]);
 
-// TODO Check if the bit is implemented yet
-// In the device crate the iopden bit is missing, so it won't compile
-// #[cfg(feature = "stm32f030")]
-// gpio!(GPIOD, gpiod, iopden, PD, [
-//     PD2: (pd2, 2, Input<Floating>),
-// ]);
+#[cfg(feature = "stm32f030")]
+gpio!(GPIOD, gpiod, iopden, PD, [
+    PD2: (pd2, 2, Input<Floating>),
+]);
 
 #[cfg(feature = "stm32f042")]
 gpio!(GPIOF, gpiof, iopfen, PF, [

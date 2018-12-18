@@ -15,4 +15,4 @@ matrix:
   fast_finish: true
 script:
   - rustup target add thumbv6m-none-eabi
-  - cargo build --features=$MCU
+  - cargo build --features=$MCU --examples --release

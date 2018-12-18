@@ -72,7 +72,7 @@ required-features = ["stm32f042"]
 
 [[example]]
 name = "led_hal_button_irq"
-required-features = ["stm32f042"]
+required-features = ["stm32f042", "rt"]
 
 [[example]]
 name = "i2c_hal_ina260reader"

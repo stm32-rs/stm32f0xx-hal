@@ -15,7 +15,7 @@ trait GpioRegExt {
     fn in_low(&self, pos: u8) -> bool;
     fn out_low(&self, pos: u8) -> bool;
     fn set_high(&self, pos: u8);
-    fn set_low(&self, pos:u8);
+    fn set_low(&self, pos: u8);
 }
 
 pub struct AF0;
@@ -56,7 +56,7 @@ pub struct Output<MODE> {
 /// Push pull output (type state)
 pub struct PushPull;
 
-use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin, toggleable};
+use embedded_hal::digital::{toggleable, InputPin, OutputPin, StatefulOutputPin};
 
 /// Fully erased pin
 pub struct Pin<MODE> {
@@ -109,28 +109,28 @@ impl<MODE> InputPin for Pin<Input<MODE>> {
 
 macro_rules! gpio_trait {
     ($gpiox:ident) => {
-          impl GpioRegExt for crate::stm32::$gpiox::RegisterBlock {
-                fn in_low(&self, pos :u8) -> bool {
-                    // NOTE(unsafe) atomic read with no side effects
-                    self.idr.read().bits() & (1 << pos) == 0
-                }
+        impl GpioRegExt for crate::stm32::$gpiox::RegisterBlock {
+            fn in_low(&self, pos: u8) -> bool {
+                // NOTE(unsafe) atomic read with no side effects
+                self.idr.read().bits() & (1 << pos) == 0
+            }
 
-                fn out_low(&self, pos: u8) -> bool {
-                    // NOTE(unsafe) atomic read with no side effects
-                    self.odr.read().bits() & (1 << pos) == 0
-                }
+            fn out_low(&self, pos: u8) -> bool {
+                // NOTE(unsafe) atomic read with no side effects
+                self.odr.read().bits() & (1 << pos) == 0
+            }
 
-                fn set_high(&self, pos: u8) {
-                    // NOTE(unsafe) atomic write to a stateless register
-                    unsafe { self.bsrr.write(|w| w.bits(1 << pos)) }
-                }
+            fn set_high(&self, pos: u8) {
+                // NOTE(unsafe) atomic write to a stateless register
+                unsafe { self.bsrr.write(|w| w.bits(1 << pos)) }
+            }
 
-                fn set_low(&self, pos: u8) {
-                    // NOTE(unsafe) atomic write to a stateless register
-                    unsafe { self.bsrr.write(|w| w.bits(1 << (pos + 16))) }
-                }
-          }
-    }
+            fn set_low(&self, pos: u8) {
+                // NOTE(unsafe) atomic write to a stateless register
+                unsafe { self.bsrr.write(|w| w.bits(1 << (pos + 16))) }
+            }
+        }
+    };
 }
 
 gpio_trait!(gpioa);

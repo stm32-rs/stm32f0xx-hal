@@ -1,5 +1,5 @@
 use core::fmt::{Result, Write};
-use core::marker::PhantomData;
+use core::ops::Deref;
 use core::ptr;
 
 use embedded_hal::prelude::*;
@@ -7,7 +7,7 @@ use nb::block;
 use void::Void;
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-use crate::stm32::{RCC, USART1, USART2};
+use crate::stm32::{usart1, RCC, USART1, USART2};
 
 use crate::gpio::*;
 use crate::rcc::Clocks;
@@ -83,12 +83,14 @@ pub struct Serial<USART, PINS> {
 
 /// Serial receiver
 pub struct Rx<USART> {
-    _usart: PhantomData<USART>,
+    // This is ok, because the USART types only contains PhantomData
+    usart: *const USART,
 }
 
 /// Serial transmitter
 pub struct Tx<USART> {
-    _usart: PhantomData<USART>,
+    // This is ok, because the USART types only contains PhantomData
+    usart: *const USART,
 }
 
 /// USART1
@@ -116,75 +118,6 @@ impl<PINS> Serial<USART1, PINS> {
         usart.cr1.modify(|_, w| unsafe { w.bits(0xD) });
 
         Serial { usart, pins }
-    }
-
-    pub fn split(self) -> (Tx<USART1>, Rx<USART1>) {
-        (
-            Tx {
-                _usart: PhantomData,
-            },
-            Rx {
-                _usart: PhantomData,
-            },
-        )
-    }
-    pub fn release(self) -> (USART1, PINS) {
-        (self.usart, self.pins)
-    }
-}
-
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-impl embedded_hal::serial::Read<u8> for Rx<USART1> {
-    type Error = Error;
-
-    fn read(&mut self) -> nb::Result<u8, Error> {
-        // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*USART1::ptr()).isr.read() };
-
-        Err(if isr.pe().bit_is_set() {
-            nb::Error::Other(Error::Parity)
-        } else if isr.fe().bit_is_set() {
-            nb::Error::Other(Error::Framing)
-        } else if isr.nf().bit_is_set() {
-            nb::Error::Other(Error::Noise)
-        } else if isr.ore().bit_is_set() {
-            nb::Error::Other(Error::Overrun)
-        } else if isr.rxne().bit_is_set() {
-            // NOTE(read_volatile) see `write_volatile` below
-            return Ok(unsafe { ptr::read_volatile(&(*USART1::ptr()).rdr as *const _ as *const _) });
-        } else {
-            nb::Error::WouldBlock
-        })
-    }
-}
-
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-impl embedded_hal::serial::Write<u8> for Tx<USART1> {
-    type Error = Void;
-
-    fn flush(&mut self) -> nb::Result<(), Self::Error> {
-        // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*USART1::ptr()).isr.read() };
-
-        if isr.tc().bit_is_set() {
-            Ok(())
-        } else {
-            Err(nb::Error::WouldBlock)
-        }
-    }
-
-    fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
-        // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*USART1::ptr()).isr.read() };
-
-        if isr.txe().bit_is_set() {
-            // NOTE(unsafe) atomic write to stateless register
-            // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
-            unsafe { ptr::write_volatile(&(*USART1::ptr()).tdr as *const _ as *mut _, byte) }
-            Ok(())
-        } else {
-            Err(nb::Error::WouldBlock)
-        }
     }
 }
 
@@ -218,33 +151,21 @@ impl<PINS> Serial<USART2, PINS> {
 
         Serial { usart, pins }
     }
-
-    pub fn split(self) -> (Tx<USART2>, Rx<USART2>) {
-        (
-            Tx {
-                _usart: PhantomData,
-            },
-            Rx {
-                _usart: PhantomData,
-            },
-        )
-    }
-    pub fn release(self) -> (USART2, PINS) {
-        (self.usart, self.pins)
-    }
 }
 
-#[cfg(any(
-    feature = "stm32f042",
-    feature = "stm32f030x8",
-    feature = "stm32f030x8"
-))]
-impl embedded_hal::serial::Read<u8> for Rx<USART2> {
+// It's s needed for the impls, but rustc doesn't recognize that
+#[allow(dead_code)]
+type SerialRegisterBlock = usart1::RegisterBlock;
+
+impl<USART> embedded_hal::serial::Read<u8> for Rx<USART>
+where
+    USART: Deref<Target = SerialRegisterBlock>,
+{
     type Error = Error;
 
     fn read(&mut self) -> nb::Result<u8, Error> {
         // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*USART2::ptr()).isr.read() };
+        let isr = unsafe { (*self.usart).isr.read() };
 
         Err(if isr.pe().bit_is_set() {
             nb::Error::Other(Error::Parity)
@@ -256,24 +177,22 @@ impl embedded_hal::serial::Read<u8> for Rx<USART2> {
             nb::Error::Other(Error::Overrun)
         } else if isr.rxne().bit_is_set() {
             // NOTE(read_volatile) see `write_volatile` below
-            return Ok(unsafe { ptr::read_volatile(&(*USART2::ptr()).rdr as *const _ as *const _) });
+            return Ok(unsafe { ptr::read_volatile(&(*self.usart).rdr as *const _ as *const _) });
         } else {
             nb::Error::WouldBlock
         })
     }
 }
 
-#[cfg(any(
-    feature = "stm32f042",
-    feature = "stm32f030x8",
-    feature = "stm32f030x8"
-))]
-impl embedded_hal::serial::Write<u8> for Tx<USART2> {
+impl<USART> embedded_hal::serial::Write<u8> for Tx<USART>
+where
+    USART: Deref<Target = SerialRegisterBlock>,
+{
     type Error = Void;
 
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
         // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*USART2::ptr()).isr.read() };
+        let isr = unsafe { (*self.usart).isr.read() };
 
         if isr.tc().bit_is_set() {
             Ok(())
@@ -284,16 +203,36 @@ impl embedded_hal::serial::Write<u8> for Tx<USART2> {
 
     fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
         // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*USART2::ptr()).isr.read() };
+        let isr = unsafe { (*self.usart).isr.read() };
 
         if isr.txe().bit_is_set() {
             // NOTE(unsafe) atomic write to stateless register
             // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
-            unsafe { ptr::write_volatile(&(*USART2::ptr()).tdr as *const _ as *mut _, byte) }
+            unsafe { ptr::write_volatile(&(*self.usart).tdr as *const _ as *mut _, byte) }
             Ok(())
         } else {
             Err(nb::Error::WouldBlock)
         }
+    }
+}
+
+impl<USART, PINS> Serial<USART, PINS>
+where
+    USART: Deref<Target = SerialRegisterBlock>,
+    PINS: Pins<USART>,
+{
+    pub fn split(self) -> (Tx<USART>, Rx<USART>) {
+        (
+            Tx {
+                usart: &self.usart as *const _,
+            },
+            Rx {
+                usart: &self.usart as *const _,
+            },
+        )
+    }
+    pub fn release(self) -> (USART, PINS) {
+        (self.usart, self.pins)
     }
 }
 

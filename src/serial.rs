@@ -61,49 +61,55 @@ pub enum Error {
     _Extensible,
 }
 
-pub trait Pins<USART> {}
+pub trait TxPin<USART> {}
+pub trait RxPin<USART> {}
+
+macro_rules! usart_pins {
+    ($($USART:ident: ($tx:ty, $rx:ty),)+) => {
+        $(
+            impl TxPin<stm32::$USART> for $tx {}
+            impl RxPin<stm32::$USART> for $rx {}
+        )+
+    }
+}
 
 #[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
-impl Pins<stm32::USART1> for (gpioa::PA9<Alternate<AF1>>, gpioa::PA10<Alternate<AF1>>) {}
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
-impl Pins<stm32::USART1> for (gpiob::PB6<Alternate<AF0>>, gpiob::PB7<Alternate<AF0>>) {}
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
-impl Pins<stm32::USART1> for (gpioa::PA9<Alternate<AF1>>, gpiob::PB7<Alternate<AF0>>) {}
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
-impl Pins<stm32::USART1> for (gpiob::PB6<Alternate<AF0>>, gpioa::PA10<Alternate<AF1>>) {}
-
+usart_pins! {
+    USART1: (gpioa::PA9<Alternate<AF1>>, gpioa::PA10<Alternate<AF1>>),
+    USART1: (gpiob::PB6<Alternate<AF0>>, gpiob::PB6<Alternate<AF0>>),
+}
 #[cfg(feature = "stm32f030x6")]
-impl Pins<stm32::USART1> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
-
+usart_pins! {
+    USART1: (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>),
+    USART1: (gpioa::PA14<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>),
+}
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
 ))]
-impl Pins<stm32::USART2> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
-#[cfg(any(
-    feature = "stm32f042",
-    feature = "stm32f030x8",
-    feature = "stm32f030xc",
-))]
-impl Pins<stm32::USART2> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>) {}
-#[cfg(any(
-    feature = "stm32f042",
-    feature = "stm32f030x8",
-    feature = "stm32f030xc",
-))]
-impl Pins<stm32::USART2> for (gpioa::PA14<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>) {}
-#[cfg(any(
-    feature = "stm32f042",
-    feature = "stm32f030x8",
-    feature = "stm32f030xc",
-))]
-impl Pins<stm32::USART2> for (gpioa::PA14<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
+usart_pins! {
+    USART2: (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>),
+    USART2: (gpioa::PA14<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>),
+}
+#[cfg(feature = "stm32f030xc")]
+usart_pins! {
+    // TODO WTF look at this again, in the datasheet PB10 is both tx and rx
+    // USART3: (gpiob::PB10, AF4, gpiob::PA11, AF4),
+    USART3: (gpioc::PC4<Alternate<AF1>>, gpioc::PC5<Alternate<AF1>>),
+    USART3: (gpioc::PC10<Alternate<AF1>>, gpioc::PC11<Alternate<AF1>>),
+    USART4: (gpioa::PA0<Alternate<AF4>>, gpioa::PA1<Alternate<AF4>>),
+    USART4: (gpioc::PC10<Alternate<AF0>>, gpioc::PC11<Alternate<AF0>>),
+    USART5: (gpiob::PB3<Alternate<AF4>>, gpiob::PB4<Alternate<AF4>>),
+    USART5: (gpioc::PC12<Alternate<AF2>>, gpiod::PD2<Alternate<AF2>>),
+    USART6: (gpioa::PA4<Alternate<AF5>>, gpioa::PA5<Alternate<AF5>>),
+    USART6: (gpioc::PC0<Alternate<AF2>>, gpioc::PC1<Alternate<AF2>>),
+}
 
 /// Serial abstraction
-pub struct Serial<USART, PINS> {
+pub struct Serial<USART, TXPIN, RXPIN> {
     usart: USART,
-    pins: PINS,
+    pins: (TXPIN, RXPIN),
 }
 
 /// Serial receiver
@@ -122,11 +128,12 @@ macro_rules! usart {
     ($($USART:ident: ($usart:ident, $usartXen:ident, $apbenr:ident),)+) => {
         $(
             use crate::stm32::$USART;
-            impl<PINS> Serial<$USART, PINS> {
+            impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN> {
                 /// Creates a new serial instance
-                pub fn $usart(usart: $USART, pins: PINS, baud_rate: Bps, clocks: Clocks) -> Self
+                pub fn $usart(usart: $USART, pins: (TXPIN, RXPIN), baud_rate: Bps, clocks: Clocks) -> Self
                 where
-                    PINS: Pins<$USART>,
+                    TXPIN: TxPin<$USART>,
+                    RXPIN: RxPin<$USART>,
                 {
                     // NOTE(unsafe) This executes only during initialisation
                     let rcc = unsafe { &(*stm32::RCC::ptr()) };
@@ -240,10 +247,11 @@ where
     }
 }
 
-impl<USART, PINS> Serial<USART, PINS>
+impl<USART, TXPIN, RXPIN> Serial<USART, TXPIN, RXPIN>
 where
     USART: Deref<Target = SerialRegisterBlock>,
-    PINS: Pins<USART>,
+    TXPIN: TxPin<USART>,
+    RXPIN: RxPin<USART>,
 {
     /// Splits the UART Peripheral in a Tx and an Rx part
     /// This is required for sending/receiving
@@ -257,7 +265,7 @@ where
             },
         )
     }
-    pub fn release(self) -> (USART, PINS) {
+    pub fn release(self) -> (USART, (TXPIN, RXPIN)) {
         (self.usart, self.pins)
     }
 }

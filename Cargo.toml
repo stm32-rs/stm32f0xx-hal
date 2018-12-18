@@ -63,5 +63,21 @@ lto = true
 opt-level = "s"
 
 [[example]]
+name = "i2c_hal_ssd1306alphabeter"
+required-features = ["stm32f042"]
+
+[[example]]
+name = "i2c_hal_ina260serial"
+required-features = ["stm32f042"]
+
+[[example]]
 name = "led_hal_button_irq"
+required-features = ["stm32f042"]
+
+[[example]]
+name = "i2c_hal_ina260reader"
+required-features = ["stm32f042"]
+
+[[example]]
+name = "spi_hal_apa102c"
 required-features = ["stm32f042"]

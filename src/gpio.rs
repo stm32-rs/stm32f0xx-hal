@@ -11,7 +11,7 @@ pub trait GpioExt {
     fn split(self) -> Self::Parts;
 }
 
-pub trait Gpio {
+trait GpioRegExt {
     fn in_low(&self, pos: u8) -> bool;
     fn out_low(&self, pos: u8) -> bool;
     fn set_high(&self, pos: u8);
@@ -61,7 +61,7 @@ use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin, toggleable};
 /// Fully erased pin
 pub struct Pin<MODE> {
     i: u8,
-    port: *const Gpio,
+    port: *const GpioRegExt,
     _mode: PhantomData<MODE>,
 }
 
@@ -109,7 +109,7 @@ impl<MODE> InputPin for Pin<Input<MODE>> {
 
 macro_rules! gpio_trait {
     ($gpiox:ident) => {
-          impl Gpio for crate::stm32::$gpiox::RegisterBlock {
+          impl GpioRegExt for crate::stm32::$gpiox::RegisterBlock {
                 fn in_low(&self, pos :u8) -> bool {
                     // NOTE(unsafe) atomic read with no side effects
                     self.idr.read().bits() & (1 << pos) == 0
@@ -151,7 +151,7 @@ macro_rules! gpio {
             use super::{
                 Alternate, Floating, GpioExt, Input, OpenDrain, Output,
                 PullDown, PullUp, PushPull, AF0, AF1, AF2, AF3, AF4, AF5, AF6, AF7,
-                Pin, Gpio,
+                Pin, GpioRegExt,
             };
 
             /// GPIO parts
@@ -431,7 +431,7 @@ macro_rules! gpio {
                     pub fn downgrade(self) -> Pin<Output<MODE>> {
                         Pin {
                             i: $i,
-                            port: $GPIOX::ptr() as *const Gpio,
+                            port: $GPIOX::ptr() as *const GpioRegExt,
                             _mode: self._mode,
                         }
                     }
@@ -477,7 +477,7 @@ macro_rules! gpio {
                     pub fn downgrade(self) -> Pin<Input<MODE>> {
                         Pin {
                             i: $i,
-                            port: $GPIOX::ptr() as *const Gpio,
+                            port: $GPIOX::ptr() as *const GpioRegExt,
                             _mode: self._mode,
                         }
                     }

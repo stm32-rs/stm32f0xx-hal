@@ -1,3 +1,28 @@
+//! API for the integrated USART ports
+//!
+//! This only implements the usual asynchronous bidirectional 8-bit transfers, everything else is missing
+//!
+//! # Example
+//! Serial Echo
+//! ``` no_run
+//! use stm32f0xx_hal as hal;
+//!
+//! use crate::hal::stm32;
+//! use crate::hal::prelude::*;
+//! use crate::hal::serial::Serial;
+//! use nb::block;
+//!
+//! let mut p = stm32::Peripherals::take().unwrap();
+//!
+//! let mut led = gpioa.pa1.into_push_pull_pull_output();
+//! let rcc = p.RCC.constrain().cfgr.freeze();
+//! let mut timer = Timer::tim1(p.TIM1, Hertz(1), clocks);
+//! loop {
+//!     led.toggle();
+//!     block!(timer.wait()).ok();
+//! }
+//! ```
+
 use core::fmt::{Result, Write};
 use core::ops::Deref;
 use core::ptr;
@@ -98,30 +123,31 @@ macro_rules! usart {
         $(
             use crate::stm32::$USART;
             impl<PINS> Serial<$USART, PINS> {
-            pub fn $usart(usart: $USART, pins: PINS, baud_rate: Bps, clocks: Clocks) -> Self
-            where
-                PINS: Pins<$USART>,
-            {
-                // NOTE(unsafe) This executes only during initialisation
-                let rcc = unsafe { &(*stm32::RCC::ptr()) };
+                /// Creates a new serial instance
+                pub fn $usart(usart: $USART, pins: PINS, baud_rate: Bps, clocks: Clocks) -> Self
+                where
+                    PINS: Pins<$USART>,
+                {
+                    // NOTE(unsafe) This executes only during initialisation
+                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
 
-                /* Enable clock for USART */
-                rcc.$apbenr.modify(|_, w| w.$usartXen().set_bit());
+                    /* Enable clock for USART */
+                    rcc.$apbenr.modify(|_, w| w.$usartXen().set_bit());
 
-                // Calculate correct baudrate divisor on the fly
-                let brr = clocks.pclk().0 / baud_rate.0;
-                usart.brr.write(|w| unsafe { w.bits(brr) });
+                    // Calculate correct baudrate divisor on the fly
+                    let brr = clocks.pclk().0 / baud_rate.0;
+                    usart.brr.write(|w| unsafe { w.bits(brr) });
 
-                /* Reset other registers to disable advanced USART features */
-                usart.cr2.reset();
-                usart.cr3.reset();
+                    /* Reset other registers to disable advanced USART features */
+                    usart.cr2.reset();
+                    usart.cr3.reset();
 
-                /* Enable transmission and receiving */
-                usart.cr1.modify(|_, w| unsafe { w.bits(0xD) });
+                    /* Enable transmission and receiving */
+                    usart.cr1.modify(|_, w| unsafe { w.bits(0xD) });
 
-                Serial { usart, pins }
-            }
+                    Serial { usart, pins }
                 }
+            }
         )+
     }
 }
@@ -157,6 +183,7 @@ where
 {
     type Error = Error;
 
+    /// Tries to read a byte from the uart
     fn read(&mut self) -> nb::Result<u8, Error> {
         // NOTE(unsafe) atomic read with no side effects
         let isr = unsafe { (*self.usart).isr.read() };
@@ -184,6 +211,7 @@ where
 {
     type Error = Void;
 
+    /// Ensures that none of the previously written words are still buffered
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
         // NOTE(unsafe) atomic read with no side effects
         let isr = unsafe { (*self.usart).isr.read() };
@@ -195,6 +223,8 @@ where
         }
     }
 
+    /// Tries to write a byte to the uart
+    /// Fails if the transmit buffer is full
     fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
         // NOTE(unsafe) atomic read with no side effects
         let isr = unsafe { (*self.usart).isr.read() };
@@ -215,6 +245,8 @@ where
     USART: Deref<Target = SerialRegisterBlock>,
     PINS: Pins<USART>,
 {
+    /// Splits the UART Peripheral in a Tx and an Rx part
+    /// This is required for sending/receiving
     pub fn split(self) -> (Tx<USART>, Rx<USART>) {
         (
             Tx {

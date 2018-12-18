@@ -4,6 +4,7 @@
 extern crate bare_metal;
 extern crate cast;
 extern crate cortex_m;
+extern crate cortex_m_semihosting;
 pub extern crate embedded_hal as hal;
 
 pub extern crate void;

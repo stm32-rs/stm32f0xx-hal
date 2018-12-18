@@ -2,6 +2,7 @@ use core::cmp;
 
 use cast::u32;
 use stm32::{FLASH, RCC};
+use cortex_m_semihosting::{debug, hprintln};
 
 use time::Hertz;
 
@@ -18,7 +19,11 @@ impl RccExt for RCC {
                 hclk: None,
                 pclk: None,
                 sysclk: None,
+                enable_hsi: None,
+                enable_hsi14: None,
                 enable_hsi48: None,
+                enable_lsi: None,
+                enable_pll: None,
             },
         }
     }
@@ -30,6 +35,7 @@ pub struct Rcc {
 }
 
 const HSI: u32 = 8_000_000; // Hz
+#[allow(dead_code)]
 const HSI14: u32 = 14_000_000; // Hz - ADC clock.
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
@@ -48,10 +54,14 @@ pub enum PllSource {
 }
 
 pub struct CFGR {
-    hclk: Option<u32>,
-    pclk: Option<u32>,
-    sysclk: Option<u32>,
-    enable_hsi48: Option<bool>,
+    hclk:           Option<u32>,
+    pclk:           Option<u32>,
+    sysclk:         Option<u32>,
+    enable_hsi:     Option<bool>,
+    enable_hsi14:   Option<bool>,
+    enable_hsi48:   Option<bool>,
+    enable_lsi:     Option<bool>,
+    enable_pll:     Option<bool>,
 }
 
 impl CFGR {
@@ -79,8 +89,33 @@ impl CFGR {
         self
     }
 
-    pub fn enable_hsi48(mut self, enable: bool) -> Self {
-        self.enable_hsi48 = Some(enable);
+    pub fn enable_hsi(mut self, is_enabled: bool) -> Self
+    {
+        self.enable_hsi = Some(is_enabled);
+        self
+    }
+
+    pub fn enable_hsi14(mut self, is_enabled: bool) -> Self
+    {
+        self.enable_hsi14 = Some(is_enabled);
+        self
+    }
+
+    pub fn enable_hsi48(mut self, is_enabled: bool) -> Self
+    {
+        self.enable_hsi48 = Some(is_enabled);
+        self
+    }
+
+    pub fn enable_lsi(mut self, is_enabled: bool) -> Self
+    {
+        self.enable_lsi = Some(is_enabled);
+        self
+    }
+
+    pub fn enable_pll(mut self, is_enabled: bool) -> Self
+    {
+        self.enable_pll = Some(is_enabled);
         self
     }
 
@@ -88,15 +123,15 @@ impl CFGR {
         let sysclk = self.sysclk.unwrap_or(HSI);
 
         // For F04x, F07x, F09x parts, use HSI48 for sysclk if someone requests sysclk == HSI48;
-        let r_sysclock; // The "real" sysclock value, calculated below
+        let r_sysclk; // The "real" sysclock value, calculated below
         let pllmul_bits;
         if sysclk == HSI48 {
             pllmul_bits = None;
-            r_sysclk == HSI48;
+            r_sysclk = HSI48;
         } else {
             let pllmul = (4 * self.sysclk.unwrap_or(HSI) + HSI) / HSI / 2;
             let pllmul = cmp::min(cmp::max(pllmul, 2), 16);
-            let r_sysclk = pllmul * HSI / 2;
+            r_sysclk = pllmul * HSI / 2;
 
             pllmul_bits = if pllmul == 2 {
                 None
@@ -139,10 +174,11 @@ impl CFGR {
         let pclk = hclk / u32(ppre);
 
         hprintln!(
-            "H: {:x} HP: {:x) P: {:x} PP: {:x} PP2: {:x}",
+            "H: {:x} HP: {:x} P: {:x} PP: {:x} PP2: {:x}",
             hclk,
             hpre_bits,
             pclk,
+            ppre_bits,
             ppre
         )
         .unwrap();
@@ -179,23 +215,31 @@ impl CFGR {
                     .sw()
                     .bits(SysClkSource::PLL as u8)
             });
-            hprintln!("PLL: {:x}", rcc.cfgr.read()).unwrap();
+            hprintln!("PLL: {:x}", rcc.cfgr.read().bits() as u16).unwrap();
         } else if r_sysclk == HSI48 {
+            // Enable HSI48
+            rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
+            while ! rcc.cr2.read().hsi48rdy().bit_is_set()
+            { // nothing 
+            }
+
             // Set HSI48 as system clock.
             rcc.cfgr.modify(|_, w| unsafe {
                 w.ppre()
-                    .bits(ppre_bits)
+                    //.bits(ppre_bits)
+                    .bits(0)
                     .hpre()
-                    .bits(hpre_bits)
+                    //.bits(hpre_bits)
+                    .bits(0)
                     .sw()
                     .bits(SysClkSource::HSI48 as u8)
             });
-            hprintln!("HSI48: {:x}", rcc.cfgr.read()).unwrap();
+            hprintln!("HSI48: {:x}", rcc.cfgr.read().bits() as u32).unwrap();
         } else {
             // use HSI as source
             rcc.cfgr
                 .write(|w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().bits(0) });
-            hprintln!("HSI: {:x}", rcc.cfgr.read()).unwrap();
+            hprintln!("HSI: {:x}", rcc.cfgr.read().bits() as u16).unwrap();
         }
 
         Clocks {

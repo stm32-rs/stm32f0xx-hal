@@ -12,8 +12,8 @@ pub trait GpioExt {
 }
 
 trait GpioRegExt {
-    fn in_low(&self, pos: u8) -> bool;
-    fn out_low(&self, pos: u8) -> bool;
+    fn is_low(&self, pos: u8) -> bool;
+    fn is_set_low(&self, pos: u8) -> bool;
     fn set_high(&self, pos: u8);
     fn set_low(&self, pos: u8);
 }
@@ -71,7 +71,7 @@ impl<MODE> StatefulOutputPin for Pin<Output<MODE>> {
     }
 
     fn is_set_low(&self) -> bool {
-        unsafe { (*self.port).out_low(self.i) }
+        unsafe { (*self.port).is_set_low(self.i) }
     }
 }
 
@@ -93,7 +93,7 @@ impl InputPin for Pin<Output<OpenDrain>> {
     }
 
     fn is_low(&self) -> bool {
-        unsafe { (*self.port).in_low(self.i) }
+        unsafe { (*self.port).is_low(self.i) }
     }
 }
 
@@ -103,19 +103,19 @@ impl<MODE> InputPin for Pin<Input<MODE>> {
     }
 
     fn is_low(&self) -> bool {
-        unsafe { (*self.port).in_low(self.i) }
+        unsafe { (*self.port).is_low(self.i) }
     }
 }
 
 macro_rules! gpio_trait {
     ($gpiox:ident) => {
         impl GpioRegExt for crate::stm32::$gpiox::RegisterBlock {
-            fn in_low(&self, pos: u8) -> bool {
+            fn is_low(&self, pos: u8) -> bool {
                 // NOTE(unsafe) atomic read with no side effects
                 self.idr.read().bits() & (1 << pos) == 0
             }
 
-            fn out_low(&self, pos: u8) -> bool {
+            fn is_set_low(&self, pos: u8) -> bool {
                 // NOTE(unsafe) atomic read with no side effects
                 self.odr.read().bits() & (1 << pos) == 0
             }
@@ -443,7 +443,7 @@ macro_rules! gpio {
                     }
 
                     fn is_set_low(&self) -> bool {
-                        unsafe { (*$GPIOX::ptr()).out_low($i) }
+                        unsafe { (*$GPIOX::ptr()).is_set_low($i) }
                     }
                 }
 
@@ -465,7 +465,7 @@ macro_rules! gpio {
                     }
 
                     fn is_low(&self) -> bool {
-                        unsafe { (*$GPIOX::ptr()).in_low($i) }
+                        unsafe { (*$GPIOX::ptr()).is_low($i) }
                     }
                 }
 
@@ -489,7 +489,7 @@ macro_rules! gpio {
                     }
 
                     fn is_low(&self) -> bool {
-                        unsafe { (*$GPIOX::ptr()).in_low($i) }
+                        unsafe { (*$GPIOX::ptr()).is_low($i) }
                     }
                 }
             )+

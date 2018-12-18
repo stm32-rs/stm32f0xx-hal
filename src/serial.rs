@@ -176,8 +176,7 @@ usart! {
     USART3: (usart3, usart3en, apb1enr),
     USART4: (usart4, usart4en, apb1enr),
     USART5: (usart5, usart5en, apb1enr),
-    // the usart6en bit is missing
-    // USART6: (usart6, usart6en, apb2enr),
+    USART6: (usart6, usart6en, apb2enr),
 }
 
 // It's s needed for the impls, but rustc doesn't recognize that

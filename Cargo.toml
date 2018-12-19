@@ -1,4 +1,5 @@
 [package]
+edition = "2018"
 authors = ["Daniel Egger <daniel@eggers-club.de>"]
 categories = [
     "embedded",
@@ -6,7 +7,8 @@ categories = [
     "no-std",
 ]
 description = "Peripheral access API for STM32F0 series microcontrollers"
-documentation = "https://docs.rs/stm32f0xx-hal"
+documentation = "https://docs.rs/crate/stm32f0xx-hal"
+
 keywords = [
     "arm",
     "cortex-m",
@@ -17,17 +19,20 @@ license = "0BSD"
 name = "stm32f0xx-hal"
 readme = "README.md"
 repository = "https://github.com/stm32-rs/stm32f0xx-hal"
-version = "0.7.0"
+version = "0.9.0"
+
+[package.metadata.docs.rs]
+features = ["stm32f042", "rt"]
 
 [dependencies]
 bare-metal = { version = "0.2.4", features = ["const-fn"] }
 cortex-m = "0.5.8"
-cortex-m-rt = "0.6.5"
-cortex-m-semihosting = "0.3.2"
-panic-semihosting = "0.5.1"
+cortex-m-rt = "0.6.7"
 nb = "0.1.1"
 void = { version = "1.0.2", default-features = false }
-stm32f0 = "0.4.0"
+stm32f0 = "0.5.0"
+cortex-m-semihosting = "0.3.2"
+panic-semihosting = "0.5.1"
 
 [dependencies.cast]
 default-features = false
@@ -38,13 +43,18 @@ features = ["unproven"]
 version = "0.2.2"
 
 [dev-dependencies]
-ina260 = "0.2.3"
+ina260 = "0.2.6"
 numtoa = "0.2.3"
 panic-halt = "0.2.0"
 
 [features]
 rt = ["stm32f0/rt"]
 stm32f042 = ["stm32f0/stm32f0x2"]
+stm32f030 = ["stm32f0/stm32f0x0"]
+stm32f030x4 = ["stm32f030x6"]
+stm32f030x6 = ["stm32f030"]
+stm32f030x8 = ["stm32f030", "stm32f0/stm32f0x0"]
+stm32f030xc = ["stm32f030", "stm32f0/stm32f0x0"]
 
 [profile.dev]
 debug = true
@@ -53,3 +63,7 @@ debug = true
 debug = true
 lto = true
 opt-level = "s"
+
+[[example]]
+name = "led_hal_button_irq"
+required-features = ["stm32f042"]

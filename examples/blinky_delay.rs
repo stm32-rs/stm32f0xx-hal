@@ -1,15 +1,13 @@
 #![no_main]
 #![no_std]
 
-extern crate cortex_m;
-extern crate cortex_m_rt;
-extern crate panic_halt;
+use panic_halt;
 
-extern crate stm32f0xx_hal as hal;
+use stm32f0xx_hal as hal;
 
-use hal::delay::Delay;
-use hal::prelude::*;
-use hal::stm32;
+use crate::hal::delay::Delay;
+use crate::hal::prelude::*;
+use crate::hal::stm32;
 
 use cortex_m::peripheral::Peripherals;
 use cortex_m_rt::entry;
@@ -23,7 +21,7 @@ fn main() -> ! {
         let mut led = gpioa.pa1.into_push_pull_output();
 
         /* Constrain clocking registers */
-        let mut rcc = p.RCC.constrain();
+        let rcc = p.RCC.constrain();
 
         /* Configure clock to 8 MHz (i.e. the default) and freeze it */
         let clocks = rcc.cfgr.sysclk(8.mhz()).freeze();
@@ -32,10 +30,7 @@ fn main() -> ! {
         let mut delay = Delay::new(cp.SYST, clocks);
 
         loop {
-            led.set_high();
-            delay.delay_ms(1_000_u16);
-
-            led.set_low();
+            led.toggle();
             delay.delay_ms(1_000_u16);
         }
     }

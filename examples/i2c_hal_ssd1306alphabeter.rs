@@ -1,16 +1,13 @@
 #![no_main]
 #![no_std]
 
-extern crate cortex_m;
-extern crate cortex_m_rt;
-extern crate embedded_hal;
-extern crate panic_halt;
+use panic_halt;
 
-extern crate stm32f0xx_hal as hal;
+use stm32f0xx_hal as hal;
 
-use hal::i2c::*;
-use hal::prelude::*;
-use hal::stm32;
+use crate::hal::i2c::*;
+use crate::hal::prelude::*;
+use crate::hal::stm32;
 
 use cortex_m_rt::entry;
 use embedded_hal::blocking::i2c::Write;
@@ -40,7 +37,7 @@ const SSD1306_CHARGE_PUMP: u8 = 0x8D;
 fn main() -> ! {
     if let Some(p) = stm32::Peripherals::take() {
         let gpiof = p.GPIOF.split();
-        let mut rcc = p.RCC.constrain();
+        let rcc = p.RCC.constrain();
         let _ = rcc.cfgr.freeze();
 
         let scl = gpiof

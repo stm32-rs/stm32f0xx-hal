@@ -1,19 +1,15 @@
 #![no_main]
 #![no_std]
 
-extern crate cortex_m;
-extern crate cortex_m_rt;
-extern crate panic_halt;
+use panic_halt;
 
-extern crate stm32f0xx_hal as hal;
+use stm32f0xx_hal as hal;
 
-use hal::prelude::*;
-use hal::stm32;
+use crate::hal::prelude::*;
+use crate::hal::serial::Serial;
+use crate::hal::stm32;
 
-#[macro_use(block)]
-extern crate nb;
-
-use hal::serial::Serial;
+use nb::block;
 
 use cortex_m_rt::entry;
 
@@ -21,7 +17,7 @@ use cortex_m_rt::entry;
 fn main() -> ! {
     if let Some(p) = stm32::Peripherals::take() {
         let gpioa = p.GPIOA.split();
-        let mut rcc = p.RCC.constrain();
+        let rcc = p.RCC.constrain();
         let clocks = rcc.cfgr.sysclk(48.mhz()).freeze();
 
         let tx = gpioa.pa9.into_alternate_af1();

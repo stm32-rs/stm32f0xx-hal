@@ -1,15 +1,13 @@
 #![no_main]
 #![no_std]
 
-extern crate cortex_m;
-extern crate cortex_m_rt;
-extern crate panic_halt;
+use panic_halt;
 
-extern crate stm32f0xx_hal as hal;
+use stm32f0xx_hal as hal;
 
-use hal::gpio::*;
-use hal::prelude::*;
-use hal::stm32;
+use crate::hal::gpio::*;
+use crate::hal::prelude::*;
+use crate::hal::stm32;
 
 use cortex_m::interrupt::Mutex;
 use cortex_m::peripheral::syst::SystClkSource::Core;
@@ -25,12 +23,12 @@ static GPIO: Mutex<RefCell<Option<gpioa::PA1<Output<PushPull>>>>> = Mutex::new(R
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
         let gpioa = p.GPIOA.split();
-        let mut rcc = p.RCC.constrain();
+        let rcc = p.RCC.constrain();
         let _ = rcc.cfgr.sysclk(48.mhz()).freeze();
         let mut syst = cp.SYST;
 
         /* (Re-)configure PA1 as output */
-        let mut led = gpioa.pa1.into_push_pull_output();
+        let led = gpioa.pa1.into_push_pull_output();
 
         cortex_m::interrupt::free(move |cs| {
             *GPIO.borrow(cs).borrow_mut() = Some(led);

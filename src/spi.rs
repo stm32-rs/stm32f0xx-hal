@@ -2,15 +2,14 @@ use core::ptr;
 
 use nb;
 
-pub use hal::spi::{Mode, Phase, Polarity};
-use rcc::Clocks;
+pub use embedded_hal::spi::{Mode, Phase, Polarity};
 
-use stm32::{RCC, SPI1};
+#[cfg(feature = "stm32f042")]
+use crate::stm32::{RCC, SPI1};
 
-use gpio::gpioa::{PA5, PA6, PA7};
-use gpio::gpiob::{PB3, PB4, PB5};
-use gpio::{Alternate, AF0};
-use time::Hertz;
+use crate::gpio::*;
+use crate::rcc::Clocks;
+use crate::time::Hertz;
 
 /// SPI error
 #[derive(Debug)]
@@ -33,21 +32,24 @@ pub struct Spi<SPI, PINS> {
 
 pub trait Pins<Spi> {}
 
+#[cfg(feature = "stm32f042")]
 impl Pins<SPI1>
     for (
-        PA5<Alternate<AF0>>,
-        PA6<Alternate<AF0>>,
-        PA7<Alternate<AF0>>,
+        gpioa::PA5<Alternate<AF0>>,
+        gpioa::PA6<Alternate<AF0>>,
+        gpioa::PA7<Alternate<AF0>>,
     )
 {}
+#[cfg(feature = "stm32f042")]
 impl Pins<SPI1>
     for (
-        PB3<Alternate<AF0>>,
-        PB4<Alternate<AF0>>,
-        PB5<Alternate<AF0>>,
+        gpiob::PB3<Alternate<AF0>>,
+        gpiob::PB4<Alternate<AF0>>,
+        gpiob::PB5<Alternate<AF0>>,
     )
 {}
 
+#[cfg(feature = "stm32f042")]
 impl<PINS> Spi<SPI1, PINS> {
     pub fn spi1<F>(spi: SPI1, pins: PINS, mode: Mode, speed: F, clocks: Clocks) -> Self
     where
@@ -126,7 +128,8 @@ impl<PINS> Spi<SPI1, PINS> {
     }
 }
 
-impl<PINS> ::hal::spi::FullDuplex<u8> for Spi<SPI1, PINS> {
+#[cfg(feature = "stm32f042")]
+impl<PINS> ::embedded_hal::spi::FullDuplex<u8> for Spi<SPI1, PINS> {
     type Error = Error;
 
     fn read(&mut self) -> nb::Result<u8, Error> {
@@ -166,5 +169,7 @@ impl<PINS> ::hal::spi::FullDuplex<u8> for Spi<SPI1, PINS> {
     }
 }
 
-impl<PINS> ::hal::blocking::spi::transfer::Default<u8> for Spi<SPI1, PINS> {}
-impl<PINS> ::hal::blocking::spi::write::Default<u8> for Spi<SPI1, PINS> {}
+#[cfg(feature = "stm32f042")]
+impl<PINS> ::embedded_hal::blocking::spi::transfer::Default<u8> for Spi<SPI1, PINS> {}
+#[cfg(feature = "stm32f042")]
+impl<PINS> ::embedded_hal::blocking::spi::write::Default<u8> for Spi<SPI1, PINS> {}

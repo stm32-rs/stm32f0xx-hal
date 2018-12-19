@@ -76,6 +76,22 @@ spi_pins! {
         mosi => [gpiob::PB15<Alternate<AF0>>],
     }
 }
+#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc"))]
+spi_pins! {
+    SPI2 => {
+        sck => [gpiob::PB13<Alternate<AF0>>],
+        miso => [gpiob::PB14<Alternate<AF0>>],
+        mosi => [gpiob::PB15<Alternate<AF0>>],
+    }
+}
+#[cfg(feature = "stm32f030xc")]
+spi_pins! {
+    SPI2 => {
+        sck => [gpiob::PB10<Alternate<AF5>>],
+        miso => [gpioc::PC2<Alternate<AF1>>],
+        mosi => [gpioc::PC3<Alternate<AF1>>],
+    }
+}
 
 macro_rules! spi {
     ($($SPI:ident: ($spi:ident, $spiXen:ident, $spiXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {

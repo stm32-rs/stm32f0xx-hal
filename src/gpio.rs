@@ -497,7 +497,7 @@ macro_rules! gpio {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030",))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 gpio!(GPIOA, gpioa, iopaen, PA, [
     PA0: (pa0, 0, Input<Floating>),
     PA1: (pa1, 1, Input<Floating>),
@@ -517,7 +517,7 @@ gpio!(GPIOA, gpioa, iopaen, PA, [
     PA15: (pa15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 gpio!(GPIOB, gpiob, iopben, PB, [
     PB0: (pb0, 0, Input<Floating>),
     PB1: (pb1, 1, Input<Floating>),
@@ -544,7 +544,7 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
     PC15: (pc15, 15, Input<Floating>),
 ]);
 
-#[cfg(feature = "stm32f030")]
+#[cfg(any(feature = "stm32f030", feature = "stm32f070"))]
 gpio!(GPIOC, gpioc, iopcen, PC, [
     PC0: (pb0, 0, Input<Floating>),
     PC1: (pb1, 1, Input<Floating>),
@@ -564,12 +564,10 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
     PC15: (pb15, 15, Input<Floating>),
 ]);
 
-// TODO Check if the bit is implemented yet
-// In the device crate the iopden bit is missing, so it won't compile
-// #[cfg(feature = "stm32f030")]
-// gpio!(GPIOD, gpiod, iopden, PD, [
-//     PD2: (pd2, 2, Input<Floating>),
-// ]);
+#[cfg(any(feature = "stm32f030", feature = "stm32f070"))]
+gpio!(GPIOD, gpiod, iopden, PD, [
+    PD2: (pd2, 2, Input<Floating>),
+]);
 
 #[cfg(feature = "stm32f042")]
 gpio!(GPIOF, gpiof, iopfen, PF, [
@@ -586,4 +584,10 @@ gpio!(GPIOF, gpiof, iopfen, PF, [
     PF5: (pf5, 5, Input<Floating>),
     PF6: (pf6, 5, Input<Floating>),
     PF7: (pf7, 5, Input<Floating>),
+]);
+
+#[cfg(feature = "stm32f070")]
+gpio!(GPIOF, gpiof, iopfen, PF, [
+    PF0: (pf0, 0, Input<Floating>),
+    PF1: (pf1, 1, Input<Floating>),
 ]);

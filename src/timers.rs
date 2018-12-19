@@ -221,7 +221,11 @@ timers! {
     TIM17: (tim17, tim17en, tim17rst, apb2enr, apb2rstr),
 }
 
-#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+    feature = "stm32f070",
+))]
 timers! {
     TIM6: (tim6, tim6en, tim6rst, apb1enr, apb1rstr),
     TIM15: (tim15, tim15en, tim15rst, apb2enr, apb2rstr),

@@ -84,10 +84,9 @@ fn main() -> ! {
     }
 }
 
-/* Define an intterupt handler, i.e. function to call when exception occurs. Here if our external
- * interrupt trips the flash function which will be called */
-//interrupt!(EXTI0_1, button_press);
 
+// Define an interupt handler, i.e. function to call when interrupt occurs. Here if our external
+// interrupt trips when the button is pressed and will light the LED for a second
 #[interrupt]
 fn EXTI0_1() {
     // Enter critical section

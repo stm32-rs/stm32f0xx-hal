@@ -6,8 +6,12 @@ use nb;
 pub use embedded_hal::spi::{Mode, Phase, Polarity};
 
 use crate::stm32;
+// TODO Put this inside the macro
+// Currently that causes a compiler panic
 #[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-use crate::stm32::{RCC, SPI1};
+use crate::stm32::SPI1;
+#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc"))]
+use crate::stm32::SPI2;
 
 use crate::gpio::*;
 use crate::rcc::Clocks;
@@ -74,10 +78,9 @@ spi_pins! {
 }
 
 macro_rules! spi {
-    ($($SPI:ident: ($spi:ident, $spiXen:ident, $spiXrst:ident, $apbrstr:ident, $apbenr:ident),)+) => {
+    ($($SPI:ident: ($spi:ident, $spiXen:ident, $spiXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
-            use crate::stm32::$SPI;
-            impl<SCKPIN, MISOPIN, MOSIPIN> Spi<SPI1, SCKPIN, MISOPIN, MOSIPIN> {
+            impl<SCKPIN, MISOPIN, MOSIPIN> Spi<$SPI, SCKPIN, MISOPIN, MOSIPIN> {
                 pub fn $spi<F>(
                     spi: $SPI,
                     pins: (SCKPIN, MISOPIN, MOSIPIN),
@@ -92,12 +95,12 @@ macro_rules! spi {
                     F: Into<Hertz>,
                 {
                     // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*RCC::ptr()) };
+                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
 
-                    /* Enable clock for SPI1 */
+                    /* Enable clock for SPI */
                     rcc.$apbenr.modify(|_, w| w.$spiXen().set_bit());
 
-                    /* Reset SPI1 */
+                    /* Reset SPI */
                     rcc.$apbrstr.modify(|_, w| w.$spiXrst().set_bit());
                     rcc.$apbrstr.modify(|_, w| w.$spiXrst().clear_bit());
                     Spi { spi, pins }.spi_init(mode, speed, clocks)
@@ -106,6 +109,7 @@ macro_rules! spi {
         )+
     }
 }
+
 #[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
 spi! {
     SPI1: (spi1, spi1en, spi1rst, apb2enr, apb2rstr),

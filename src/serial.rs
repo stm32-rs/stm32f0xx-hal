@@ -6,7 +6,7 @@ use embedded_hal::prelude::*;
 use nb::block;
 use void::Void;
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 use crate::stm32::{RCC, USART1, USART2};
 
 use crate::gpio::*;
@@ -38,13 +38,13 @@ pub enum Error {
 
 pub trait Pins<USART> {}
 
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
+#[cfg(any(feature = "stm32f030", feature = "stm32f042", feature = "stm32f070"))]
 impl Pins<USART1> for (gpioa::PA9<Alternate<AF1>>, gpioa::PA10<Alternate<AF1>>) {}
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
+#[cfg(any(feature = "stm32f030", feature = "stm32f042", feature = "stm32f070"))]
 impl Pins<USART1> for (gpiob::PB6<Alternate<AF0>>, gpiob::PB7<Alternate<AF0>>) {}
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
+#[cfg(any(feature = "stm32f030", feature = "stm32f042", feature = "stm32f070"))]
 impl Pins<USART1> for (gpioa::PA9<Alternate<AF1>>, gpiob::PB7<Alternate<AF0>>) {}
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
+#[cfg(any(feature = "stm32f030", feature = "stm32f042", feature = "stm32f070"))]
 impl Pins<USART1> for (gpiob::PB6<Alternate<AF0>>, gpioa::PA10<Alternate<AF1>>) {}
 
 #[cfg(feature = "stm32f030x6")]
@@ -60,18 +60,21 @@ impl Pins<USART2> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {
     feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f070",
 ))]
 impl Pins<USART2> for (gpioa::PA2<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>) {}
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f070",
 ))]
 impl Pins<USART2> for (gpioa::PA14<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>) {}
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f070",
 ))]
 impl Pins<USART2> for (gpioa::PA14<Alternate<AF1>>, gpioa::PA3<Alternate<AF1>>) {}
 
@@ -92,7 +95,7 @@ pub struct Tx<USART> {
 }
 
 /// USART1
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 impl<PINS> Serial<USART1, PINS> {
     pub fn usart1(usart: USART1, pins: PINS, baud_rate: Bps, clocks: Clocks) -> Self
     where
@@ -133,7 +136,7 @@ impl<PINS> Serial<USART1, PINS> {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 impl embedded_hal::serial::Read<u8> for Rx<USART1> {
     type Error = Error;
 
@@ -158,7 +161,7 @@ impl embedded_hal::serial::Read<u8> for Rx<USART1> {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 impl embedded_hal::serial::Write<u8> for Tx<USART1> {
     type Error = Void;
 
@@ -192,7 +195,8 @@ impl embedded_hal::serial::Write<u8> for Tx<USART1> {
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
-    feature = "stm32f030x8"
+    feature = "stm32f030x8",
+    feature = "stm32f070",
 ))]
 impl<PINS> Serial<USART2, PINS> {
     pub fn usart2(usart: USART2, pins: PINS, baud_rate: Bps, clocks: Clocks) -> Self
@@ -237,7 +241,8 @@ impl<PINS> Serial<USART2, PINS> {
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
-    feature = "stm32f030x8"
+    feature = "stm32f030x8",
+    feature = "stm32f070",
 ))]
 impl embedded_hal::serial::Read<u8> for Rx<USART2> {
     type Error = Error;
@@ -266,7 +271,8 @@ impl embedded_hal::serial::Read<u8> for Rx<USART2> {
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
-    feature = "stm32f030x8"
+    feature = "stm32f030x8",
+    feature = "stm32f070",
 ))]
 impl embedded_hal::serial::Write<u8> for Tx<USART2> {
     type Error = Void;

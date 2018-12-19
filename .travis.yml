@@ -4,11 +4,14 @@ rust:
   - nightly
 cache: cargo
 env:
-- MCU=stm32f042
-- MCU=stm32f030
-- MCU=stm32f030x6
-- MCU=stm32f030x8
-- MCU=stm32f030xc
+  - MCU=stm32f042
+  - MCU=stm32f030
+  - MCU=stm32f030x6
+  - MCU=stm32f030x8
+  - MCU=stm32f030xc
+  - MCU=stm32f070
+  - MCU=stm32f070x6
+  - MCU=stm32f070xb
 matrix:
   allow_failures:
     - rust: nightly

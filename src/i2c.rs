@@ -1,6 +1,7 @@
 #[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
 use crate::stm32::{I2C1, RCC};
 
+use crate::stm32;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
 use crate::gpio::*;
@@ -8,31 +9,62 @@ use crate::time::{KiloHertz, U32Ext};
 use core::cmp;
 
 /// I2C abstraction
-pub struct I2c<I2C, PINS> {
+pub struct I2c<I2C, SCLPIN, SDAPIN> {
     i2c: I2C,
-    pins: PINS,
+    pins: (SCLPIN, SDAPIN),
 }
 
-pub trait Pins<I2c> {}
+pub trait SclPin<I2C> {}
+pub trait SdaPin<I2C> {}
 
+macro_rules! i2c_pins {
+    ($($I2C:ident => {
+        scl => [$($scl:ty),+ $(,)*],
+        sda => [$($sda:ty),+ $(,)*],
+    })+) => {
+        $(
+            $(
+                impl SclPin<stm32::$I2C> for $scl {}
+            )+
+            $(
+                impl SdaPin<stm32::$I2C> for $sda {}
+            )+
+        )+
+    }
+}
+
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+i2c_pins! {
+    I2C1 => {
+        scl => [gpioa::PA11<Alternate<AF5>>, gpiob::PB6<Alternate<AF1>>, gpiob::PB8<Alternate<AF1>>],
+        sda => [gpioa::PA12<Alternate<AF5>>, gpiob::PB7<Alternate<AF1>>, gpiob::PB9<Alternate<AF1>>],
+    }
+}
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x6",
     feature = "stm32f030xc"
 ))]
-impl Pins<I2C1> for (gpioa::PA9<Alternate<AF4>>, gpioa::PA10<Alternate<AF4>>) {}
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-impl Pins<I2C1> for (gpioa::PA11<Alternate<AF5>>, gpioa::PA12<Alternate<AF5>>) {}
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-impl Pins<I2C1> for (gpiob::PB6<Alternate<AF1>>, gpiob::PB7<Alternate<AF1>>) {}
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-impl Pins<I2C1> for (gpiob::PB8<Alternate<AF1>>, gpiob::PB9<Alternate<AF1>>) {}
+i2c_pins! {
+    I2C1 => {
+        scl => [gpioa::PA9<Alternate<AF4>>],
+        sda => [gpioa::PA10<Alternate<AF4>>],
+    }
+}
 #[cfg(any(feature = "stm32f042", feature = "stm32f030x6"))]
-impl Pins<I2C1> for (gpiob::PB10<Alternate<AF1>>, gpiob::PB11<Alternate<AF1>>) {}
+i2c_pins! {
+    I2C1 => {
+        scl => [gpiob::PB10<Alternate<AF1>>],
+        sda => [gpiob::PB11<Alternate<AF1>>],
+    }
+}
 #[cfg(any(feature = "stm32f042", feature = "stm32f030xc"))]
-impl Pins<I2C1> for (gpiob::PB13<Alternate<AF5>>, gpiob::PB14<Alternate<AF5>>) {}
-#[cfg(any(feature = "stm32f042", feature = "stm32f030xc"))]
-impl Pins<I2C1> for (gpiof::PF1<Alternate<AF1>>, gpiof::PF0<Alternate<AF1>>) {}
+i2c_pins! {
+    I2C1 => {
+        scl => [gpiob::PB13<Alternate<AF5>>, gpiof::PF1<Alternate<AF1>>],
+        sda => [gpiob::PB14<Alternate<AF5>>, gpiof::PF0<Alternate<AF1>>],
+    }
+}
 
 #[derive(Debug)]
 pub enum Error {
@@ -41,10 +73,11 @@ pub enum Error {
 }
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-impl<PINS> I2c<I2C1, PINS> {
-    pub fn i2c1(i2c: I2C1, pins: PINS, speed: KiloHertz) -> Self
+impl<SCLPIN, SDAPIN> I2c<I2C1, SCLPIN, SDAPIN> {
+    pub fn i2c1(i2c: I2C1, pins: (SCLPIN, SDAPIN), speed: KiloHertz) -> Self
     where
-        PINS: Pins<I2C1>,
+        SCLPIN: SclPin<I2C1>,
+        SDAPIN: SdaPin<I2C1>,
     {
         // NOTE(unsafe) This executes only during initialisation
         let rcc = unsafe { &(*RCC::ptr()) };
@@ -104,7 +137,7 @@ impl<PINS> I2c<I2C1, PINS> {
         I2c { i2c, pins }
     }
 
-    pub fn release(self) -> (I2C1, PINS) {
+    pub fn release(self) -> (I2C1, (SCLPIN, SDAPIN)) {
         (self.i2c, self.pins)
     }
 
@@ -134,7 +167,7 @@ impl<PINS> I2c<I2C1, PINS> {
 }
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-impl<PINS> WriteRead for I2c<I2C1, PINS> {
+impl<SCLPIN, SDAPIN> WriteRead for I2c<I2C1, SCLPIN, SDAPIN> {
     type Error = Error;
 
     fn write_read(&mut self, addr: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Error> {
@@ -212,7 +245,7 @@ impl<PINS> WriteRead for I2c<I2C1, PINS> {
 }
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
-impl<PINS> Write for I2c<I2C1, PINS> {
+impl<SCLPIN, SDAPIN> Write for I2c<I2C1, SCLPIN, SDAPIN> {
     type Error = Error;
 
     fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Error> {

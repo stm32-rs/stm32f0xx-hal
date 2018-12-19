@@ -269,8 +269,6 @@ where
 impl<USART, TXPIN, RXPIN> Serial<USART, TXPIN, RXPIN>
 where
     USART: Deref<Target = SerialRegisterBlock>,
-    TXPIN: TxPin<USART>,
-    RXPIN: RxPin<USART>,
 {
     /// Splits the UART Peripheral in a Tx and an Rx part
     /// This is required for sending/receiving

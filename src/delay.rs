@@ -1,4 +1,29 @@
-//! Delays
+//! API for delays with the systick timer
+//!
+//! Please be aware of potential overflows.
+//! For example, the maximum delay with 48MHz is around 89 seconds
+//!
+//! Consider using the timers api as a more flexible interface
+//!
+//! # Example
+//!
+//! ``` no_run
+//! use stm32f0xx_hal as hal;
+//!
+//! use crate::hal::stm32;
+//! use crate::hal::prelude::*;
+//! use crate::hal::delay::Delay;
+//! use cortex_m::peripheral::Peripherals;
+//!
+//! let mut p = stm32::Peripherals::take().unwrap();
+//! let mut cp = cortex_m::Peripherals::take().unwrap();
+//!
+//! let clocks = p.RCC.constrain().cfgr.freeze();
+//! let mut delay = Delay::new(cp.SYST, clocks);
+//! loop {
+//!     delay.delay_ms(1_000_u16);
+//! }
+//! ```
 
 use cast::{u16, u32};
 use cortex_m::peripheral::syst::SystClkSource;

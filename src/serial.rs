@@ -31,7 +31,7 @@ use embedded_hal::prelude::*;
 use nb::block;
 use void::Void;
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 use crate::stm32;
 
 use crate::gpio::*;
@@ -94,10 +94,18 @@ usart_pins! {
         rx => [gpioa::PA3<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>],
     }
 }
+#[cfg(feature = "stm32f070")]
+usart_pins! {
+    USART1 => {
+        tx => [gpioa::PA9<Alternate<AF1>>, gpiob::PB6<Alternate<AF0>>],
+        rx => [gpioa::PA10<Alternate<AF1>>, gpiob::PB7<Alternate<AF0>>],
+    }
+}
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f070",
 ))]
 usart_pins! {
     USART2 => {
@@ -105,7 +113,7 @@ usart_pins! {
         rx => [gpioa::PA3<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>],
     }
 }
-#[cfg(feature = "stm32f030xc")]
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f070xb"))]
 usart_pins! {
     USART3 => {
         // According to the datasheet PB10 is both tx and rx, but in stm32cubemx it's only tx
@@ -116,6 +124,9 @@ usart_pins! {
         tx => [gpioa::PA0<Alternate<AF4>>, gpioc::PC10<Alternate<AF0>>],
         rx => [gpioa::PA1<Alternate<AF4>>, gpioc::PC11<Alternate<AF0>>],
     }
+}
+#[cfg(feature = "stm32f030xc")]
+usart_pins! {
     USART5 => {
         tx => [gpiob::PB3<Alternate<AF4>>, gpioc::PC12<Alternate<AF2>>],
         rx => [gpiob::PB4<Alternate<AF4>>, gpiod::PD2<Alternate<AF2>>],
@@ -179,22 +190,26 @@ macro_rules! usart {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 usart! {
     USART1: (usart1, usart1en, apb2enr),
 }
 #[cfg(any(
     feature = "stm32f042",
     feature = "stm32f030x8",
-    feature = "stm32f030xc"
+    feature = "stm32f030xc",
+    feature = "stm32f070",
 ))]
 usart! {
     USART2: (usart2, usart2en, apb1enr),
 }
-#[cfg(any(feature = "stm32f030xc"))]
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f070xb"))]
 usart! {
     USART3: (usart3, usart3en, apb1enr),
     USART4: (usart4, usart4en, apb1enr),
+}
+#[cfg(feature = "stm32f030xc")]
+usart! {
     USART5: (usart5, usart5en, apb1enr),
     USART6: (usart6, usart6en, apb2enr),
 }

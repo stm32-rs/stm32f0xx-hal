@@ -1,11 +1,17 @@
+use core::ops::Deref;
 use core::ptr;
 
 use nb;
 
 pub use embedded_hal::spi::{Mode, Phase, Polarity};
 
-#[cfg(feature = "stm32f042")]
-use crate::stm32::{RCC, SPI1};
+use crate::stm32;
+// TODO Put this inside the macro
+// Currently that causes a compiler panic
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+use crate::stm32::SPI1;
+#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc"))]
+use crate::stm32::SPI2;
 
 use crate::gpio::*;
 use crate::rcc::Clocks;
@@ -25,49 +31,124 @@ pub enum Error {
 }
 
 /// SPI abstraction
-pub struct Spi<SPI, PINS> {
+pub struct Spi<SPI, SCKPIN, MISOPIN, MOSIPIN> {
     spi: SPI,
-    pins: PINS,
+    pins: (SCKPIN, MISOPIN, MOSIPIN),
 }
 
-pub trait Pins<Spi> {}
+pub trait SckPin<SPI> {}
+pub trait MisoPin<SPI> {}
+pub trait MosiPin<SPI> {}
 
-#[cfg(feature = "stm32f042")]
-impl Pins<SPI1>
-    for (
-        gpioa::PA5<Alternate<AF0>>,
-        gpioa::PA6<Alternate<AF0>>,
-        gpioa::PA7<Alternate<AF0>>,
-    )
-{}
-#[cfg(feature = "stm32f042")]
-impl Pins<SPI1>
-    for (
-        gpiob::PB3<Alternate<AF0>>,
-        gpiob::PB4<Alternate<AF0>>,
-        gpiob::PB5<Alternate<AF0>>,
-    )
-{}
+macro_rules! spi_pins {
+    ($($SPI:ident => {
+        sck => [$($sck:ty),+ $(,)*],
+        miso => [$($miso:ty),+ $(,)*],
+        mosi => [$($mosi:ty),+ $(,)*],
+    })+) => {
+        $(
+            $(
+                impl SckPin<stm32::$SPI> for $sck {}
+            )+
+            $(
+                impl MisoPin<stm32::$SPI> for $miso {}
+            )+
+            $(
+                impl MosiPin<stm32::$SPI> for $mosi {}
+            )+
+        )+
+    }
+}
 
-#[cfg(feature = "stm32f042")]
-impl<PINS> Spi<SPI1, PINS> {
-    pub fn spi1<F>(spi: SPI1, pins: PINS, mode: Mode, speed: F, clocks: Clocks) -> Self
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+spi_pins! {
+    SPI1 => {
+        sck => [gpioa::PA5<Alternate<AF0>>, gpiob::PB3<Alternate<AF0>>],
+        miso => [gpioa::PA6<Alternate<AF0>>, gpiob::PB4<Alternate<AF0>>],
+        mosi => [gpioa::PA7<Alternate<AF0>>, gpiob::PB5<Alternate<AF0>>],
+    }
+}
+#[cfg(feature = "stm32f030x6")]
+spi_pins! {
+    SPI1 => {
+        sck => [gpiob::PB13<Alternate<AF0>>],
+        miso => [gpiob::PB14<Alternate<AF0>>],
+        mosi => [gpiob::PB15<Alternate<AF0>>],
+    }
+}
+#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc"))]
+spi_pins! {
+    SPI2 => {
+        sck => [gpiob::PB13<Alternate<AF0>>],
+        miso => [gpiob::PB14<Alternate<AF0>>],
+        mosi => [gpiob::PB15<Alternate<AF0>>],
+    }
+}
+#[cfg(feature = "stm32f030xc")]
+spi_pins! {
+    SPI2 => {
+        sck => [gpiob::PB10<Alternate<AF5>>],
+        miso => [gpioc::PC2<Alternate<AF1>>],
+        mosi => [gpioc::PC3<Alternate<AF1>>],
+    }
+}
+
+macro_rules! spi {
+    ($($SPI:ident: ($spi:ident, $spiXen:ident, $spiXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
+        $(
+            impl<SCKPIN, MISOPIN, MOSIPIN> Spi<$SPI, SCKPIN, MISOPIN, MOSIPIN> {
+                pub fn $spi<F>(
+                    spi: $SPI,
+                    pins: (SCKPIN, MISOPIN, MOSIPIN),
+                    mode: Mode,
+                    speed: F,
+                    clocks: Clocks,
+                ) -> Self
+                where
+                    SCKPIN: SckPin<$SPI>,
+                    MISOPIN: MisoPin<$SPI>,
+                    MOSIPIN: MosiPin<$SPI>,
+                    F: Into<Hertz>,
+                {
+                    // NOTE(unsafe) This executes only during initialisation
+                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
+
+                    /* Enable clock for SPI */
+                    rcc.$apbenr.modify(|_, w| w.$spiXen().set_bit());
+
+                    /* Reset SPI */
+                    rcc.$apbrstr.modify(|_, w| w.$spiXrst().set_bit());
+                    rcc.$apbrstr.modify(|_, w| w.$spiXrst().clear_bit());
+                    Spi { spi, pins }.spi_init(mode, speed, clocks)
+                }
+            }
+        )+
+    }
+}
+
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+spi! {
+    SPI1: (spi1, spi1en, spi1rst, apb2enr, apb2rstr),
+}
+#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc"))]
+spi! {
+    SPI2: (spi2, spi2en, spi2rst, apb1enr, apb1rstr),
+}
+
+// It's s needed for the impls, but rustc doesn't recognize that
+#[allow(dead_code)]
+type SpiRegisterBlock = stm32::spi1::RegisterBlock;
+
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
+where
+    SPI: Deref<Target = SpiRegisterBlock>,
+{
+    fn spi_init<F>(self: Self, mode: Mode, speed: F, clocks: Clocks) -> Self
     where
-        PINS: Pins<SPI1>,
         F: Into<Hertz>,
     {
-        // NOTE(unsafe) This executes only during initialisation
-        let rcc = unsafe { &(*RCC::ptr()) };
-
-        /* Enable clock for SPI1 */
-        rcc.apb2enr.modify(|_, w| w.spi1en().set_bit());
-
-        /* Reset SPI1 */
-        rcc.apb2rstr.modify(|_, w| w.spi1rst().set_bit());
-        rcc.apb2rstr.modify(|_, w| w.spi1rst().clear_bit());
-
         /* Make sure the SPI unit is disabled so we can configure it */
-        spi.cr1.modify(|_, w| w.spe().clear_bit());
+        self.spi.cr1.modify(|_, w| w.spe().clear_bit());
 
         // FRXTH: 8-bit threshold on RX FIFO
         // DS: 8-bit data size
@@ -75,7 +156,8 @@ impl<PINS> Spi<SPI1, PINS> {
         //
         // NOTE(unsafe): DS reserved bit patterns are 0b0000, 0b0001, and 0b0010. 0b0111 is valid
         // (reference manual, pp 804)
-        spi.cr2
+        self.spi
+            .cr2
             .write(|w| unsafe { w.frxth().set_bit().ds().bits(0b0111).ssoe().clear_bit() });
 
         let br = match clocks.pclk().0 / speed.into().0 {
@@ -97,7 +179,7 @@ impl<PINS> Spi<SPI1, PINS> {
         // dff: 8 bit frames
         // bidimode: 2-line unidirectional
         // spe: enable the SPI bus
-        spi.cr1.write(|w| unsafe {
+        self.spi.cr1.write(|w| unsafe {
             w.cpha()
                 .bit(mode.phase == Phase::CaptureOnSecondTransition)
                 .cpol()
@@ -120,16 +202,18 @@ impl<PINS> Spi<SPI1, PINS> {
                 .set_bit()
         });
 
-        Spi { spi, pins }
+        self
     }
-
-    pub fn release(self) -> (SPI1, PINS) {
+    pub fn release(self) -> (SPI, (SCKPIN, MISOPIN, MOSIPIN)) {
         (self.spi, self.pins)
     }
 }
 
-#[cfg(feature = "stm32f042")]
-impl<PINS> ::embedded_hal::spi::FullDuplex<u8> for Spi<SPI1, PINS> {
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::spi::FullDuplex<u8>
+    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
+where
+    SPI: Deref<Target = SpiRegisterBlock>,
+{
     type Error = Error;
 
     fn read(&mut self) -> nb::Result<u8, Error> {
@@ -169,7 +253,15 @@ impl<PINS> ::embedded_hal::spi::FullDuplex<u8> for Spi<SPI1, PINS> {
     }
 }
 
-#[cfg(feature = "stm32f042")]
-impl<PINS> ::embedded_hal::blocking::spi::transfer::Default<u8> for Spi<SPI1, PINS> {}
-#[cfg(feature = "stm32f042")]
-impl<PINS> ::embedded_hal::blocking::spi::write::Default<u8> for Spi<SPI1, PINS> {}
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::transfer::Default<u8>
+    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
+where
+    SPI: Deref<Target = SpiRegisterBlock>,
+{
+}
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::write::Default<u8>
+    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
+where
+    SPI: Deref<Target = SpiRegisterBlock>,
+{
+}

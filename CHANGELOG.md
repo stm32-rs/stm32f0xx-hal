@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Added Sync & Send ability to Pin
 - Added overflow guards to delay
+- Added initial implementation of an ADC interface (#13) - @HarkonenBade
 
 ## [v0.10.0] - 2018-12-23
 

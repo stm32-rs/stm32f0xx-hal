@@ -8,9 +8,13 @@ pub use embedded_hal::spi::{Mode, Phase, Polarity};
 use crate::stm32;
 // TODO Put this inside the macro
 // Currently that causes a compiler panic
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 use crate::stm32::SPI1;
-#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc"))]
+#[cfg(any(
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+    feature = "stm32f070xb"
+))]
 use crate::stm32::SPI2;
 
 use crate::gpio::*;
@@ -60,7 +64,7 @@ macro_rules! spi_pins {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 spi_pins! {
     SPI1 => {
         sck => [gpioa::PA5<Alternate<AF0>>, gpiob::PB3<Alternate<AF0>>],
@@ -76,7 +80,11 @@ spi_pins! {
         mosi => [gpiob::PB15<Alternate<AF0>>],
     }
 }
-#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc"))]
+#[cfg(any(
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+    feature = "stm32f070xb"
+))]
 spi_pins! {
     SPI2 => {
         sck => [gpiob::PB13<Alternate<AF0>>],
@@ -84,7 +92,7 @@ spi_pins! {
         mosi => [gpiob::PB15<Alternate<AF0>>],
     }
 }
-#[cfg(feature = "stm32f030xc")]
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f070xb"))]
 spi_pins! {
     SPI2 => {
         sck => [gpiob::PB10<Alternate<AF5>>],
@@ -126,11 +134,15 @@ macro_rules! spi {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 spi! {
     SPI1: (spi1, spi1en, spi1rst, apb2enr, apb2rstr),
 }
-#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc"))]
+#[cfg(any(
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+    feature = "stm32f070xb"
+))]
 spi! {
     SPI2: (spi2, spi2en, spi2rst, apb1enr, apb1rstr),
 }

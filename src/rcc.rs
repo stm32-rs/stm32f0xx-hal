@@ -176,16 +176,6 @@ impl CFGR {
         let ppre: u8 = 1 << (ppre_bits - 0b011);
         let pclk = hclk / u32(ppre);
 
-//        hprintln!(
-//            "H: {:x} HP: {:x} P: {:x} PP: {:x} PP2: {:x}",
-//            hclk,
-//            hpre_bits,
-//            pclk,
-//            ppre_bits,
-//            ppre
-//        )
-//        .unwrap();
-
         // adjust flash wait states
         unsafe {
             let flash = &*FLASH::ptr();
@@ -218,7 +208,6 @@ impl CFGR {
                     .sw()
                     .bits(SysClkSource::PLL as u8)
             });
-            hprintln!("PLL: {:x}", rcc.cfgr.read().bits() as u16).unwrap();
         } else if r_sysclk == HSI48 {
             // Enable HSI48
             rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
@@ -229,20 +218,18 @@ impl CFGR {
             // Set HSI48 as system clock.
             rcc.cfgr.modify(|_, w| unsafe {
                 w.ppre()
-                    //.bits(ppre_bits)
-                    .bits(0)
+                    .bits(ppre_bits)
+                    //.bits(0)
                     .hpre()
-                    //.bits(hpre_bits)
-                    .bits(0)
+                    .bits(hpre_bits)
+                    //.bits(0)
                     .sw()
                     .bits(SysClkSource::HSI48 as u8)
             });
-//            hprintln!("HSI48: {:x}", rcc.cfgr.read().bits() as u32).unwrap();
         } else {
             // use HSI as source
             rcc.cfgr
                 .write(|w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().bits(0) });
-//            hprintln!("HSI: {:x}", rcc.cfgr.read().bits() as u16).unwrap();
         }
 
         Clocks {

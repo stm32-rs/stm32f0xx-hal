@@ -31,8 +31,6 @@ cortex-m-rt = "0.6.7"
 nb = "0.1.1"
 void = { version = "1.0.2", default-features = false }
 stm32f0 = "0.5.0"
-cortex-m-semihosting = "0.3.2"
-panic-semihosting = "0.5.1"
 
 [dependencies.cast]
 default-features = false
@@ -48,6 +46,7 @@ panic-halt = "0.2.0"
 [features]
 rt = ["stm32f0/rt"]
 stm32f042 = ["stm32f0/stm32f0x2"]
+stm32f072 = ["stm32f0/stm32f0x2"]
 stm32f030 = ["stm32f0/stm32f0x0"]
 stm32f030x4 = ["stm32f030x6"]
 stm32f030x6 = ["stm32f030"]

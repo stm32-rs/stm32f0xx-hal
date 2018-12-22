@@ -149,11 +149,17 @@ pub struct Rx<USART> {
     usart: *const USART,
 }
 
+// NOTE(unsafe) Required to allow protected shared access in handlers
+unsafe impl<USART> Send for Rx<USART> {}
+
 /// Serial transmitter
 pub struct Tx<USART> {
     // This is ok, because the USART types only contains PhantomData
     usart: *const USART,
 }
+
+// NOTE(unsafe) Required to allow protected shared access in handlers
+unsafe impl<USART> Send for Tx<USART> {}
 
 macro_rules! usart {
     ($($USART:ident: ($usart:ident, $usartXen:ident, $apbenr:ident),)+) => {

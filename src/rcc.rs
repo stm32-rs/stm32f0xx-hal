@@ -48,7 +48,7 @@ pub struct Rcc {
 const HSI: u32 = 8_000_000; // Hz
 #[allow(dead_code)] // Only used for ADC, but no configuration for ADC clock yet.
 const HSI14: u32 = 14_000_000; // Hz - ADC clock.
-#[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
+// TODO - fix this #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
 pub enum SysClkSource {

@@ -31,7 +31,7 @@ use embedded_hal::prelude::*;
 use nb::block;
 use void::Void;
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f030", feature = "stm32f070"))]
 use crate::stm32;
 
 use crate::gpio::*;

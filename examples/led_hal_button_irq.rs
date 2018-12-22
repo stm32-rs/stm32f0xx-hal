@@ -84,7 +84,6 @@ fn main() -> ! {
     }
 }
 
-
 // Define an interupt handler, i.e. function to call when interrupt occurs. Here if our external
 // interrupt trips when the button is pressed and will light the LED for a second
 #[interrupt]

@@ -1,6 +1,11 @@
 use core::cmp;
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f072",
+    feature = "stm32f030",
+    feature = "stm32f070"
+))]
 use crate::stm32::{FLASH, RCC};
 use cast::u32;
 
@@ -12,7 +17,12 @@ pub trait RccExt {
     fn constrain(self) -> Rcc;
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f072",
+    feature = "stm32f030",
+    feature = "stm32f070"
+))]
 impl RccExt for RCC {
     fn constrain(self) -> Rcc {
         Rcc {
@@ -56,14 +66,14 @@ pub enum PllSource {
 }
 
 pub struct CFGR {
-    hclk:           Option<u32>,
-    pclk:           Option<u32>,
-    sysclk:         Option<u32>,
-    enable_hsi:     Option<bool>,
-    enable_hsi14:   Option<bool>,
-    enable_hsi48:   Option<bool>,
-    enable_lsi:     Option<bool>,
-    enable_pll:     Option<bool>,
+    hclk: Option<u32>,
+    pclk: Option<u32>,
+    sysclk: Option<u32>,
+    enable_hsi: Option<bool>,
+    enable_hsi14: Option<bool>,
+    enable_hsi48: Option<bool>,
+    enable_lsi: Option<bool>,
+    enable_pll: Option<bool>,
 }
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
@@ -92,32 +102,27 @@ impl CFGR {
         self
     }
 
-    pub fn enable_hsi(mut self, is_enabled: bool) -> Self
-    {
+    pub fn enable_hsi(mut self, is_enabled: bool) -> Self {
         self.enable_hsi = Some(is_enabled);
         self
     }
 
-    pub fn enable_hsi14(mut self, is_enabled: bool) -> Self
-    {
+    pub fn enable_hsi14(mut self, is_enabled: bool) -> Self {
         self.enable_hsi14 = Some(is_enabled);
         self
     }
 
-    pub fn enable_hsi48(mut self, is_enabled: bool) -> Self
-    {
+    pub fn enable_hsi48(mut self, is_enabled: bool) -> Self {
         self.enable_hsi48 = Some(is_enabled);
         self
     }
 
-    pub fn enable_lsi(mut self, is_enabled: bool) -> Self
-    {
+    pub fn enable_lsi(mut self, is_enabled: bool) -> Self {
         self.enable_lsi = Some(is_enabled);
         self
     }
 
-    pub fn enable_pll(mut self, is_enabled: bool) -> Self
-    {
+    pub fn enable_pll(mut self, is_enabled: bool) -> Self {
         self.enable_pll = Some(is_enabled);
         self
     }
@@ -211,8 +216,8 @@ impl CFGR {
         } else if r_sysclk == HSI48 {
             // Enable HSI48
             rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
-            while ! rcc.cr2.read().hsi48rdy().bit_is_set()
-            { // nothing 
+            while !rcc.cr2.read().hsi48rdy().bit_is_set() {
+                // nothing
             }
 
             // Set HSI48 as system clock.

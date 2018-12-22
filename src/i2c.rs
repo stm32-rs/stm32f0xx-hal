@@ -1,41 +1,101 @@
-#[cfg(feature = "stm32f042")]
-use crate::stm32::{I2C1, RCC};
+use core::ops::Deref;
 
+use crate::stm32;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use core::cmp;
-#[cfg(feature = "stm32f042")]
-use crate::gpio::gpioa::{PA10, PA11, PA12, PA9};
-#[cfg(feature = "stm32f042")]
-use crate::gpio::gpiob::{PB10, PB11, PB13, PB14, PB6, PB7, PB8, PB9};
-#[cfg(feature = "stm32f042")]
-use crate::gpio::gpiof::{PF0, PF1};
-#[cfg(feature = "stm32f042")]
-use crate::gpio::{Alternate, AF1, AF4, AF5};
+use crate::gpio::*;
 use crate::time::{KiloHertz, U32Ext};
+use core::cmp;
 
 /// I2C abstraction
-pub struct I2c<I2C, PINS> {
+pub struct I2c<I2C, SCLPIN, SDAPIN> {
     i2c: I2C,
-    pins: PINS,
+    pins: (SCLPIN, SDAPIN),
 }
 
-pub trait Pins<I2c> {}
+pub trait SclPin<I2C> {}
+pub trait SdaPin<I2C> {}
 
-#[cfg(feature = "stm32f042")]
-impl Pins<I2C1> for (PA9<Alternate<AF4>>, PA10<Alternate<AF4>>) {}
-#[cfg(feature = "stm32f042")]
-impl Pins<I2C1> for (PA11<Alternate<AF5>>, PA12<Alternate<AF5>>) {}
-#[cfg(feature = "stm32f042")]
-impl Pins<I2C1> for (PB6<Alternate<AF1>>, PB7<Alternate<AF1>>) {}
-#[cfg(feature = "stm32f042")]
-impl Pins<I2C1> for (PB8<Alternate<AF1>>, PB9<Alternate<AF1>>) {}
-#[cfg(feature = "stm32f042")]
-impl Pins<I2C1> for (PB10<Alternate<AF1>>, PB11<Alternate<AF1>>) {}
-#[cfg(feature = "stm32f042")]
-impl Pins<I2C1> for (PB13<Alternate<AF5>>, PB14<Alternate<AF5>>) {}
-#[cfg(feature = "stm32f042")]
-impl Pins<I2C1> for (PF1<Alternate<AF1>>, PF0<Alternate<AF1>>) {}
+macro_rules! i2c_pins {
+    ($($I2C:ident => {
+        scl => [$($scl:ty),+ $(,)*],
+        sda => [$($sda:ty),+ $(,)*],
+    })+) => {
+        $(
+            $(
+                impl SclPin<stm32::$I2C> for $scl {}
+            )+
+            $(
+                impl SdaPin<stm32::$I2C> for $sda {}
+            )+
+        )+
+    }
+}
+
+#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+i2c_pins! {
+    I2C1 => {
+        scl => [gpioa::PA11<Alternate<AF5>>, gpiob::PB6<Alternate<AF1>>, gpiob::PB8<Alternate<AF1>>],
+        sda => [gpioa::PA12<Alternate<AF5>>, gpiob::PB7<Alternate<AF1>>, gpiob::PB9<Alternate<AF1>>],
+    }
+}
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f030x6",
+    feature = "stm32f030xc"
+))]
+i2c_pins! {
+    I2C1 => {
+        scl => [gpioa::PA9<Alternate<AF4>>],
+        sda => [gpioa::PA10<Alternate<AF4>>],
+    }
+}
+#[cfg(any(feature = "stm32f042", feature = "stm32f030x6"))]
+i2c_pins! {
+    I2C1 => {
+        scl => [gpiob::PB10<Alternate<AF1>>],
+        sda => [gpiob::PB11<Alternate<AF1>>],
+    }
+}
+#[cfg(any(feature = "stm32f042", feature = "stm32f030xc"))]
+i2c_pins! {
+    I2C1 => {
+        scl => [gpiob::PB13<Alternate<AF5>>, gpiof::PF1<Alternate<AF1>>],
+        sda => [gpiob::PB14<Alternate<AF5>>, gpiof::PF0<Alternate<AF1>>],
+    }
+}
+#[cfg(feature = "stm32f070")]
+i2c_pins! {
+    I2C1 => {
+        scl => [gpiob::PB6<Alternate<AF1>>, gpiob::PB8<Alternate<AF1>>],
+        sda => [gpiob::PB7<Alternate<AF1>>, gpiob::PB9<Alternate<AF1>>],
+    }
+}
+#[cfg(feature = "stm32f070x6")]
+i2c_pins! {
+    I2C1 => {
+        scl => [gpioa::PA9<Alternate<AF4>>, gpiof::PF0<Alternate<AF1>>],
+        sda => [gpioa::PA10<Alternate<AF4>>, gpiof::PF1<Alternate<AF1>>],
+    }
+}
+#[cfg(any(
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+    feature = "stm32f070xb"
+))]
+i2c_pins! {
+    I2C2 => {
+        scl => [gpiob::PB10<Alternate<AF1>>],
+        sda => [gpiob::PB11<Alternate<AF1>>],
+    }
+}
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f070xb"))]
+i2c_pins! {
+    I2C2 => {
+        scl => [gpiob::PB13<Alternate<AF5>>],
+        sda => [gpiob::PB14<Alternate<AF5>>],
+    }
+}
 
 #[derive(Debug)]
 pub enum Error {
@@ -43,24 +103,54 @@ pub enum Error {
     NACK,
 }
 
-#[cfg(feature = "stm32f042")]
-impl<PINS> I2c<I2C1, PINS> {
-    pub fn i2c1(i2c: I2C1, pins: PINS, speed: KiloHertz) -> Self
-    where
-        PINS: Pins<I2C1>,
-    {
-        // NOTE(unsafe) This executes only during initialisation
-        let rcc = unsafe { &(*RCC::ptr()) };
+macro_rules! i2c {
+    ($($I2C:ident: ($i2c:ident, $i2cXen:ident, $i2cXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
+        $(
+            use crate::stm32::$I2C;
+            impl<SCLPIN, SDAPIN> I2c<$I2C, SCLPIN, SDAPIN> {
+                pub fn $i2c(i2c: $I2C, pins: (SCLPIN, SDAPIN), speed: KiloHertz) -> Self
+                where
+                    SCLPIN: SclPin<$I2C>,
+                    SDAPIN: SdaPin<$I2C>,
+                {
+                    // NOTE(unsafe) This executes only during initialisation
+                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
 
-        /* Enable clock for I2C1 */
-        rcc.apb1enr.modify(|_, w| w.i2c1en().set_bit());
+                    /* Enable clock for I2C */
+                    rcc.$apbenr.modify(|_, w| w.$i2cXen().set_bit());
 
-        /* Reset I2C1 */
-        rcc.apb1rstr.modify(|_, w| w.i2c1rst().set_bit());
-        rcc.apb1rstr.modify(|_, w| w.i2c1rst().clear_bit());
+                    /* Reset I2C */
+                    rcc.$apbrstr.modify(|_, w| w.$i2cXrst().set_bit());
+                    rcc.$apbrstr.modify(|_, w| w.$i2cXrst().clear_bit());
+                    I2c { i2c, pins }.i2c_init(speed)
+                }
+            }
+        )+
+    }
+}
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
+i2c! {
+    I2C1: (i2c1, i2c1en, i2c1rst, apb1enr, apb1rstr),
+}
+#[cfg(any(
+    feature = "stm32f030xc",
+    feature = "stm32f030xc",
+    feature = "stm32f070xb"
+))]
+i2c! {
+    I2C2: (i2c2, i2c2en, i2c2rst, apb1enr, apb1rstr),
+}
 
+// It's s needed for the impls, but rustc doesn't recognize that
+#[allow(dead_code)]
+type I2cRegisterBlock = stm32::i2c1::RegisterBlock;
+impl<I2C, SCLPIN, SDAPIN> I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    fn i2c_init(self: Self, speed: KiloHertz) -> Self {
         /* Make sure the I2C unit is disabled so we can configure it */
-        i2c.cr1.modify(|_, w| w.pe().clear_bit());
+        self.i2c.cr1.modify(|_, w| w.pe().clear_bit());
 
         // Calculate settings for I2C speed modes
         let presc;
@@ -88,7 +178,7 @@ impl<PINS> I2c<I2C1, PINS> {
         }
 
         /* Enable I2C signal generator, and configure I2C for 400KHz full speed */
-        i2c.timingr.write(|w| {
+        self.i2c.timingr.write(|w| {
             w.presc()
                 .bits(presc)
                 .scldel()
@@ -102,12 +192,12 @@ impl<PINS> I2c<I2C1, PINS> {
         });
 
         /* Enable the I2C processing */
-        i2c.cr1.modify(|_, w| w.pe().set_bit());
+        self.i2c.cr1.modify(|_, w| w.pe().set_bit());
 
-        I2c { i2c, pins }
+        self
     }
 
-    pub fn release(self) -> (I2C1, PINS) {
+    pub fn release(self) -> (I2C, (SCLPIN, SDAPIN)) {
         (self.i2c, self.pins)
     }
 
@@ -136,8 +226,10 @@ impl<PINS> I2c<I2C1, PINS> {
     }
 }
 
-#[cfg(feature = "stm32f042")]
-impl<PINS> WriteRead for I2c<I2C1, PINS> {
+impl<I2C, SCLPIN, SDAPIN> WriteRead for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
     type Error = Error;
 
     fn write_read(&mut self, addr: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Error> {
@@ -214,8 +306,10 @@ impl<PINS> WriteRead for I2c<I2C1, PINS> {
     }
 }
 
-#[cfg(feature = "stm32f042")]
-impl<PINS> Write for I2c<I2C1, PINS> {
+impl<I2C, SCLPIN, SDAPIN> Write for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
     type Error = Error;
 
     fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Error> {

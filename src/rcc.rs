@@ -1,10 +1,8 @@
 use core::cmp;
 
-use cast::u32;
-use cortex_m_semihosting::{debug, hprintln};
-
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f030", feature = "stm32f070"))]
 use crate::stm32::{FLASH, RCC};
+use cast::u32;
 
 use crate::time::Hertz;
 
@@ -14,7 +12,7 @@ pub trait RccExt {
     fn constrain(self) -> Rcc;
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f030", feature = "stm32f070"))]
 impl RccExt for RCC {
     fn constrain(self) -> Rcc {
         Rcc {
@@ -38,8 +36,9 @@ pub struct Rcc {
 }
 
 const HSI: u32 = 8_000_000; // Hz
-#[allow(dead_code)]
+#[allow(dead_code)] // Only used for ADC, but no configuration for ADC clock yet.
 const HSI14: u32 = 14_000_000; // Hz - ADC clock.
+#[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
 pub enum SysClkSource {
@@ -67,7 +66,7 @@ pub struct CFGR {
     enable_pll:     Option<bool>,
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
 impl CFGR {
     pub fn hclk<F>(mut self, freq: F) -> Self
     where
@@ -177,15 +176,15 @@ impl CFGR {
         let ppre: u8 = 1 << (ppre_bits - 0b011);
         let pclk = hclk / u32(ppre);
 
-        hprintln!(
-            "H: {:x} HP: {:x} P: {:x} PP: {:x} PP2: {:x}",
-            hclk,
-            hpre_bits,
-            pclk,
-            ppre_bits,
-            ppre
-        )
-        .unwrap();
+//        hprintln!(
+//            "H: {:x} HP: {:x} P: {:x} PP: {:x} PP2: {:x}",
+//            hclk,
+//            hpre_bits,
+//            pclk,
+//            ppre_bits,
+//            ppre
+//        )
+//        .unwrap();
 
         // adjust flash wait states
         unsafe {
@@ -238,12 +237,12 @@ impl CFGR {
                     .sw()
                     .bits(SysClkSource::HSI48 as u8)
             });
-            hprintln!("HSI48: {:x}", rcc.cfgr.read().bits() as u32).unwrap();
+//            hprintln!("HSI48: {:x}", rcc.cfgr.read().bits() as u32).unwrap();
         } else {
             // use HSI as source
             rcc.cfgr
                 .write(|w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().bits(0) });
-            hprintln!("HSI: {:x}", rcc.cfgr.read().bits() as u16).unwrap();
+//            hprintln!("HSI: {:x}", rcc.cfgr.read().bits() as u16).unwrap();
         }
 
         Clocks {

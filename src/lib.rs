@@ -3,10 +3,10 @@
 
 pub use stm32f0;
 
-#[cfg(feature = "stm32f042")]
+#[cfg(feature = "stm32f042", feature = "stm32f072")]
 pub use stm32f0::stm32f0x2 as stm32;
 
-#[cfg(feature = "stm32f030")]
+#[cfg(any(feature = "stm32f030", feature = "stm32f070"))]
 pub use stm32f0::stm32f0x0 as stm32;
 
 pub mod delay;
@@ -18,3 +18,4 @@ pub mod serial;
 pub mod spi;
 pub mod time;
 pub mod timers;
+pub mod watchdog;

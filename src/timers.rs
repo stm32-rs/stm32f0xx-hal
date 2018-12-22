@@ -24,10 +24,7 @@
 //! }
 //! ```
 
-#[cfg(feature = "stm32f030")]
-use crate::stm32::{RCC, TIM1, TIM14, TIM15, TIM16, TIM17, TIM3, TIM6, TIM7};
-#[cfg(feature = "stm32f042")]
-use crate::stm32::{RCC, TIM1, TIM14, TIM16, TIM17, TIM2, TIM3};
+use crate::stm32;
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
@@ -111,6 +108,7 @@ impl Periodic for Timer<SYST> {}
 macro_rules! timers {
     ($($TIM:ident: ($tim:ident, $timXen:ident, $timXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
+            use crate::stm32::$TIM;
             impl Timer<$TIM> {
                 // XXX(why not name this `new`?) bummer: constructors need to have different names
                 // even if the `$TIM` are non overlapping (compare to the `free` function below
@@ -121,7 +119,7 @@ macro_rules! timers {
                     T: Into<Hertz>,
                 {
                     // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*RCC::ptr()) };
+                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
 
                     // enable and reset peripheral to a clean slate state
                     rcc.$apbenr.modify(|_, w| w.$timXen().set_bit());
@@ -159,8 +157,7 @@ macro_rules! timers {
 
                 /// Releases the TIM peripheral
                 pub fn release(self) -> $TIM {
-                    use crate::stm32::RCC;
-                    let rcc = unsafe { &(*RCC::ptr()) };
+                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
                     // Pause counter
                     self.tim.cr1.modify(|_, w| w.cen().clear_bit());
                     // Disable timer
@@ -212,7 +209,7 @@ macro_rules! timers {
     }
 }
 
-#[cfg(any(feature = "stm32f030", feature = "stm32f042",))]
+#[cfg(any(feature = "stm32f030", feature = "stm32f042", feature = "stm32f070"))]
 timers! {
     TIM1: (tim1, tim1en, tim1rst, apb2enr, apb2rstr),
     TIM3: (tim3, tim3en, tim3rst, apb1enr, apb1rstr),
@@ -221,13 +218,17 @@ timers! {
     TIM17: (tim17, tim17en, tim17rst, apb2enr, apb2rstr),
 }
 
-#[cfg(any(feature = "stm32f030x8", feature = "stm32f030xc"))]
+#[cfg(any(
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+    feature = "stm32f070xb",
+))]
 timers! {
     TIM6: (tim6, tim6en, tim6rst, apb1enr, apb1rstr),
     TIM15: (tim15, tim15en, tim15rst, apb2enr, apb2rstr),
 }
 
-#[cfg(feature = "stm32f030xc")]
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f070xb"))]
 timers! {
     TIM7: (tim7, tim7en, tim7rst, apb1enr, apb1rstr),
 }

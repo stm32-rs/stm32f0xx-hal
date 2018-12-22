@@ -114,8 +114,7 @@ impl watchdog::WatchdogEnable for Watchdog {
         self.iwdg.rlr.write(|w| w.rl().bits(time.reload));
         // Wait until the registers are updated before issuing a reset with
         // (potentially false) values
-        while self.iwdg.sr.read().pvu().bit() {}
-        while self.iwdg.sr.read().rvu().bit() {}
+        while self.iwdg.sr.read().bits() != 0 {}
         self.iwdg.kr.write(|w| w.key().reset());
     }
 }

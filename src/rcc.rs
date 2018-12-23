@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use core::cmp;
 
 #[cfg(any(
@@ -41,6 +42,7 @@ pub struct Rcc {
 
 #[allow(unused)]
 const HSI: u32 = 8_000_000; // Hz
+#[allow(unused)]
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
 #[allow(unused)]

@@ -28,10 +28,7 @@ impl RccExt for RCC {
                 pclk: None,
                 sysclk: None,
                 enable_hsi: None,
-                enable_hsi14: None,
                 enable_hsi48: None,
-                enable_lsi: None,
-                enable_pll: None,
             },
         }
     }
@@ -44,8 +41,6 @@ pub struct Rcc {
 
 #[allow(unused)]
 const HSI: u32 = 8_000_000; // Hz
-#[allow(dead_code)] // Only used for ADC, but no configuration for ADC clock yet.
-const HSI14: u32 = 14_000_000; // Hz - ADC clock.
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
 enum SysClkSource {
@@ -68,7 +63,6 @@ pub struct CFGR {
     pclk: Option<u32>,
     sysclk: Option<u32>,
     enable_hsi: Option<bool>,
-    enable_hsi14: Option<bool>,
     enable_hsi48: Option<bool>,
     enable_lsi: Option<bool>,
     enable_pll: Option<bool>,
@@ -109,24 +103,9 @@ impl CFGR {
         self
     }
 
-    pub fn enable_hsi14(mut self, is_enabled: bool) -> Self {
-        self.enable_hsi14 = Some(is_enabled);
-        self
-    }
-
     #[cfg(feature = "stm32f042")]
     pub fn enable_hsi48(mut self, is_enabled: bool) -> Self {
         self.enable_hsi48 = Some(is_enabled);
-        self
-    }
-
-    pub fn enable_lsi(mut self, is_enabled: bool) -> Self {
-        self.enable_lsi = Some(is_enabled);
-        self
-    }
-
-    pub fn enable_pll(mut self, is_enabled: bool) -> Self {
-        self.enable_pll = Some(is_enabled);
         self
     }
 
@@ -150,12 +129,10 @@ impl CFGR {
         }
        
         // Pll check
-        let enable_pll;
         if sysclk == src_clk_freq {
             // Bypass pll if src clk and requested sysclk are the same, to save power.
             // The only reason to override this behaviour is if the sysclk source were HSI, and you
             // were running the USB off the PLL...
-            enable_pll = false;
             pllmul_bits = None;
             r_sysclk = src_clk_freq;
         } else {
@@ -168,7 +145,6 @@ impl CFGR {
             } else {
                 Some(pllmul as u8 - 2)
             };
-            enable_pll = true; // Force PLL on.
         }
 
         let hpre_bits = self
@@ -227,11 +203,6 @@ impl CFGR {
         if self.enable_hsi.unwrap_or(false) {
             rcc.cr.write(|w| w.hsion().set_bit());
             while rcc.cr.read().hsirdy().bit_is_clear() { }
-        }
-        // HSI14
-        if self.enable_hsi14.unwrap_or(false) {
-            rcc.cr2.modify(|_, w| w.hsi14on().set_bit());
-            while rcc.cr2.read().hsi14rdy().bit_is_clear() { }
         }
         // HSI48
         if self.enable_hsi48.unwrap_or(false) {

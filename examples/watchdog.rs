@@ -1,6 +1,7 @@
 #![no_main]
 #![no_std]
 
+#[allow(unused)]
 use panic_halt;
 
 use core::fmt::Write;

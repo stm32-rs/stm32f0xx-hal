@@ -6,12 +6,12 @@ API for the STMicro STM32F0xx family of microcontrollers. It replaces the
 [stm32f042-hal][] by a more ubiqitous version suitable for additional families.
 
 Currently supported configuration are:
-* stm32f042
 * stm32f030
 * stm32f030x4
 * stm32f030x6
 * stm32f030x8
 * stm32f030xc
+* stm32f042
 * stm32f070
 * stm32f070x6
 * stm32f070xb

@@ -23,20 +23,18 @@
 //! }
 //! ```
 
-use core::fmt::{Result, Write};
-use core::ops::Deref;
-use core::ptr;
+#[allow(unused)]
+use core::{
+    fmt::{Result, Write},
+    ops::Deref,
+    ptr,
+};
 
+#[allow(unused)]
 use embedded_hal::prelude::*;
-use nb::block;
-use void::Void;
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f030", feature = "stm32f070"))]
-use crate::stm32;
-
-use crate::gpio::*;
-use crate::rcc::Clocks;
-use crate::time::Bps;
+#[allow(unused)]
+use crate::{gpio::*, rcc::Clocks, stm32, time::Bps};
 
 /// Interrupt event
 pub enum Event {
@@ -64,6 +62,7 @@ pub enum Error {
 pub trait TxPin<USART> {}
 pub trait RxPin<USART> {}
 
+#[allow(unused)]
 macro_rules! usart_pins {
     ($($USART:ident => {
         tx => [$($tx:ty),+ $(,)*],
@@ -102,9 +101,9 @@ usart_pins! {
     }
 }
 #[cfg(any(
-    feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f042",
     feature = "stm32f070",
 ))]
 usart_pins! {
@@ -138,12 +137,14 @@ usart_pins! {
 }
 
 /// Serial abstraction
+#[allow(unused)]
 pub struct Serial<USART, TXPIN, RXPIN> {
     usart: USART,
     pins: (TXPIN, RXPIN),
 }
 
 /// Serial receiver
+#[allow(unused)]
 pub struct Rx<USART> {
     // This is ok, because the USART types only contains PhantomData
     usart: *const USART,
@@ -153,6 +154,7 @@ pub struct Rx<USART> {
 unsafe impl<USART> Send for Rx<USART> {}
 
 /// Serial transmitter
+#[allow(unused)]
 pub struct Tx<USART> {
     // This is ok, because the USART types only contains PhantomData
     usart: *const USART,
@@ -161,6 +163,7 @@ pub struct Tx<USART> {
 // NOTE(unsafe) Required to allow protected shared access in handlers
 unsafe impl<USART> Send for Tx<USART> {}
 
+#[allow(unused)]
 macro_rules! usart {
     ($($USART:ident: ($usart:ident, $usartXen:ident, $apbenr:ident),)+) => {
         $(
@@ -196,14 +199,18 @@ macro_rules! usart {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 usart! {
     USART1: (usart1, usart1en, apb2enr),
 }
 #[cfg(any(
-    feature = "stm32f042",
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f042",
     feature = "stm32f070",
 ))]
 usart! {
@@ -222,8 +229,18 @@ usart! {
 
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 type SerialRegisterBlock = stm32::usart1::RegisterBlock;
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<USART> embedded_hal::serial::Read<u8> for Rx<USART>
 where
     USART: Deref<Target = SerialRegisterBlock>,
@@ -252,11 +269,16 @@ where
     }
 }
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<USART> embedded_hal::serial::Write<u8> for Tx<USART>
 where
     USART: Deref<Target = SerialRegisterBlock>,
 {
-    type Error = Void;
+    type Error = void::Void;
 
     /// Ensures that none of the previously written words are still buffered
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
@@ -287,6 +309,11 @@ where
     }
 }
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<USART, TXPIN, RXPIN> Serial<USART, TXPIN, RXPIN>
 where
     USART: Deref<Target = SerialRegisterBlock>,
@@ -308,11 +335,18 @@ where
     }
 }
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<USART> Write for Tx<USART>
 where
     Tx<USART>: embedded_hal::serial::Write<u8>,
 {
     fn write_str(&mut self, s: &str) -> Result {
+        use nb::block;
+
         let _ = s.as_bytes().iter().map(|c| block!(self.write(*c))).last();
         Ok(())
     }

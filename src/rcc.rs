@@ -1,13 +1,10 @@
-use core::cmp;
-
 #[cfg(any(
-    feature = "stm32f042",
-    feature = "stm32f072",
     feature = "stm32f030",
+    feature = "stm32f042",
     feature = "stm32f070"
+    feature = "stm32f072",
 ))]
 use crate::stm32::{FLASH, RCC};
-use cast::u32;
 
 use crate::time::Hertz;
 
@@ -18,10 +15,10 @@ pub trait RccExt {
 }
 
 #[cfg(any(
-    feature = "stm32f042",
-    feature = "stm32f072",
     feature = "stm32f030",
+    feature = "stm32f042",
     feature = "stm32f070"
+    feature = "stm32f072",
 ))]
 impl RccExt for RCC {
     fn constrain(self) -> Rcc {
@@ -46,6 +43,7 @@ pub struct Rcc {
     pub cfgr: CFGR,
 }
 
+#[allow(unused)]
 const HSI: u32 = 8_000_000; // Hz
 #[allow(dead_code)] // Only used for ADC, but no configuration for ADC clock yet.
 const HSI14: u32 = 14_000_000; // Hz - ADC clock.
@@ -66,6 +64,7 @@ pub enum PllSource {
     HSI48 = 0b11,
 }
 
+#[allow(unused)]
 pub struct CFGR {
     hclk: Option<u32>,
     pclk: Option<u32>,
@@ -78,7 +77,11 @@ pub struct CFGR {
     enable_pll: Option<bool>,
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl CFGR {
     pub fn hclk<F>(mut self, freq: F) -> Self
     where
@@ -203,7 +206,7 @@ impl CFGR {
             .unwrap_or(0b011);
 
         let ppre: u8 = 1 << (ppre_bits - 0b011);
-        let pclk = hclk / u32(ppre);
+        let pclk = hclk / cast::u32(ppre);
 
         // adjust flash wait states
         unsafe {

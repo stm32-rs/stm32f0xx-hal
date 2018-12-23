@@ -1,13 +1,18 @@
+#[allow(unused)]
 use core::ops::Deref;
 
-use crate::stm32;
+#[allow(unused)]
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use crate::gpio::*;
-use crate::time::{KiloHertz, U32Ext};
-use core::cmp;
+#[allow(unused)]
+use crate::{
+    gpio::*,
+    stm32,
+    time::{KiloHertz, U32Ext},
+};
 
 /// I2C abstraction
+#[allow(unused)]
 pub struct I2c<I2C, SCLPIN, SDAPIN> {
     i2c: I2C,
     pins: (SCLPIN, SDAPIN),
@@ -16,6 +21,7 @@ pub struct I2c<I2C, SCLPIN, SDAPIN> {
 pub trait SclPin<I2C> {}
 pub trait SdaPin<I2C> {}
 
+#[allow(unused)]
 macro_rules! i2c_pins {
     ($($I2C:ident => {
         scl => [$($scl:ty),+ $(,)*],
@@ -32,7 +38,7 @@ macro_rules! i2c_pins {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030"))]
+#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
 i2c_pins! {
     I2C1 => {
         scl => [gpioa::PA11<Alternate<AF5>>, gpiob::PB6<Alternate<AF1>>, gpiob::PB8<Alternate<AF1>>],
@@ -40,9 +46,9 @@ i2c_pins! {
     }
 }
 #[cfg(any(
-    feature = "stm32f042",
     feature = "stm32f030x6",
-    feature = "stm32f030xc"
+    feature = "stm32f030xc",
+    feature = "stm32f042",
 ))]
 i2c_pins! {
     I2C1 => {
@@ -103,6 +109,7 @@ pub enum Error {
     NACK,
 }
 
+#[allow(unused)]
 macro_rules! i2c {
     ($($I2C:ident: ($i2c:ident, $i2cXen:ident, $i2cXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
@@ -128,12 +135,17 @@ macro_rules! i2c {
         )+
     }
 }
-#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 i2c! {
     I2C1: (i2c1, i2c1en, i2c1rst, apb1enr, apb1rstr),
 }
 #[cfg(any(
     feature = "stm32f030xc",
+    // XXX: This can't be right
     feature = "stm32f030xc",
     feature = "stm32f070xb"
 ))]
@@ -142,13 +154,26 @@ i2c! {
 }
 
 // It's s needed for the impls, but rustc doesn't recognize that
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 #[allow(dead_code)]
 type I2cRegisterBlock = stm32::i2c1::RegisterBlock;
+
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<I2C, SCLPIN, SDAPIN> I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,
 {
     fn i2c_init(self: Self, speed: KiloHertz) -> Self {
+        use core::cmp;
+
         /* Make sure the I2C unit is disabled so we can configure it */
         self.i2c.cr1.modify(|_, w| w.pe().clear_bit());
 
@@ -226,6 +251,11 @@ where
     }
 }
 
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f030",
+    feature = "stm32f070"
+))]
 impl<I2C, SCLPIN, SDAPIN> WriteRead for I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,
@@ -306,6 +336,11 @@ where
     }
 }
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<I2C, SCLPIN, SDAPIN> Write for I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,

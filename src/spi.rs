@@ -1,24 +1,37 @@
-use core::ops::Deref;
-use core::ptr;
+#[allow(unused)]
+use core::{ops::Deref, ptr};
 
+#[allow(unused)]
 use nb;
 
 pub use embedded_hal::spi::{Mode, Phase, Polarity};
 
+#[allow(unused)]
 use crate::stm32;
+
 // TODO Put this inside the macro
 // Currently that causes a compiler panic
-#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 use crate::stm32::SPI1;
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f070xb"
 ))]
+#[allow(unused)]
 use crate::stm32::SPI2;
 
+#[allow(unused)]
 use crate::gpio::*;
+
+#[allow(unused)]
 use crate::rcc::Clocks;
+
+#[allow(unused)]
 use crate::time::Hertz;
 
 /// SPI error
@@ -35,6 +48,7 @@ pub enum Error {
 }
 
 /// SPI abstraction
+#[allow(unused)]
 pub struct Spi<SPI, SCKPIN, MISOPIN, MOSIPIN> {
     spi: SPI,
     pins: (SCKPIN, MISOPIN, MOSIPIN),
@@ -44,6 +58,7 @@ pub trait SckPin<SPI> {}
 pub trait MisoPin<SPI> {}
 pub trait MosiPin<SPI> {}
 
+#[allow(unused)]
 macro_rules! spi_pins {
     ($($SPI:ident => {
         sck => [$($sck:ty),+ $(,)*],
@@ -64,7 +79,11 @@ macro_rules! spi_pins {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 spi_pins! {
     SPI1 => {
         sck => [gpioa::PA5<Alternate<AF0>>, gpiob::PB3<Alternate<AF0>>],
@@ -101,6 +120,7 @@ spi_pins! {
     }
 }
 
+#[allow(unused)]
 macro_rules! spi {
     ($($SPI:ident: ($spi:ident, $spiXen:ident, $spiXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
@@ -134,7 +154,11 @@ macro_rules! spi {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 spi! {
     SPI1: (spi1, spi1en, spi1rst, apb2enr, apb2rstr),
 }
@@ -149,8 +173,18 @@ spi! {
 
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 type SpiRegisterBlock = stm32::spi1::RegisterBlock;
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
@@ -221,6 +255,11 @@ where
     }
 }
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::spi::FullDuplex<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
@@ -265,15 +304,24 @@ where
     }
 }
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::transfer::Default<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
-{
-}
+{}
+
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::write::Default<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
-{
-}
+{}

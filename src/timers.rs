@@ -24,12 +24,10 @@
 //! }
 //! ```
 
-use crate::stm32;
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
 use crate::rcc::Clocks;
-use cast::{u16, u32};
 use embedded_hal::timer::{CountDown, Periodic};
 use nb;
 use void::Void;
@@ -105,6 +103,7 @@ impl CountDown for Timer<SYST> {
 
 impl Periodic for Timer<SYST> {}
 
+#[allow(unused)]
 macro_rules! timers {
     ($($TIM:ident: ($tim:ident, $timXen:ident, $timXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
@@ -119,7 +118,7 @@ macro_rules! timers {
                     T: Into<Hertz>,
                 {
                     // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
+                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
 
                     // enable and reset peripheral to a clean slate state
                     rcc.$apbenr.modify(|_, w| w.$timXen().set_bit());
@@ -157,7 +156,7 @@ macro_rules! timers {
 
                 /// Releases the TIM peripheral
                 pub fn release(self) -> $TIM {
-                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
+                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
                     // Pause counter
                     self.tim.cr1.modify(|_, w| w.cen().clear_bit());
                     // Disable timer
@@ -182,11 +181,11 @@ macro_rules! timers {
                     let frequency = timeout.into().0;
                     let ticks = self.clocks.pclk().0 / frequency;
 
-                    let psc = u16((ticks - 1) / (1 << 16)).unwrap();
+                    let psc = cast::u16((ticks - 1) / (1 << 16)).unwrap();
                     self.tim.psc.write(|w| unsafe { w.psc().bits(psc) });
 
-                    let arr = u16(ticks / u32(psc + 1)).unwrap();
-                    self.tim.arr.write(|w| unsafe { w.bits(u32(arr)) });
+                    let arr = cast::u16(ticks / cast::u32(psc + 1)).unwrap();
+                    self.tim.arr.write(|w| unsafe { w.bits(cast::u32(arr)) });
 
                     // start counter
                     self.tim.cr1.modify(|_, w| w.cen().set_bit());
@@ -209,7 +208,11 @@ macro_rules! timers {
     }
 }
 
-#[cfg(any(feature = "stm32f030", feature = "stm32f042", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 timers! {
     TIM1: (tim1, tim1en, tim1rst, apb2enr, apb2rstr),
     TIM3: (tim3, tim3en, tim3rst, apb1enr, apb1rstr),

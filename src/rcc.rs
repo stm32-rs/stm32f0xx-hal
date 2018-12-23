@@ -32,6 +32,7 @@ impl RccExt for RCC {
                 sysclk: None,
                 enable_hsi: None,
                 enable_hsi14: None,
+                // This does not work very well: #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
                 enable_hsi48: None,
                 enable_lsi: None,
                 enable_pll: None,
@@ -48,7 +49,7 @@ pub struct Rcc {
 const HSI: u32 = 8_000_000; // Hz
 #[allow(dead_code)] // Only used for ADC, but no configuration for ADC clock yet.
 const HSI14: u32 = 14_000_000; // Hz - ADC clock.
-// TODO - fix this #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
+// Can't do this anymore... #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
 pub enum SysClkSource {
@@ -71,6 +72,7 @@ pub struct CFGR {
     sysclk: Option<u32>,
     enable_hsi: Option<bool>,
     enable_hsi14: Option<bool>,
+    // This does not work very well: #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
     enable_hsi48: Option<bool>,
     enable_lsi: Option<bool>,
     enable_pll: Option<bool>,
@@ -112,6 +114,7 @@ impl CFGR {
         self
     }
 
+    #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
     pub fn enable_hsi48(mut self, is_enabled: bool) -> Self {
         self.enable_hsi48 = Some(is_enabled);
         self
@@ -128,24 +131,45 @@ impl CFGR {
     }
 
     pub fn freeze(self) -> Clocks {
+        // Default to lowest frequency clock on all systems.
         let sysclk = self.sysclk.unwrap_or(HSI);
 
-        // For F04x, F07x, F09x parts, use HSI48 for sysclk if someone requests sysclk == HSI48;
         let r_sysclk; // The "real" sysclock value, calculated below
+        let src_clk_freq; // Frequency of source clock for PLL and etc, HSI, or HSI48 on supported systems.
         let pllmul_bits;
-        if sysclk == HSI48 {
-            pllmul_bits = None;
-            r_sysclk = HSI48;
+
+        // Select clock source based on user input and capability
+        // Highest selected frequency source available takes precident.
+        // For F04x, F07x, F09x parts, use HSI48 if requested.
+        if self.enable_hsi48.unwrap_or(false) { 
+            // This does not work... #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
+            src_clk_freq = HSI48; // Use HSI48 if requested and available.
+        } else if self.enable_hsi.unwrap_or(true) {
+            src_clk_freq = HSI; // HSI if requested, or by default.
         } else {
-            let pllmul = (4 * self.sysclk.unwrap_or(HSI) + HSI) / HSI / 2;
+            src_clk_freq = HSI; // If no clock source is selclected use HSI.
+        }
+       
+        // Pll check
+        let enable_pll;
+        if sysclk == src_clk_freq {
+            // bypass pll if src clk and requested sysclk are the same, to save power.
+            // The only reason to override this behaviour is if the sysclk source were HSI, and you
+            // were running the USB off the PLL...
+            enable_pll = false;
+            pllmul_bits = None;
+            r_sysclk = src_clk_freq;
+        } else {
+            let pllmul = (4 * self.sysclk.unwrap_or(src_clk_freq) + src_clk_freq) / src_clk_freq / 2;
             let pllmul = cmp::min(cmp::max(pllmul, 2), 16);
-            r_sysclk = pllmul * HSI / 2;
+            r_sysclk = pllmul * src_clk_freq / 2;
 
             pllmul_bits = if pllmul == 2 {
                 None
             } else {
                 Some(pllmul as u8 - 2)
             };
+            enable_pll = true; // Force PLL on.
         }
 
         let hpre_bits = self
@@ -195,15 +219,46 @@ impl CFGR {
             })
         }
 
+        // Set up rcc based on above calculated configuration.
         let rcc = unsafe { &*RCC::ptr() };
-        if let Some(pllmul_bits) = pllmul_bits {
-            // use PLL as source
 
+       
+        // Enable requested clock sources
+        // HSI
+        if self.enable_hsi.unwrap_or(false) {
+            rcc.cr.write(|w| w.hsion().set_bit());
+            while rcc.cr.read().hsirdy().bit_is_clear() { }
+        }
+        // HSI14
+        if self.enable_hsi14.unwrap_or(false) {
+            rcc.cr2.modify(|_, w| w.hsi14on().set_bit());
+            while rcc.cr2.read().hsi14rdy().bit_is_clear() {
+                // nothing
+            }
+        }
+        // HSI48
+        if self.enable_hsi48.unwrap_or(false) {
+            rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
+            while rcc.cr2.read().hsi48rdy().bit_is_clear() {
+                // nothing
+            }
+        }
+
+        // Enable PLL
+        if let Some(pllmul_bits) = pllmul_bits {
             rcc.cfgr.write(|w| unsafe { w.pllmul().bits(pllmul_bits) });
 
-            rcc.cr.write(|w| w.pllon().set_bit());
+            // Set PLL source based on configuration.
+            if self.enable_hsi48.unwrap_or(false) {
+                rcc.cfgr.modify(|_, w| w.pllsrc().bits(PllSource::HSI48 as u8));
+            } else if self.enable_hsi.unwrap_or(true) {
+                rcc.cfgr.modify(|_, w| w.pllsrc().bits(PllSource::HSI_2 as u8));
+            } else {
+                rcc.cfgr.modify(|_, w| w.pllsrc().bits(PllSource::HSI_2 as u8));
+            }
 
-            while rcc.cr.read().pllrdy().bit_is_clear() {}
+            rcc.cr.write(|w| w.pllon().set_bit());
+            while rcc.cr.read().pllrdy().bit_is_clear() { }
 
             rcc.cfgr.modify(|_, w| unsafe {
                 w.ppre()
@@ -213,30 +268,30 @@ impl CFGR {
                     .sw()
                     .bits(SysClkSource::PLL as u8)
             });
-        } else if r_sysclk == HSI48 {
-            // Enable HSI48
-            rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
-            while !rcc.cr2.read().hsi48rdy().bit_is_set() {
-                // nothing
+
+        } else { // No PLL required.
+            // Setup requested clocks.
+            if self.enable_hsi48.unwrap_or(false) {
+                rcc.cfgr.modify(|_, w| unsafe { 
+                    w.ppre().bits(ppre_bits)
+                     .hpre().bits(hpre_bits)
+                     .sw().bits(SysClkSource::HSI48 as u8)
+                });
+            } else if self.enable_hsi.unwrap_or(true) {
+                rcc.cfgr.modify(|_, w| unsafe { 
+                    w.ppre().bits(ppre_bits)
+                     .hpre().bits(hpre_bits)
+                     .sw().bits(SysClkSource::HSI as u8)
+                });
+            } else { // Default to HSI
+                rcc.cfgr.modify(|_, w| unsafe {
+                    w.ppre().bits(ppre_bits)
+                     .hpre().bits(hpre_bits)
+                     .sw().bits(SysClkSource::HSI as u8)
+                });
             }
-
-            // Set HSI48 as system clock.
-            rcc.cfgr.modify(|_, w| unsafe {
-                w.ppre()
-                    .bits(ppre_bits)
-                    //.bits(0)
-                    .hpre()
-                    .bits(hpre_bits)
-                    //.bits(0)
-                    .sw()
-                    .bits(SysClkSource::HSI48 as u8)
-            });
-        } else {
-            // use HSI as source
-            rcc.cfgr
-                .write(|w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().bits(0) });
         }
-
+        
         Clocks {
             hclk: Hertz(hclk),
             pclk: Hertz(pclk),

@@ -43,6 +43,7 @@ pub struct Rcc {
 const HSI: u32 = 8_000_000; // Hz
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
+#[allow(unused)]
 enum SysClkSource {
     HSI = 0b00,
     HSE = 0b01,
@@ -50,6 +51,7 @@ enum SysClkSource {
     HSI48 = 0b11,
 }
 
+#[allow(unused)]
 enum PllSource {
     HSI_2 = 0b00,
     HSI = 0b01,

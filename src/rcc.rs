@@ -52,14 +52,14 @@ const HSI14: u32 = 14_000_000; // Hz - ADC clock.
 // Can't do this anymore... #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
-pub enum SysClkSource {
+enum SysClkSource {
     HSI = 0b00,
     HSE = 0b01,
     PLL = 0b10,
     HSI48 = 0b11,
 }
 
-pub enum PllSource {
+enum PllSource {
     HSI_2 = 0b00,
     HSI = 0b01,
     HSE = 0b10,
@@ -82,7 +82,8 @@ pub struct CFGR {
 #[cfg(any(
     feature = "stm32f030",
     feature = "stm32f042",
-    feature = "stm32f070"
+    feature = "stm32f070",
+    feature = "stm32f072"
 ))]
 impl CFGR {
     pub fn hclk<F>(mut self, freq: F) -> Self
@@ -144,7 +145,7 @@ impl CFGR {
         let pllmul_bits;
 
         // Select clock source based on user input and capability
-        // Highest selected frequency source available takes precident.
+        // Highest selected frequency source available takes precedent.
         // For F04x, F07x, F09x parts, use HSI48 if requested.
         if self.enable_hsi48.unwrap_or(false) { 
             // This does not work... #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
@@ -152,13 +153,13 @@ impl CFGR {
         } else if self.enable_hsi.unwrap_or(true) {
             src_clk_freq = HSI; // HSI if requested, or by default.
         } else {
-            src_clk_freq = HSI; // If no clock source is selclected use HSI.
+            src_clk_freq = HSI; // If no clock source is selected use HSI.
         }
        
         // Pll check
         let enable_pll;
         if sysclk == src_clk_freq {
-            // bypass pll if src clk and requested sysclk are the same, to save power.
+            // Bypass pll if src clk and requested sysclk are the same, to save power.
             // The only reason to override this behaviour is if the sysclk source were HSI, and you
             // were running the USB off the PLL...
             enable_pll = false;
@@ -237,16 +238,12 @@ impl CFGR {
         // HSI14
         if self.enable_hsi14.unwrap_or(false) {
             rcc.cr2.modify(|_, w| w.hsi14on().set_bit());
-            while rcc.cr2.read().hsi14rdy().bit_is_clear() {
-                // nothing
-            }
+            while rcc.cr2.read().hsi14rdy().bit_is_clear() { }
         }
         // HSI48
         if self.enable_hsi48.unwrap_or(false) {
             rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
-            while rcc.cr2.read().hsi48rdy().bit_is_clear() {
-                // nothing
-            }
+            while rcc.cr2.read().hsi48rdy().bit_is_clear() { }
         }
 
         // Enable PLL

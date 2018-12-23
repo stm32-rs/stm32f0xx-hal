@@ -62,6 +62,11 @@ pub enum Error {
 pub trait TxPin<USART> {}
 pub trait RxPin<USART> {}
 
+// NOTE(unsafe) We only have to worry about conflicts with TxPin and RxPin.
+// As they only overlap in read access for the isr, there are no conflicts
+unsafe impl<USART> Sync for TxPin<USART> {}
+unsafe impl<USART> Sync for RxPin<USART> {}
+
 #[allow(unused)]
 macro_rules! usart_pins {
     ($($USART:ident => {

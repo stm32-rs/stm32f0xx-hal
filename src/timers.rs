@@ -73,6 +73,9 @@ impl Timer<SYST> {
     }
 }
 
+/// Use the systick as a timer
+///
+/// Be aware that intervals less than 4 Hertz may not function properly
 impl CountDown for Timer<SYST> {
     type Time = Hertz;
 

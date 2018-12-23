@@ -1,6 +1,7 @@
 #![no_main]
 #![no_std]
 
+#[allow(unused)]
 use panic_halt;
 
 use stm32f0xx_hal as hal;
@@ -83,7 +84,6 @@ fn main() -> ! {
         continue;
     }
 }
-
 
 // Define an interupt handler, i.e. function to call when interrupt occurs. Here if our external
 // interrupt trips when the button is pressed and will light the LED for a second

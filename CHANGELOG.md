@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Removed superfluous use statements
 - Re-added Send ability for U(S)ART Rx/Tx
+- Made crate to compile without features
+- Eliminated a lot of unused warnings
 
 ### Fixed
 

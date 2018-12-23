@@ -41,16 +41,32 @@
 //! // Whoops, got stuck, the watchdog issues a reset after 10 ms
 //! iwdg.feed();
 //! ```
+#[allow(unused)]
 use embedded_hal::watchdog;
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 use crate::stm32::IWDG;
 use crate::time::Hertz;
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 /// Watchdog instance
 pub struct Watchdog {
     iwdg: IWDG,
 }
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl watchdog::Watchdog for Watchdog {
     /// Feed the watchdog, so that at least one `period` goes by before the next
     /// reset
@@ -88,12 +104,23 @@ impl Into<IwdgTimeout> for Hertz {
         IwdgTimeout { psc, reload }
     }
 }
+
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl Watchdog {
     pub fn new(iwdg: IWDG) -> Self {
         Self { iwdg }
     }
 }
 
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f070"
+))]
 impl watchdog::WatchdogEnable for Watchdog {
     type Time = IwdgTimeout;
     fn start<T>(&mut self, period: T)

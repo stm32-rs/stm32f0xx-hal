@@ -1,8 +1,10 @@
+use core::cmp;
+
 #[cfg(any(
     feature = "stm32f030",
     feature = "stm32f042",
-    feature = "stm32f070"
-    feature = "stm32f072",
+    feature = "stm32f070",
+    feature = "stm32f072"
 ))]
 use crate::stm32::{FLASH, RCC};
 
@@ -17,8 +19,8 @@ pub trait RccExt {
 #[cfg(any(
     feature = "stm32f030",
     feature = "stm32f042",
-    feature = "stm32f070"
-    feature = "stm32f072",
+    feature = "stm32f070",
+    feature = "stm32f072"
 ))]
 impl RccExt for RCC {
     fn constrain(self) -> Rcc {

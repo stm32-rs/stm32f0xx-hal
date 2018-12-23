@@ -64,8 +64,6 @@ pub struct CFGR {
     sysclk: Option<u32>,
     enable_hsi: Option<bool>,
     enable_hsi48: Option<bool>,
-    enable_lsi: Option<bool>,
-    enable_pll: Option<bool>,
 }
 
 #[cfg(any(

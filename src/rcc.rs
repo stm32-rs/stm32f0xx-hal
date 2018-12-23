@@ -4,7 +4,6 @@ use core::cmp;
     feature = "stm32f030",
     feature = "stm32f042",
     feature = "stm32f070",
-    feature = "stm32f072"
 ))]
 use crate::stm32::{FLASH, RCC};
 
@@ -20,7 +19,6 @@ pub trait RccExt {
     feature = "stm32f030",
     feature = "stm32f042",
     feature = "stm32f070",
-    feature = "stm32f072"
 ))]
 impl RccExt for RCC {
     fn constrain(self) -> Rcc {
@@ -31,7 +29,6 @@ impl RccExt for RCC {
                 sysclk: None,
                 enable_hsi: None,
                 enable_hsi14: None,
-                // This does not work very well: #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
                 enable_hsi48: None,
                 enable_lsi: None,
                 enable_pll: None,
@@ -49,7 +46,6 @@ pub struct Rcc {
 const HSI: u32 = 8_000_000; // Hz
 #[allow(dead_code)] // Only used for ADC, but no configuration for ADC clock yet.
 const HSI14: u32 = 14_000_000; // Hz - ADC clock.
-// Can't do this anymore... #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
 enum SysClkSource {
@@ -73,7 +69,6 @@ pub struct CFGR {
     sysclk: Option<u32>,
     enable_hsi: Option<bool>,
     enable_hsi14: Option<bool>,
-    // This does not work very well: #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
     enable_hsi48: Option<bool>,
     enable_lsi: Option<bool>,
     enable_pll: Option<bool>,
@@ -83,7 +78,6 @@ pub struct CFGR {
     feature = "stm32f030",
     feature = "stm32f042",
     feature = "stm32f070",
-    feature = "stm32f072"
 ))]
 impl CFGR {
     pub fn hclk<F>(mut self, freq: F) -> Self
@@ -120,7 +114,7 @@ impl CFGR {
         self
     }
 
-    #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
+    #[cfg(feature = "stm32f042")]
     pub fn enable_hsi48(mut self, is_enabled: bool) -> Self {
         self.enable_hsi48 = Some(is_enabled);
         self
@@ -148,7 +142,6 @@ impl CFGR {
         // Highest selected frequency source available takes precedent.
         // For F04x, F07x, F09x parts, use HSI48 if requested.
         if self.enable_hsi48.unwrap_or(false) { 
-            // This does not work... #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
             src_clk_freq = HSI48; // Use HSI48 if requested and available.
         } else if self.enable_hsi.unwrap_or(true) {
             src_clk_freq = HSI; // HSI if requested, or by default.

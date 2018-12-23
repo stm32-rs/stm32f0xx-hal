@@ -65,6 +65,12 @@ pub struct Pin<MODE> {
     _mode: PhantomData<MODE>,
 }
 
+// NOTE(unsafe) The only write acess is to BSRR, which is thread safe
+unsafe impl<MODE> Sync for Pin<MODE> {}
+// NOTE(unsafe) this only enables read access to the same pin from multiple
+// threads
+unsafe impl<MODE> Send for Pin<MODE> {}
+
 impl<MODE> StatefulOutputPin for Pin<Output<MODE>> {
     fn is_set_high(&self) -> bool {
         !self.is_set_low()

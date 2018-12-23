@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added Sync & Send ability to Pin
+
 ## [v0.10.0] - 2018-12-23
 
 ### Added

@@ -14,8 +14,7 @@ use cortex_m::interrupt::Mutex;
 use cortex_m::peripheral::Peripherals as c_m_Peripherals;
 use cortex_m_rt::entry;
 
-pub use crate::hal::stm32;
-pub use crate::hal::stm32::{interrupt, Interrupt, Peripherals, EXTI};
+use crate::hal::stm32::{interrupt, Interrupt, Peripherals, EXTI};
 
 use core::cell::RefCell;
 use core::ops::DerefMut;

@@ -15,7 +15,7 @@ use cortex_m_rt::entry;
 
 #[entry]
 fn main() -> ! {
-    pub const MODE: Mode = Mode {
+    const MODE: Mode = Mode {
         polarity: Polarity::IdleHigh,
         phase: Phase::CaptureOnSecondTransition,
     };

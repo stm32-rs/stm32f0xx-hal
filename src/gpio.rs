@@ -143,18 +143,10 @@ macro_rules! gpio_trait {
     };
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 gpio_trait!(gpioa);
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 gpio_trait!(gpiof);
 
 #[allow(unused)]
@@ -535,11 +527,7 @@ macro_rules! gpio {
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 gpio!(GPIOA, gpioa, iopaen, PA, [
     PA0: (pa0, 0, Input<Floating>),
     PA1: (pa1, 1, Input<Floating>),
@@ -559,11 +547,7 @@ gpio!(GPIOA, gpioa, iopaen, PA, [
     PA15: (pa15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 gpio!(GPIOB, gpiob, iopben, PB, [
     PB0: (pb0, 0, Input<Floating>),
     PB1: (pb1, 1, Input<Floating>),

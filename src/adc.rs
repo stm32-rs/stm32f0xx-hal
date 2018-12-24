@@ -33,12 +33,13 @@
 //! }
 //! ```
 
+#[cfg(feature = "device-selected")]
 use embedded_hal::adc::{Channel, OneShot};
 
-use crate::stm32;
+#[cfg(feature = "device-selected")]
+use crate::{stm32, gpio::*};
 
-use crate::gpio::*;
-
+#[cfg(feature = "device-selected")]
 /// Analog to Digital converter interface
 pub struct Adc {
     rb: stm32::ADC,
@@ -70,6 +71,7 @@ pub enum AdcSampleTime {
     T_239,
 }
 
+#[cfg(feature = "device-selected")]
 impl AdcSampleTime {
     fn write_bits(&self, adc: &mut stm32::ADC) {
         unsafe {
@@ -117,6 +119,7 @@ pub enum AdcAlign {
     LeftAsRM,
 }
 
+#[cfg(feature = "device-selected")]
 impl AdcAlign {
     fn write_bits(&self, adc: &mut stm32::ADC) {
         adc.cfgr1.write(|w| {
@@ -147,6 +150,7 @@ pub enum AdcPrecision {
     B_6,
 }
 
+#[cfg(feature = "device-selected")]
 impl AdcPrecision {
     fn write_bits(&self, adc: &mut stm32::ADC) {
         unsafe {
@@ -167,6 +171,7 @@ impl AdcPrecision {
     }
 }
 
+#[cfg(feature = "device-selected")]
 macro_rules! adc_pins {
     ($($pin:ty => $chan:expr),+ $(,)*) => {
         $(
@@ -179,7 +184,7 @@ macro_rules! adc_pins {
     };
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f030", feature = "stm32f070",))]
+#[cfg(feature = "device-selected")]
 adc_pins!(
     gpioa::PA0<Analog> => 0_u8,
     gpioa::PA1<Analog> => 1_u8,
@@ -211,11 +216,13 @@ pub struct VTemp;
 /// Internal voltage reference (ADC Channel 17)
 pub struct VRef;
 
+#[cfg(feature = "device-selected")]
 adc_pins!(
     VTemp => 16_u8,
     VRef  => 17_u8,
 );
 
+#[cfg(feature = "device-selected")]
 impl VTemp {
     /// Init a new VTemp
     pub fn new() -> Self {
@@ -236,6 +243,7 @@ impl VTemp {
     }
 }
 
+#[cfg(feature = "device-selected")]
 impl VRef {
     /// Init a new VRef
     pub fn new() -> Self {
@@ -253,17 +261,17 @@ impl VRef {
     }
 }
 
-#[cfg(any(feature = "stm32f042",))]
+#[cfg(feature = "stm32f042")]
 #[derive(Debug)]
 /// Battery reference voltage (ADC Channel 18)
 pub struct VBat;
 
-#[cfg(any(feature = "stm32f042",))]
+#[cfg(feature = "stm32f042")]
 adc_pins!(
     VBat  => 18_u8,
 );
 
-#[cfg(any(feature = "stm32f042",))]
+#[cfg(feature = "stm32f042")]
 impl VBat {
     /// Init a new VBat
     pub fn new() -> Self {
@@ -282,6 +290,7 @@ impl VBat {
     }
 }
 
+#[cfg(feature = "device-selected")]
 impl Adc {
     /// Init a new Adc
     ///
@@ -381,6 +390,7 @@ impl Adc {
     }
 }
 
+#[cfg(feature = "device-selected")]
 impl<WORD, PIN> OneShot<Adc, WORD, PIN> for Adc
 where
     WORD: From<u16>,

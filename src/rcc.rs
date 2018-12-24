@@ -1,10 +1,3 @@
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
-use crate::stm32::{FLASH, RCC};
-
 use crate::time::Hertz;
 
 /// Extension trait that constrains the `RCC` peripheral
@@ -13,12 +6,8 @@ pub trait RccExt {
     fn constrain(self) -> Rcc;
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
-impl RccExt for RCC {
+#[cfg(feature = "device-selected")]
+impl RccExt for crate::stm32::RCC {
     fn constrain(self) -> Rcc {
         Rcc {
             cfgr: CFGR {
@@ -45,11 +34,7 @@ pub struct CFGR {
     sysclk: Option<u32>,
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl CFGR {
     pub fn hclk<F>(mut self, freq: F) -> Self
     where
@@ -121,7 +106,7 @@ impl CFGR {
 
         // adjust flash wait states
         unsafe {
-            let flash = &*FLASH::ptr();
+            let flash = &*crate::stm32::FLASH::ptr();
             flash.acr.write(|w| {
                 w.latency().bits(if sysclk <= 24_000_000 {
                     0b000
@@ -133,7 +118,7 @@ impl CFGR {
             })
         }
 
-        let rcc = unsafe { &*RCC::ptr() };
+        let rcc = unsafe { &*crate::stm32::RCC::ptr() };
         if let Some(pllmul_bits) = pllmul_bits {
             // use PLL as source
 

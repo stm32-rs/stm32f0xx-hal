@@ -34,7 +34,7 @@ use core::{
 use embedded_hal::prelude::*;
 
 #[allow(unused)]
-use crate::{gpio::*, rcc::Clocks, stm32, time::Bps};
+use crate::{gpio::*, rcc::Clocks, time::Bps};
 
 /// Interrupt event
 pub enum Event {
@@ -62,7 +62,7 @@ pub enum Error {
 pub trait TxPin<USART> {}
 pub trait RxPin<USART> {}
 
-#[allow(unused)]
+#[cfg(feature = "device-selected")]
 macro_rules! usart_pins {
     ($($USART:ident => {
         tx => [$($tx:ty),+ $(,)*],
@@ -70,10 +70,10 @@ macro_rules! usart_pins {
     })+) => {
         $(
             $(
-                impl TxPin<stm32::$USART> for $tx {}
+                impl TxPin<crate::stm32::$USART> for $tx {}
             )+
             $(
-                impl RxPin<stm32::$USART> for $rx {}
+                impl RxPin<crate::stm32::$USART> for $rx {}
             )+
         )+
     }
@@ -163,7 +163,7 @@ pub struct Tx<USART> {
 // NOTE(unsafe) Required to allow protected shared access in handlers
 unsafe impl<USART> Send for Tx<USART> {}
 
-#[allow(unused)]
+#[cfg(feature = "device-selected")]
 macro_rules! usart {
     ($($USART:ident: ($usart:ident, $usartXen:ident, $apbenr:ident),)+) => {
         $(
@@ -176,7 +176,7 @@ macro_rules! usart {
                     RXPIN: RxPin<$USART>,
                 {
                     // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
+                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
 
                     /* Enable clock for USART */
                     rcc.$apbenr.modify(|_, w| w.$usartXen().set_bit());
@@ -199,11 +199,7 @@ macro_rules! usart {
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 usart! {
     USART1: (usart1, usart1en, apb2enr),
 }
@@ -229,18 +225,10 @@ usart! {
 
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
-type SerialRegisterBlock = stm32::usart1::RegisterBlock;
+#[cfg(feature = "device-selected")]
+type SerialRegisterBlock = crate::stm32::usart1::RegisterBlock;
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<USART> embedded_hal::serial::Read<u8> for Rx<USART>
 where
     USART: Deref<Target = SerialRegisterBlock>,
@@ -269,11 +257,7 @@ where
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<USART> embedded_hal::serial::Write<u8> for Tx<USART>
 where
     USART: Deref<Target = SerialRegisterBlock>,
@@ -309,11 +293,7 @@ where
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<USART, TXPIN, RXPIN> Serial<USART, TXPIN, RXPIN>
 where
     USART: Deref<Target = SerialRegisterBlock>,
@@ -335,11 +315,7 @@ where
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<USART> Write for Tx<USART>
 where
     Tx<USART>: embedded_hal::serial::Write<u8>,

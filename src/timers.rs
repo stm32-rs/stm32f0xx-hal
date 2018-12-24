@@ -211,11 +211,7 @@ macro_rules! timers {
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 timers! {
     TIM1: (tim1, tim1en, tim1rst, apb2enr, apb2rstr),
     TIM3: (tim3, tim3en, tim3rst, apb1enr, apb1rstr),

@@ -7,7 +7,6 @@ use embedded_hal::blocking::i2c::{Write, WriteRead};
 #[allow(unused)]
 use crate::{
     gpio::*,
-    stm32,
     time::{KiloHertz, U32Ext},
 };
 
@@ -29,10 +28,10 @@ macro_rules! i2c_pins {
     })+) => {
         $(
             $(
-                impl SclPin<stm32::$I2C> for $scl {}
+                impl SclPin<crate::stm32::$I2C> for $scl {}
             )+
             $(
-                impl SdaPin<stm32::$I2C> for $sda {}
+                impl SdaPin<crate::stm32::$I2C> for $sda {}
             )+
         )+
     }
@@ -121,7 +120,7 @@ macro_rules! i2c {
                     SDAPIN: SdaPin<$I2C>,
                 {
                     // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
+                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
 
                     /* Enable clock for I2C */
                     rcc.$apbenr.modify(|_, w| w.$i2cXen().set_bit());
@@ -135,14 +134,12 @@ macro_rules! i2c {
         )+
     }
 }
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+
+#[cfg(feature = "device-selected")]
 i2c! {
     I2C1: (i2c1, i2c1en, i2c1rst, apb1enr, apb1rstr),
 }
+
 #[cfg(any(
     feature = "stm32f030xc",
     // XXX: This can't be right
@@ -153,20 +150,12 @@ i2c! {
     I2C2: (i2c2, i2c2en, i2c2rst, apb1enr, apb1rstr),
 }
 
+#[cfg(feature = "device-selected")]
 // It's s needed for the impls, but rustc doesn't recognize that
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
 #[allow(dead_code)]
-type I2cRegisterBlock = stm32::i2c1::RegisterBlock;
+type I2cRegisterBlock = crate::stm32::i2c1::RegisterBlock;
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<I2C, SCLPIN, SDAPIN> I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,
@@ -251,11 +240,7 @@ where
     }
 }
 
-#[cfg(any(
-    feature = "stm32f042",
-    feature = "stm32f030",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<I2C, SCLPIN, SDAPIN> WriteRead for I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,
@@ -336,11 +321,7 @@ where
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<I2C, SCLPIN, SDAPIN> Write for I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,

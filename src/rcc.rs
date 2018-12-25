@@ -11,13 +11,18 @@ impl RccExt for crate::stm32::RCC {
     fn constrain(self) -> Rcc {
         Rcc {
             cfgr: CFGR {
+                hse: None,
                 hclk: None,
                 pclk: None,
                 sysclk: None,
+                clock_source: ClockSource::HSI,
             },
         }
     }
 }
+
+#[cfg(feature = "stm32f070")]
+use stm32f0::stm32f0x0::rcc::cfgr::{SWW, PLLSRCW};
 
 /// Constrained RCC peripheral
 pub struct Rcc {
@@ -28,14 +33,32 @@ pub struct Rcc {
 const HSI: u32 = 8_000_000; // Hz
 
 #[allow(unused)]
+pub enum ClockSource {
+    /// Use internal clock as source
+    HSI,
+    /// Use External clock as source
+    HSE,
+}
+
+#[allow(unused)]
 pub struct CFGR {
+    hse: Option<u32>,
     hclk: Option<u32>,
     pclk: Option<u32>,
     sysclk: Option<u32>,
+    clock_source: ClockSource,
 }
 
 #[cfg(feature = "device-selected")]
 impl CFGR {
+    pub fn hse<F>(mut self, freq: F) -> Self
+        where
+            F: Into<Hertz>,
+    {
+        self.hse = Some(freq.into().0);
+        self
+    }
+
     pub fn hclk<F>(mut self, freq: F) -> Self
     where
         F: Into<Hertz>,
@@ -53,17 +76,28 @@ impl CFGR {
     }
 
     pub fn sysclk<F>(mut self, freq: F) -> Self
-    where
-        F: Into<Hertz>,
+        where
+            F: Into<Hertz>,
     {
         self.sysclk = Some(freq.into().0);
         self
     }
 
+    pub fn clock_source(mut self, src: ClockSource) -> Self
+    {
+        self.clock_source = src;
+        self
+    }
+
     pub fn freeze(self) -> Clocks {
-        let pllmul = (4 * self.sysclk.unwrap_or(HSI) + HSI) / HSI / 2;
+        let core_freq = match self.clock_source {
+            ClockSource::HSI => HSI,
+            ClockSource::HSE => self.hse.unwrap_or(HSI)
+        };
+
+        let pllmul = (4 * self.sysclk.unwrap_or(core_freq) + core_freq) / core_freq / 2;
         let pllmul = core::cmp::min(core::cmp::max(pllmul, 2), 16);
-        let sysclk = pllmul * HSI / 2;
+        let sysclk = pllmul * core_freq / 2;
 
         let pllmul_bits = if pllmul == 2 {
             None
@@ -122,7 +156,12 @@ impl CFGR {
         if let Some(pllmul_bits) = pllmul_bits {
             // use PLL as source
 
-            rcc.cfgr.write(|w| unsafe { w.pllmul().bits(pllmul_bits) });
+            let pll_src_variant = match self.clock_source {
+                ClockSource::HSI => PLLSRCW::HSI_DIV_PREDIV,
+                ClockSource::HSE => PLLSRCW::HSE_DIV_PREDIV,
+            };
+
+            rcc.cfgr.write(|w| unsafe { w.pllsrc().variant(pll_src_variant).pllmul().bits(pllmul_bits) });
 
             rcc.cr.write(|w| w.pllon().set_bit());
 
@@ -132,9 +171,14 @@ impl CFGR {
                 w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().bits(2)
             });
         } else {
+            let src_sw_variant = match self.clock_source {
+                ClockSource::HSI => SWW::HSI,
+                ClockSource::HSE => SWW::HSE,
+            };
+
             // use HSI as source
             rcc.cfgr
-                .write(|w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().bits(0) });
+                .write(|w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().variant(src_sw_variant) });
         }
 
         Clocks {

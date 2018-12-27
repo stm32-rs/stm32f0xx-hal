@@ -34,10 +34,22 @@
 //! ```
 
 #[cfg(feature = "device-selected")]
+const VREFCAL: *const u16 = 0x1FFF_F7BA as *const u16;
+
+#[cfg(feature = "device-selected")]
+const VTEMPCAL30: *const u16 = 0x1FFF_F7B8 as *const u16;
+
+#[cfg(feature = "device-selected")]
+const VTEMPCAL110: *const u16 = 0x1FFF_F7C2 as *const u16;
+
+#[cfg(feature = "device-selected")]
+use core::ptr;
+
+#[cfg(feature = "device-selected")]
 use embedded_hal::adc::{Channel, OneShot};
 
 #[cfg(feature = "device-selected")]
-use crate::{stm32, gpio::*};
+use crate::{gpio::*, stm32};
 
 #[cfg(feature = "device-selected")]
 /// Analog to Digital converter interface
@@ -46,9 +58,10 @@ pub struct Adc {
     sample_time: AdcSampleTime,
     align: AdcAlign,
     precision: AdcPrecision,
+    stored_cfg: Option<(AdcSampleTime, AdcAlign, AdcPrecision)>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 /// ADC Sampling time
 ///
 /// Options for the sampling time, each is T + 0.5 ADC clock cycles.
@@ -96,7 +109,7 @@ impl AdcSampleTime {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 /// ADC Result Alignment
 pub enum AdcAlign {
     /// Left aligned results (most significant bits)
@@ -137,7 +150,7 @@ impl AdcAlign {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 /// ADC Sampling Precision
 pub enum AdcPrecision {
     /// 12 bit precision
@@ -241,6 +254,43 @@ impl VTemp {
     pub fn disable(&mut self, adc: &mut Adc) {
         adc.rb.ccr.modify(|_, w| w.tsen().clear_bit());
     }
+
+    pub fn convert_temp(vtemp: u16, vdda: u16) -> i16 {
+        const VDD_CALIB: i32 = 3300_i32;
+        let vtemp30_cal = i32::from(unsafe { ptr::read(VTEMPCAL30) }) * 100;
+        let vtemp110_cal = i32::from(unsafe { ptr::read(VTEMPCAL110) }) * 100;
+
+        let mut temperature: i32 = (vtemp as i32) * 100;
+        temperature = (temperature * (vdda as i32) / VDD_CALIB) - vtemp30_cal;
+        temperature *= (110 - 30) * 100;
+        temperature /= vtemp110_cal - vtemp30_cal;
+        temperature += 3000;
+        temperature as i16
+    }
+
+    pub fn read_vtemp(adc: &mut Adc) -> i16 {
+        let mut vtemp = Self::new();
+
+        vtemp.enable(adc);
+
+        // Double read of vdda to allow sufficient startup time for the temp sensor
+        adc.read_vdda();
+        let vdda = adc.read_vdda();
+
+        adc.stash_cfg();
+
+        adc.set_align(AdcAlign::Right);
+        adc.set_precision(AdcPrecision::B_12);
+        adc.set_sample_time(AdcSampleTime::T_239);
+
+        let vtemp_val = adc.read(&mut vtemp).unwrap();
+
+        vtemp.disable(adc);
+
+        adc.restore_cfg();
+
+        Self::convert_temp(vtemp_val, vdda)
+    }
 }
 
 #[cfg(feature = "device-selected")]
@@ -258,6 +308,27 @@ impl VRef {
     /// Disable the internal reference voltage.
     pub fn disable(&mut self, adc: &mut Adc) {
         adc.rb.ccr.modify(|_, w| w.vrefen().clear_bit());
+    }
+
+    pub fn read_vdda(adc: &mut Adc) -> u16 {
+        let vrefint_cal = u32::from(unsafe { ptr::read(VREFCAL) });
+        let mut vref = Self::new();
+
+        adc.stash_cfg();
+
+        adc.set_align(AdcAlign::Right);
+        adc.set_precision(AdcPrecision::B_12);
+        adc.set_sample_time(AdcSampleTime::T_239);
+
+        vref.enable(adc);
+
+        let vref_val: u32 = adc.read(&mut vref).unwrap();
+
+        vref.disable(adc);
+
+        adc.restore_cfg();
+
+        (3300 * vrefint_cal / vref_val) as u16
     }
 }
 
@@ -288,6 +359,18 @@ impl VBat {
     pub fn disable(&mut self, adc: &mut Adc) {
         adc.rb.ccr.modify(|_, w| w.vbaten().clear_bit());
     }
+
+    pub fn read_vbat(adc: &mut Adc) -> u16 {
+        let mut vbat = Self::new();
+
+        vbat.enable(adc);
+
+        let vbat_val: u16 = adc.read_abs_v(&mut vbat);
+
+        vbat.disable(adc);
+
+        vbat_val * 2
+    }
 }
 
 #[cfg(feature = "device-selected")]
@@ -303,10 +386,23 @@ impl Adc {
             sample_time: AdcSampleTime::default(),
             align: AdcAlign::default(),
             precision: AdcPrecision::default(),
+            stored_cfg: None,
         };
         s.select_clock();
         s.calibrate();
         s
+    }
+
+    pub fn stash_cfg(&mut self) {
+        self.stored_cfg = Some((self.sample_time, self.align, self.precision));
+    }
+
+    pub fn restore_cfg(&mut self) {
+        if let Some((samp_t, align, precision)) = self.stored_cfg.take() {
+            self.sample_time = samp_t;
+            self.align = align;
+            self.precision = precision;
+        }
     }
 
     /// Set the Adc sampling time
@@ -328,6 +424,43 @@ impl Adc {
     /// Options can be found in [AdcPrecision](crate::adc::AdcPrecision).
     pub fn set_precision(&mut self, precision: AdcPrecision) {
         self.precision = precision;
+    }
+
+    pub fn max_sample(&self) -> u16 {
+        match self.align {
+            AdcAlign::Left => u16::max_value(),
+            AdcAlign::LeftAsRM => match self.precision {
+                AdcPrecision::B_6 => u8::max_value() as u16,
+                _ => u16::max_value(),
+            },
+            AdcAlign::Right => match self.precision {
+                AdcPrecision::B_12 => (1 << 12) - 1,
+                AdcPrecision::B_10 => (1 << 10) - 1,
+                AdcPrecision::B_8 => (1 << 8) - 1,
+                AdcPrecision::B_6 => (1 << 6) - 1,
+            },
+        }
+    }
+
+    pub fn read_vdda(&mut self) -> u16 {
+        VRef::read_vdda(self)
+    }
+
+    pub fn read_vtemp(&mut self) -> i16 {
+        VTemp::read_vtemp(self)
+    }
+
+    #[cfg(feature = "stm32f042")]
+    pub fn read_vbat(&mut self) -> u16 {
+        VBat::read_vbat(self)
+    }
+
+    pub fn read_abs_v<PIN: Channel<Adc, ID = u8>>(&mut self, pin: &mut PIN) -> u16 {
+        let vdda = self.read_vdda() as u32;
+        let v: u32 = self.read(pin).unwrap();
+        let max_samp = self.max_sample() as u32;
+
+        (v * vdda / max_samp) as u16
     }
 
     fn calibrate(&mut self) {

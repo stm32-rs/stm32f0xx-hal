@@ -82,7 +82,7 @@ impl DelayUs<u32> for Delay {
         const MAX_RVR: u32 = 0x00FF_FFFF;
 
         let mut total_rvr = if self.clocks.sysclk().0 < 1_000_000 {
-            us / (1_000_00 / self.clocks.sysclk().0)
+            us / (1_000_000 / self.clocks.sysclk().0)
         } else {
             us * (self.clocks.sysclk().0 / 1_000_000)
         };

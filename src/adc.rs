@@ -255,6 +255,10 @@ impl VTemp {
         adc.rb.ccr.modify(|_, w| w.tsen().clear_bit());
     }
 
+    pub fn is_enabled(&self, adc: &Adc) -> bool {
+        adc.rb.ccr.read().tsen().bit_is_set()
+    }
+
     pub fn convert_temp(vtemp: u16, vdda: u16) -> i16 {
         const VDD_CALIB: i32 = 3300_i32;
         let vtemp30_cal = i32::from(unsafe { ptr::read(VTEMPCAL30) }) * 100;
@@ -270,11 +274,14 @@ impl VTemp {
 
     pub fn read_vtemp(adc: &mut Adc) -> i16 {
         let mut vtemp = Self::new();
+        let vtemp_preenable = vtemp.is_enabled(&adc);
 
-        vtemp.enable(adc);
+        if !vtemp_preenable {
+            vtemp.enable(adc);
 
-        // Double read of vdda to allow sufficient startup time for the temp sensor
-        adc.read_vdda();
+            // Double read of vdda to allow sufficient startup time for the temp sensor
+            adc.read_vdda();
+        }
         let vdda = adc.read_vdda();
 
         adc.stash_cfg();
@@ -285,7 +292,9 @@ impl VTemp {
 
         let vtemp_val = adc.read(&mut vtemp).unwrap();
 
-        vtemp.disable(adc);
+        if !vtemp_preenable {
+            vtemp.disable(adc);
+        }
 
         adc.restore_cfg();
 
@@ -310,6 +319,10 @@ impl VRef {
         adc.rb.ccr.modify(|_, w| w.vrefen().clear_bit());
     }
 
+    pub fn is_enabled(&self, adc: &Adc) -> bool {
+        adc.rb.ccr.read().vrefen().bit_is_set()
+    }
+
     pub fn read_vdda(adc: &mut Adc) -> u16 {
         let vrefint_cal = u32::from(unsafe { ptr::read(VREFCAL) });
         let mut vref = Self::new();
@@ -320,11 +333,16 @@ impl VRef {
         adc.set_precision(AdcPrecision::B_12);
         adc.set_sample_time(AdcSampleTime::T_239);
 
-        vref.enable(adc);
+        let vref_val: u32 = if vref.is_enabled(&adc) {
+            adc.read(&mut vref).unwrap()
+        } else {
+            vref.enable(adc);
 
-        let vref_val: u32 = adc.read(&mut vref).unwrap();
+            let ret = adc.read(&mut vref).unwrap();
 
-        vref.disable(adc);
+            vref.disable(adc);
+            ret
+        };
 
         adc.restore_cfg();
 
@@ -360,14 +378,23 @@ impl VBat {
         adc.rb.ccr.modify(|_, w| w.vbaten().clear_bit());
     }
 
+    pub fn is_enabled(&self, adc: &Adc) -> bool {
+        adc.rb.ccr.read().vbaten().bit_is_set()
+    }
+
     pub fn read_vbat(adc: &mut Adc) -> u16 {
         let mut vbat = Self::new();
 
-        vbat.enable(adc);
+        let vbat_val: u16 = if vbat.is_enabled(&adc) {
+            adc.read_abs_v(&mut vbat)
+        } else {
+            vbat.enable(adc);
 
-        let vbat_val: u16 = adc.read_abs_v(&mut vbat);
+            let ret = adc.read_abs_v(&mut vbat);
 
-        vbat.disable(adc);
+            vbat.disable(adc);
+            ret
+        };
 
         vbat_val * 2
     }
@@ -393,11 +420,11 @@ impl Adc {
         s
     }
 
-    pub fn stash_cfg(&mut self) {
+    fn stash_cfg(&mut self) {
         self.stored_cfg = Some((self.sample_time, self.align, self.precision));
     }
 
-    pub fn restore_cfg(&mut self) {
+    fn restore_cfg(&mut self) {
         if let Some((samp_t, align, precision)) = self.stored_cfg.take() {
             self.sample_time = samp_t;
             self.align = align;

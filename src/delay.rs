@@ -33,22 +33,22 @@ use crate::rcc::Clocks;
 use embedded_hal::blocking::delay::{DelayMs, DelayUs};
 
 /// System timer (SysTick) as a delay provider
+#[derive(Clone)]
 pub struct Delay {
     clocks: Clocks,
-    syst: SYST,
 }
 
 impl Delay {
     /// Configures the system timer (SysTick) as a delay provider
-    pub fn new(mut syst: SYST, clocks: Clocks) -> Self {
+    /// As access to the count register is possible without a reference, we can
+    /// just drop it
+    pub fn new(mut syst: SYST, clocks: Clocks) -> Delay {
         syst.set_clock_source(SystClkSource::Core);
 
-        Delay { syst, clocks }
-    }
-
-    /// Releases the system timer (SysTick) resource
-    pub fn free(self) -> SYST {
-        self.syst
+        syst.set_reload(0x00FF_FFFF);
+        syst.clear_current();
+        syst.enable_counter();
+        Delay { clocks }
     }
 }
 
@@ -79,7 +79,8 @@ impl DelayMs<u8> for Delay {
 impl DelayUs<u32> for Delay {
     fn delay_us(&mut self, us: u32) {
         // The SysTick Reload Value register supports values between 1 and 0x00FFFFFF.
-        const MAX_RVR: u32 = 0x00FF_FFFF;
+        // Here less than maximum is used so we have some play if there's a long running interrupt.
+        const MAX_RVR: u32 = 0x007F_FFFF;
 
         let mut total_rvr = if self.clocks.sysclk().0 < 1_000_000 {
             us / (1_000_000 / self.clocks.sysclk().0)
@@ -94,16 +95,10 @@ impl DelayUs<u32> for Delay {
                 MAX_RVR
             };
 
-            self.syst.set_reload(current_rvr);
-            self.syst.clear_current();
-            self.syst.enable_counter();
-
+            let start_count = SYST::get_current();
+            while (SYST::get_current() - start_count) < current_rvr {}
             // Update the tracking variable while we are waiting...
             total_rvr -= current_rvr;
-
-            while !self.syst.has_wrapped() {}
-
-            self.syst.disable_counter();
         }
     }
 }

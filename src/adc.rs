@@ -64,7 +64,6 @@ pub struct Adc {
     sample_time: AdcSampleTime,
     align: AdcAlign,
     precision: AdcPrecision,
-    stored_cfg: Option<(AdcSampleTime, AdcAlign, AdcPrecision)>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -293,11 +292,7 @@ impl VTemp {
         }
         let vdda = VRef::read_vdda(adc);
 
-        adc.stash_cfg();
-
-        adc.set_align(AdcAlign::Right);
-        adc.set_precision(AdcPrecision::B_12);
-        adc.set_sample_time(AdcSampleTime::T_239);
+        let prev_cfg = adc.default_cfg();
 
         let vtemp_val = adc.read(&mut vtemp).unwrap();
 
@@ -305,7 +300,7 @@ impl VTemp {
             vtemp.disable(adc);
         }
 
-        adc.restore_cfg();
+        adc.restore_cfg(prev_cfg);
 
         Self::convert_temp(vtemp_val, vdda)
     }
@@ -336,11 +331,7 @@ impl VRef {
         let vrefint_cal = u32::from(unsafe { ptr::read(VREFCAL) });
         let mut vref = Self::new();
 
-        adc.stash_cfg();
-
-        adc.set_align(AdcAlign::Right);
-        adc.set_precision(AdcPrecision::B_12);
-        adc.set_sample_time(AdcSampleTime::T_239);
+        let prev_cfg = adc.default_cfg();
 
         let vref_val: u32 = if vref.is_enabled(&adc) {
             adc.read(&mut vref).unwrap()
@@ -353,7 +344,7 @@ impl VRef {
             ret
         };
 
-        adc.restore_cfg();
+        adc.restore_cfg(prev_cfg);
 
         ((VDD_CALIB as u32) * vrefint_cal / vref_val) as u16
     }
@@ -409,6 +400,9 @@ impl VBat {
     }
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct StoredConfig(AdcSampleTime, AdcAlign, AdcPrecision);
+
 #[cfg(feature = "device-selected")]
 impl Adc {
     /// Init a new Adc
@@ -422,23 +416,28 @@ impl Adc {
             sample_time: AdcSampleTime::default(),
             align: AdcAlign::default(),
             precision: AdcPrecision::default(),
-            stored_cfg: None,
         };
         s.select_clock();
         s.calibrate();
         s
     }
 
-    fn stash_cfg(&mut self) {
-        self.stored_cfg = Some((self.sample_time, self.align, self.precision));
+    pub fn save_cfg(&mut self) -> StoredConfig {
+        StoredConfig(self.sample_time, self.align, self.precision)
     }
 
-    fn restore_cfg(&mut self) {
-        if let Some((samp_t, align, precision)) = self.stored_cfg.take() {
-            self.sample_time = samp_t;
-            self.align = align;
-            self.precision = precision;
-        }
+    pub fn restore_cfg(&mut self, cfg: StoredConfig) {
+        self.sample_time = cfg.0;
+        self.align = cfg.1;
+        self.precision = cfg.2;
+    }
+
+    pub fn default_cfg(&mut self) -> StoredConfig {
+        let cfg = self.save_cfg();
+        self.sample_time = AdcSampleTime::default();
+        self.align = AdcAlign::default();
+        self.precision = AdcPrecision::default();
+        cfg
     }
 
     /// Set the Adc sampling time

@@ -38,6 +38,8 @@ pub struct Delay {
     clocks: Clocks,
 }
 
+const MAX_SYSTICK: u32 = 0x00FF_FFFF;
+
 impl Delay {
     /// Configures the system timer (SysTick) as a delay provider
     /// As access to the count register is possible without a reference, we can
@@ -45,7 +47,7 @@ impl Delay {
     pub fn new(mut syst: SYST, clocks: Clocks) -> Delay {
         syst.set_clock_source(SystClkSource::Core);
 
-        syst.set_reload(0x00FF_FFFF);
+        syst.set_reload(MAX_SYSTICK);
         syst.clear_current();
         syst.enable_counter();
         Delay { clocks }
@@ -96,9 +98,8 @@ impl DelayUs<u32> for Delay {
             };
 
             let start_count = SYST::get_current();
-            while (SYST::get_current() - start_count) < current_rvr {}
-            // Update the tracking variable while we are waiting...
             total_rvr -= current_rvr;
+            while ((start_count - SYST::get_current()) % MAX_SYSTICK) < current_rvr {}
         }
     }
 }

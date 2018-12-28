@@ -49,10 +49,13 @@ const VDD_CALIB: u16 = 3300;
 use core::ptr;
 
 #[cfg(feature = "device-selected")]
-use embedded_hal::adc::{Channel, OneShot};
+use embedded_hal::{
+    adc::{Channel, OneShot},
+    blocking::delay::DelayUs,
+};
 
 #[cfg(feature = "device-selected")]
-use crate::{gpio::*, stm32};
+use crate::{delay::Delay, gpio::*, stm32};
 
 #[cfg(feature = "device-selected")]
 /// Analog to Digital converter interface
@@ -274,17 +277,21 @@ impl VTemp {
         temperature as i16
     }
 
-    pub fn read_vtemp(adc: &mut Adc) -> i16 {
+    pub fn read(adc: &mut Adc, delay: Option<&mut Delay>) -> i16 {
         let mut vtemp = Self::new();
         let vtemp_preenable = vtemp.is_enabled(&adc);
 
         if !vtemp_preenable {
             vtemp.enable(adc);
 
-            // Double read of vdda to allow sufficient startup time for the temp sensor
-            adc.read_vdda();
+            if let Some(dref) = delay {
+                dref.delay_us(2_u16);
+            } else {
+                // Double read of vdda to allow sufficient startup time for the temp sensor
+                VRef::read_vdda(adc);
+            }
         }
-        let vdda = adc.read_vdda();
+        let vdda = VRef::read_vdda(adc);
 
         adc.stash_cfg();
 
@@ -384,7 +391,7 @@ impl VBat {
         adc.rb.ccr.read().vbaten().bit_is_set()
     }
 
-    pub fn read_vbat(adc: &mut Adc) -> u16 {
+    pub fn read(adc: &mut Adc) -> u16 {
         let mut vbat = Self::new();
 
         let vbat_val: u16 = if vbat.is_enabled(&adc) {
@@ -471,21 +478,8 @@ impl Adc {
         }
     }
 
-    pub fn read_vdda(&mut self) -> u16 {
-        VRef::read_vdda(self)
-    }
-
-    pub fn read_vtemp(&mut self) -> i16 {
-        VTemp::read_vtemp(self)
-    }
-
-    #[cfg(feature = "stm32f042")]
-    pub fn read_vbat(&mut self) -> u16 {
-        VBat::read_vbat(self)
-    }
-
     pub fn read_abs_v<PIN: Channel<Adc, ID = u8>>(&mut self, pin: &mut PIN) -> u16 {
-        let vdda = self.read_vdda() as u32;
+        let vdda = VRef::read_vdda(self) as u32;
         let v: u32 = self.read(pin).unwrap();
         let max_samp = self.max_sample() as u32;
 

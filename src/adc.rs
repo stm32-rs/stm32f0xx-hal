@@ -43,6 +43,9 @@ const VTEMPCAL30: *const u16 = 0x1FFF_F7B8 as *const u16;
 const VTEMPCAL110: *const u16 = 0x1FFF_F7C2 as *const u16;
 
 #[cfg(feature = "device-selected")]
+const VDD_CALIB: u16 = 3300;
+
+#[cfg(feature = "device-selected")]
 use core::ptr;
 
 #[cfg(feature = "device-selected")]
@@ -260,12 +263,11 @@ impl VTemp {
     }
 
     pub fn convert_temp(vtemp: u16, vdda: u16) -> i16 {
-        const VDD_CALIB: i32 = 3300_i32;
         let vtemp30_cal = i32::from(unsafe { ptr::read(VTEMPCAL30) }) * 100;
         let vtemp110_cal = i32::from(unsafe { ptr::read(VTEMPCAL110) }) * 100;
 
         let mut temperature: i32 = (vtemp as i32) * 100;
-        temperature = (temperature * (vdda as i32) / VDD_CALIB) - vtemp30_cal;
+        temperature = (temperature * (vdda as i32) / (VDD_CALIB as i32)) - vtemp30_cal;
         temperature *= (110 - 30) * 100;
         temperature /= vtemp110_cal - vtemp30_cal;
         temperature += 3000;
@@ -346,7 +348,7 @@ impl VRef {
 
         adc.restore_cfg();
 
-        (3300 * vrefint_cal / vref_val) as u16
+        ((VDD_CALIB as u32) * vrefint_cal / vref_val) as u16
     }
 }
 

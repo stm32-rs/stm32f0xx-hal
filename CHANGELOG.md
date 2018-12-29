@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Added ADC helper functions to read more intuitive values (#22) - @HarkonenBade
+
 ## [v0.10.1] - 2018-12-25
 
 ### Added

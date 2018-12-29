@@ -47,13 +47,13 @@ fn main() -> ! {
         // Start SysTick interrupt generation
         syst.enable_interrupt();
 
-        // USART2 at PA2 (TX) and PA15(RX)
-        let tx = gpioa.pa2.into_alternate_af1();
-        let rx = gpioa.pa15.into_alternate_af1();
+        // USART1 at PA9 (TX) and PA10(RX)
+        let tx = gpioa.pa9.into_alternate_af1();
+        let rx = gpioa.pa10.into_alternate_af1();
 
         // Initialiase UART
         let (mut tx, _) =
-            hal::serial::Serial::usart2(p.USART2, (tx, rx), 115_200.bps(), clocks).split();
+            hal::serial::Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), clocks).split();
 
         // Initialise ADC
         let adc = hal::adc::Adc::new(p.ADC);

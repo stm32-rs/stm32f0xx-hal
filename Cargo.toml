@@ -42,6 +42,7 @@ version = "0.2.2"
 
 [dev-dependencies]
 panic-halt = "0.2.0"
+cortex-m-semihosting = "0.3.1"
 
 [features]
 device-selected = []

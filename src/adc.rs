@@ -260,11 +260,13 @@ impl VTemp {
         adc.rb.ccr.modify(|_, w| w.tsen().clear_bit());
     }
 
+    /// Checks if the temperature sensor is enabled, does not account for the
+    /// t<sub>START</sub> time however.
     pub fn is_enabled(&self, adc: &Adc) -> bool {
         adc.rb.ccr.read().tsen().bit_is_set()
     }
 
-    pub fn convert_temp(vtemp: u16, vdda: u16) -> i16 {
+    fn convert_temp(vtemp: u16, vdda: u16) -> i16 {
         let vtemp30_cal = i32::from(unsafe { ptr::read(VTEMPCAL30) }) * 100;
         let vtemp110_cal = i32::from(unsafe { ptr::read(VTEMPCAL110) }) * 100;
 
@@ -276,6 +278,12 @@ impl VTemp {
         temperature as i16
     }
 
+    /// Read the value of the internal temperature sensor and return the
+    /// result in 100ths of a degree centigrade.
+    ///
+    /// Given a delay reference it will attempt to restrict to the
+    /// minimum delay needed to ensure a 10 us t<sub>START</sub> value.
+    /// Otherwise it will approximate the required delay using ADC reads.
     pub fn read(adc: &mut Adc, delay: Option<&mut Delay>) -> i16 {
         let mut vtemp = Self::new();
         let vtemp_preenable = vtemp.is_enabled(&adc);
@@ -323,10 +331,12 @@ impl VRef {
         adc.rb.ccr.modify(|_, w| w.vrefen().clear_bit());
     }
 
+    /// Returns if the internal voltage reference is enabled.
     pub fn is_enabled(&self, adc: &Adc) -> bool {
         adc.rb.ccr.read().vrefen().bit_is_set()
     }
 
+    /// Reads the value of VDDA in milli-volts
     pub fn read_vdda(adc: &mut Adc) -> u16 {
         let vrefint_cal = u32::from(unsafe { ptr::read(VREFCAL) });
         let mut vref = Self::new();
@@ -378,19 +388,21 @@ impl VBat {
         adc.rb.ccr.modify(|_, w| w.vbaten().clear_bit());
     }
 
+    /// Returns if the internal VBat sense is enabled
     pub fn is_enabled(&self, adc: &Adc) -> bool {
         adc.rb.ccr.read().vbaten().bit_is_set()
     }
 
+    /// Reads the value of VBat in milli-volts
     pub fn read(adc: &mut Adc) -> u16 {
         let mut vbat = Self::new();
 
         let vbat_val: u16 = if vbat.is_enabled(&adc) {
-            adc.read_abs_v(&mut vbat)
+            adc.read_abs_mv(&mut vbat)
         } else {
             vbat.enable(adc);
 
-            let ret = adc.read_abs_v(&mut vbat);
+            let ret = adc.read_abs_mv(&mut vbat);
 
             vbat.disable(adc);
             ret
@@ -400,6 +412,7 @@ impl VBat {
     }
 }
 
+/// A stored ADC config, can be restored by using the `Adc::restore_cfg` method
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct StoredConfig(AdcSampleTime, AdcAlign, AdcPrecision);
 
@@ -422,16 +435,20 @@ impl Adc {
         s
     }
 
+    /// Saves a copy of the current ADC config
     pub fn save_cfg(&mut self) -> StoredConfig {
         StoredConfig(self.sample_time, self.align, self.precision)
     }
 
+    /// Restores a stored config
     pub fn restore_cfg(&mut self, cfg: StoredConfig) {
         self.sample_time = cfg.0;
         self.align = cfg.1;
         self.precision = cfg.2;
     }
 
+    /// Resets the ADC config to default, returning the existing config as
+    /// a stored config.
     pub fn default_cfg(&mut self) -> StoredConfig {
         let cfg = self.save_cfg();
         self.sample_time = AdcSampleTime::default();
@@ -461,6 +478,7 @@ impl Adc {
         self.precision = precision;
     }
 
+    /// Returns the largest possible sample value for the current settings
     pub fn max_sample(&self) -> u16 {
         match self.align {
             AdcAlign::Left => u16::max_value(),
@@ -477,7 +495,8 @@ impl Adc {
         }
     }
 
-    pub fn read_abs_v<PIN: Channel<Adc, ID = u8>>(&mut self, pin: &mut PIN) -> u16 {
+    /// Read the value of a channel and converts the result to milli-volts
+    pub fn read_abs_mv<PIN: Channel<Adc, ID = u8>>(&mut self, pin: &mut PIN) -> u16 {
         let vdda = VRef::read_vdda(self) as u32;
         let v: u32 = self.read(pin).unwrap();
         let max_samp = self.max_sample() as u32;

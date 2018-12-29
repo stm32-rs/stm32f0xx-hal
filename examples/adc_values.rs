@@ -18,7 +18,7 @@ use core::cell::RefCell;
 
 struct Shared {
     adc: hal::adc::Adc,
-    tx: hal::serial::Tx<stm32::USART2>,
+    tx: hal::serial::Tx<stm32::USART1>,
 }
 
 static SHARED: Mutex<RefCell<Option<Shared>>> = Mutex::new(RefCell::new(None));

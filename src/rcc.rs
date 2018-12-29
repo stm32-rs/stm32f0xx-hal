@@ -1,4 +1,10 @@
 use crate::time::Hertz;
+use crate::stm32::rcc::cfgr::{PLLSRCW, SWW};
+
+pub enum ClockSource {
+    HSI,
+    HSE(u32)
+}
 
 /// Extension trait that constrains the `RCC` peripheral
 pub trait RccExt {
@@ -11,18 +17,14 @@ impl RccExt for crate::stm32::RCC {
     fn constrain(self) -> Rcc {
         Rcc {
             cfgr: CFGR {
-                hse: None,
                 hclk: None,
                 pclk: None,
                 sysclk: None,
-                clock_source: ClockSource::HSI,
+                clock_src: ClockSource::HSI,
             },
         }
     }
 }
-
-#[cfg(feature = "stm32f070")]
-use stm32f0::stm32f0x0::rcc::cfgr::{SWW, PLLSRCW};
 
 /// Constrained RCC peripheral
 pub struct Rcc {
@@ -33,20 +35,12 @@ pub struct Rcc {
 const HSI: u32 = 8_000_000; // Hz
 
 #[allow(unused)]
-pub enum ClockSource {
-    /// Use internal clock as source
-    HSI,
-    /// Use External clock as source
-    HSE,
-}
-
-#[allow(unused)]
 pub struct CFGR {
-    hse: Option<u32>,
     hclk: Option<u32>,
     pclk: Option<u32>,
     sysclk: Option<u32>,
-    clock_source: ClockSource,
+
+    clock_src: ClockSource,
 }
 
 #[cfg(feature = "device-selected")]
@@ -55,7 +49,7 @@ impl CFGR {
         where
             F: Into<Hertz>,
     {
-        self.hse = Some(freq.into().0);
+        self.clock_src = ClockSource::HSE(freq.into().0);
         self
     }
 
@@ -76,28 +70,22 @@ impl CFGR {
     }
 
     pub fn sysclk<F>(mut self, freq: F) -> Self
-        where
-            F: Into<Hertz>,
+    where
+        F: Into<Hertz>,
     {
         self.sysclk = Some(freq.into().0);
         self
     }
 
-    pub fn clock_source(mut self, src: ClockSource) -> Self
-    {
-        self.clock_source = src;
-        self
-    }
-
     pub fn freeze(self) -> Clocks {
-        let core_freq = match self.clock_source {
+        let base_freq = match self.clock_src {
             ClockSource::HSI => HSI,
-            ClockSource::HSE => self.hse.unwrap_or(HSI)
+            ClockSource::HSE(freq) => freq,
         };
 
-        let pllmul = (4 * self.sysclk.unwrap_or(core_freq) + core_freq) / core_freq / 2;
+        let pllmul = (4 * self.sysclk.unwrap_or(base_freq) + base_freq) / base_freq / 2;
         let pllmul = core::cmp::min(core::cmp::max(pllmul, 2), 16);
-        let sysclk = pllmul * core_freq / 2;
+        let sysclk = pllmul * base_freq / 2;
 
         let pllmul_bits = if pllmul == 2 {
             None
@@ -138,6 +126,21 @@ impl CFGR {
         let ppre: u8 = 1 << (ppre_bits - 0b011);
         let pclk = hclk / cast::u32(ppre);
 
+        let rcc = unsafe { &*crate::stm32::RCC::ptr() };
+
+        // If we are using HSE, start it
+        match self.clock_src {
+            ClockSource::HSE(_) => {
+                rcc.cr
+                    .modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
+
+                // Wait for HSE ready
+
+                while !rcc.cr.read().hserdy().bit_is_set() {}
+            },
+            ClockSource::HSI => (),
+        };
+
         // adjust flash wait states
         unsafe {
             let flash = &*crate::stm32::FLASH::ptr();
@@ -152,33 +155,50 @@ impl CFGR {
             })
         }
 
-        let rcc = unsafe { &*crate::stm32::RCC::ptr() };
         if let Some(pllmul_bits) = pllmul_bits {
             // use PLL as source
 
-            let pll_src_variant = match self.clock_source {
-                ClockSource::HSI => PLLSRCW::HSI_DIV_PREDIV,
-                ClockSource::HSE => PLLSRCW::HSE_DIV_PREDIV,
+            // If PLL is current source, switch to HSI
+            if rcc.cfgr.read().sws().is_pll() {
+                // Temporarily select HSI
+                rcc.cfgr.write(|w| w.sw().hsi());
+
+                // Wait for HSI enabled
+                while !rcc.cfgr.read().sws().is_hsi() {}
+            }
+
+            // Disable the PLL
+            rcc.cr.write(|w| w.pllon().off());
+            // Wait for PLL ready to clear
+            while rcc.cr.read().pllrdy().bit_is_set() {}
+
+            let pllsrc_bit = match self.clock_src {
+                ClockSource::HSI => 0,
+                ClockSource::HSE(_) => 1,
             };
 
-            rcc.cfgr.write(|w| unsafe { w.pllsrc().variant(pll_src_variant).pllmul().bits(pllmul_bits) });
+            rcc.cfgr.write(|w| unsafe {
+                w
+                    .pllsrc().bits(pllsrc_bit)
+                    .pllmul().bits(pllmul_bits)
+            });
 
-            rcc.cr.write(|w| w.pllon().set_bit());
+            rcc.cr.write(|w| w.pllon().on());
 
             while rcc.cr.read().pllrdy().bit_is_clear() {}
 
             rcc.cfgr.modify(|_, w| unsafe {
-                w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().bits(2)
+                w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll()
             });
         } else {
-            let src_sw_variant = match self.clock_source {
+            let sw_var = match self.clock_src {
                 ClockSource::HSI => SWW::HSI,
-                ClockSource::HSE => SWW::HSE,
+                ClockSource::HSE(_) => SWW::HSE,
             };
 
             // use HSI as source
             rcc.cfgr
-                .write(|w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().variant(src_sw_variant) });
+                .write(|w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().variant(sw_var) });
         }
 
         Clocks {

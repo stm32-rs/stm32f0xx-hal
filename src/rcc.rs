@@ -1,3 +1,4 @@
+use core::cmp;
 use crate::time::Hertz;
 
 /// Extension trait that constrains the `RCC` peripheral

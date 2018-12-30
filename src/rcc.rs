@@ -1,5 +1,5 @@
 use crate::time::Hertz;
-use crate::stm32::rcc::cfgr::{PLLSRCW, SWW};
+use crate::stm32::rcc::cfgr::SWW;
 
 pub enum ClockSource {
     HSI,

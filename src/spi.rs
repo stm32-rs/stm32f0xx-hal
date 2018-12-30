@@ -6,23 +6,15 @@ use nb;
 
 pub use embedded_hal::spi::{Mode, Phase, Polarity};
 
-#[allow(unused)]
-use crate::stm32;
-
 // TODO Put this inside the macro
 // Currently that causes a compiler panic
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 use crate::stm32::SPI1;
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f070xb"
 ))]
-#[allow(unused)]
 use crate::stm32::SPI2;
 
 #[allow(unused)]
@@ -58,7 +50,7 @@ pub trait SckPin<SPI> {}
 pub trait MisoPin<SPI> {}
 pub trait MosiPin<SPI> {}
 
-#[allow(unused)]
+#[cfg(feature = "device-selected")]
 macro_rules! spi_pins {
     ($($SPI:ident => {
         sck => [$($sck:ty),+ $(,)*],
@@ -67,23 +59,19 @@ macro_rules! spi_pins {
     })+) => {
         $(
             $(
-                impl SckPin<stm32::$SPI> for $sck {}
+                impl SckPin<crate::stm32::$SPI> for $sck {}
             )+
             $(
-                impl MisoPin<stm32::$SPI> for $miso {}
+                impl MisoPin<crate::stm32::$SPI> for $miso {}
             )+
             $(
-                impl MosiPin<stm32::$SPI> for $mosi {}
+                impl MosiPin<crate::stm32::$SPI> for $mosi {}
             )+
         )+
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 spi_pins! {
     SPI1 => {
         sck => [gpioa::PA5<Alternate<AF0>>, gpiob::PB3<Alternate<AF0>>],
@@ -139,7 +127,7 @@ macro_rules! spi {
                     F: Into<Hertz>,
                 {
                     // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*stm32::RCC::ptr()) };
+                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
 
                     /* Enable clock for SPI */
                     rcc.$apbenr.modify(|_, w| w.$spiXen().set_bit());
@@ -154,11 +142,7 @@ macro_rules! spi {
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 spi! {
     SPI1: (spi1, spi1en, spi1rst, apb2enr, apb2rstr),
 }
@@ -173,18 +157,10 @@ spi! {
 
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
-type SpiRegisterBlock = stm32::spi1::RegisterBlock;
+#[cfg(feature = "device-selected")]
+type SpiRegisterBlock = crate::stm32::spi1::RegisterBlock;
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
@@ -255,11 +231,7 @@ where
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::spi::FullDuplex<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
@@ -304,22 +276,14 @@ where
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::transfer::Default<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
 {}
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::write::Default<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where

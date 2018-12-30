@@ -48,6 +48,9 @@ pub struct PullUp;
 /// Open drain input or output (type state)
 pub struct OpenDrain;
 
+/// Analog mode (type state)
+pub struct Analog;
+
 /// Output mode (type state)
 pub struct Output<MODE> {
     _mode: PhantomData<MODE>,
@@ -64,6 +67,12 @@ pub struct Pin<MODE> {
     port: *const GpioRegExt,
     _mode: PhantomData<MODE>,
 }
+
+// NOTE(unsafe) The only write acess is to BSRR, which is thread safe
+unsafe impl<MODE> Sync for Pin<MODE> {}
+// NOTE(unsafe) this only enables read access to the same pin from multiple
+// threads
+unsafe impl<MODE> Send for Pin<MODE> {}
 
 impl<MODE> StatefulOutputPin for Pin<Output<MODE>> {
     fn is_set_high(&self) -> bool {
@@ -134,18 +143,10 @@ macro_rules! gpio_trait {
     };
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 gpio_trait!(gpioa);
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 gpio_trait!(gpiof);
 
 #[allow(unused)]
@@ -162,7 +163,7 @@ macro_rules! gpio {
 
             use crate::stm32::RCC;
             use super::{
-                Alternate, Floating, GpioExt, Input, OpenDrain, Output,
+                Alternate, Analog, Floating, GpioExt, Input, OpenDrain, Output,
                 PullDown, PullUp, PushPull, AF0, AF1, AF2, AF3, AF4, AF5, AF6, AF7,
                 Pin, GpioRegExt,
             };
@@ -327,6 +328,22 @@ macro_rules! gpio {
                             });
                             &(*$GPIOX::ptr()).moder.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
+                            });
+                        }
+                        $PXi { _mode: PhantomData }
+                    }
+
+                    /// Configures the pin to operate as an analog pin
+                    pub fn into_analog(
+                        self,
+                    ) -> $PXi<Analog> {
+                        let offset = 2 * $i;
+                        unsafe {
+                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                                w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
+                            });
+                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                                w.bits((r.bits() & !(0b11 << offset)) | (0b11 << offset))
                             });
                         }
                         $PXi { _mode: PhantomData }
@@ -510,11 +527,7 @@ macro_rules! gpio {
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 gpio!(GPIOA, gpioa, iopaen, PA, [
     PA0: (pa0, 0, Input<Floating>),
     PA1: (pa1, 1, Input<Floating>),
@@ -534,11 +547,7 @@ gpio!(GPIOA, gpioa, iopaen, PA, [
     PA15: (pa15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 gpio!(GPIOB, gpiob, iopben, PB, [
     PB0: (pb0, 0, Input<Floating>),
     PB1: (pb1, 1, Input<Floating>),

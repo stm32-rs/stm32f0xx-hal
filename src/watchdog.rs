@@ -44,29 +44,17 @@
 #[allow(unused)]
 use embedded_hal::watchdog;
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 use crate::stm32::IWDG;
 use crate::time::Hertz;
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 /// Watchdog instance
 pub struct Watchdog {
     iwdg: IWDG,
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl watchdog::Watchdog for Watchdog {
     /// Feed the watchdog, so that at least one `period` goes by before the next
     /// reset
@@ -105,22 +93,14 @@ impl Into<IwdgTimeout> for Hertz {
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl Watchdog {
     pub fn new(iwdg: IWDG) -> Self {
         Self { iwdg }
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 impl watchdog::WatchdogEnable for Watchdog {
     type Time = IwdgTimeout;
     fn start<T>(&mut self, period: T)

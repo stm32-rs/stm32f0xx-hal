@@ -1,6 +1,31 @@
-//! Delays
+//! API for delays with the systick timer
+//!
+//! Please be aware of potential overflows.
+//! For example, the maximum delay with 48MHz is around 89 seconds
+//!
+//! Consider using the timers api as a more flexible interface
+//!
+//! # Example
+//!
+//! ``` no_run
+//! use stm32f0xx_hal as hal;
+//!
+//! use crate::hal::stm32;
+//! use crate::hal::prelude::*;
+//! use crate::hal::delay::Delay;
+//! use cortex_m::peripheral::Peripherals;
+//!
+//! let mut p = stm32::Peripherals::take().unwrap();
+//! let mut cp = cortex_m::Peripherals::take().unwrap();
+//!
+//! let clocks = p.RCC.constrain().cfgr.freeze();
+//! let mut delay = Delay::new(cp.SYST, clocks);
+//! loop {
+//!     delay.delay_ms(1_000_u16);
+//! }
+//! ```
 
-use cast::u32;
+use cast::{u16, u32};
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
@@ -28,36 +53,58 @@ impl Delay {
 }
 
 impl DelayMs<u32> for Delay {
-    fn delay_ms(&mut self, ms: u32) {
-        self.delay_us(ms * 1_000);
+    // At 48 MHz, calling delay_us with ms * 1_000 directly overflows at 0x15D868 (just over the max u16 value)
+    fn delay_ms(&mut self, mut ms: u32) {
+        const MAX_MS: u32 = 0x0000_FFFF;
+        while ms != 0 {
+            let current_ms = if ms <= MAX_MS { ms } else { MAX_MS };
+            self.delay_us(current_ms * 1_000);
+            ms -= current_ms;
+        }
     }
 }
 
 impl DelayMs<u16> for Delay {
     fn delay_ms(&mut self, ms: u16) {
-        self.delay_ms(u32(ms));
+        self.delay_us(u32::from(ms) * 1_000);
     }
 }
 
 impl DelayMs<u8> for Delay {
     fn delay_ms(&mut self, ms: u8) {
-        self.delay_ms(u32(ms));
+        self.delay_ms(u16(ms));
     }
 }
 
 impl DelayUs<u32> for Delay {
     fn delay_us(&mut self, us: u32) {
-        let rvr = us * (self.clocks.sysclk().0 / 1_000_000);
+        // The SysTick Reload Value register supports values between 1 and 0x00FFFFFF.
+        const MAX_RVR: u32 = 0x00FF_FFFF;
 
-        assert!(rvr < (1 << 24));
+        let mut total_rvr = if self.clocks.sysclk().0 < 1_000_000 {
+            us / (1_000_00 / self.clocks.sysclk().0)
+        } else {
+            us * (self.clocks.sysclk().0 / 1_000_000)
+        };
 
-        self.syst.set_reload(rvr);
-        self.syst.clear_current();
-        self.syst.enable_counter();
+        while total_rvr != 0 {
+            let current_rvr = if total_rvr <= MAX_RVR {
+                total_rvr
+            } else {
+                MAX_RVR
+            };
 
-        while !self.syst.has_wrapped() {}
+            self.syst.set_reload(current_rvr);
+            self.syst.clear_current();
+            self.syst.enable_counter();
 
-        self.syst.disable_counter();
+            // Update the tracking variable while we are waiting...
+            total_rvr -= current_rvr;
+
+            while !self.syst.has_wrapped() {}
+
+            self.syst.disable_counter();
+        }
     }
 }
 

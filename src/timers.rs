@@ -59,20 +59,23 @@ impl Timer<SYST> {
     }
 
     /// Starts listening for an `event`
-    pub fn listen(&mut self, event: Event) {
+    pub fn listen(&mut self, event: &Event) {
         match event {
             Event::TimeOut => self.tim.enable_interrupt(),
         }
     }
 
     /// Stops listening for an `event`
-    pub fn unlisten(&mut self, event: Event) {
+    pub fn unlisten(&mut self, event: &Event) {
         match event {
             Event::TimeOut => self.tim.disable_interrupt(),
         }
     }
 }
 
+/// Use the systick as a timer
+///
+/// Be aware that intervals less than 4 Hertz may not function properly
 impl CountDown for Timer<SYST> {
     type Time = Hertz;
 
@@ -208,11 +211,7 @@ macro_rules! timers {
     }
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070"
-))]
+#[cfg(feature = "device-selected")]
 timers! {
     TIM1: (tim1, tim1en, tim1rst, apb2enr, apb2rstr),
     TIM3: (tim3, tim3en, tim3rst, apb1enr, apb1rstr),

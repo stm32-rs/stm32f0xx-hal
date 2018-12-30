@@ -12,16 +12,15 @@ use crate::hal::prelude::*;
 
 use cortex_m::interrupt::Mutex;
 use cortex_m::peripheral::Peripherals as c_m_Peripherals;
-use cortex_m_rt::{entry, interrupt};
+use cortex_m_rt::entry;
 
-pub use crate::hal::stm32;
-pub use crate::hal::stm32::*;
+use crate::hal::stm32::{interrupt, Interrupt, Peripherals, EXTI};
 
 use core::cell::RefCell;
 use core::ops::DerefMut;
 
 // Make our LED globally available
-static LED: Mutex<RefCell<Option<gpiob::PB3<Output<PushPull>>>>> = Mutex::new(RefCell::new(None));
+static LED: Mutex<RefCell<Option<gpioa::PA1<Output<PushPull>>>>> = Mutex::new(RefCell::new(None));
 
 // Make our delay provider globally available
 static DELAY: Mutex<RefCell<Option<Delay>>> = Mutex::new(RefCell::new(None));
@@ -32,6 +31,7 @@ static INT: Mutex<RefCell<Option<EXTI>>> = Mutex::new(RefCell::new(None));
 #[entry]
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (Peripherals::take(), c_m_Peripherals::take()) {
+        let gpioa = p.GPIOA.split();
         let gpiob = p.GPIOB.split();
         let syscfg = p.SYSCFG_COMP;
         let exti = p.EXTI;
@@ -43,8 +43,8 @@ fn main() -> ! {
         // Configure PB1 as input (button)
         let _ = gpiob.pb1.into_pull_down_input();
 
-        // Configure PB3 as output (LED)
-        let mut led = gpiob.pb3.into_push_pull_output();
+        // Configure PA1 as output (LED)
+        let mut led = gpioa.pa1.into_push_pull_output();
 
         // Turn off LED
         led.set_low();
@@ -107,7 +107,7 @@ fn EXTI0_1() {
             led.set_low();
 
             // Clear interrupt
-            exti.pr.modify(|_, w| w.pif1().set_bit());
+            exti.pr.write(|w| w.pif1().set_bit());
         }
     });
 }

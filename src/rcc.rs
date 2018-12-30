@@ -1,13 +1,3 @@
-#[allow(unused_imports)]
-use core::cmp;
-
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070",
-))]
-use crate::stm32::{FLASH, RCC};
-
 use crate::time::Hertz;
 
 /// Extension trait that constrains the `RCC` peripheral
@@ -16,12 +6,8 @@ pub trait RccExt {
     fn constrain(self) -> Rcc;
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070",
-))]
-impl RccExt for RCC {
+#[cfg(feature = "device-selected")]
+impl RccExt for crate::stm32::RCC {
     fn constrain(self) -> Rcc {
         Rcc {
             cfgr: CFGR {
@@ -55,7 +41,7 @@ enum SysClkSource {
 
 #[allow(unused)]
 enum PllSource {
-    HSI_2 = 0b00,
+    HSI_DIV2 = 0b00,
     HSI = 0b01,
     HSE = 0b10,
     HSI48 = 0b11,
@@ -70,11 +56,7 @@ pub struct CFGR {
     enable_hsi48: bool,
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f042",
-    feature = "stm32f070",
-))]
+#[cfg(feature = "device-selected")]
 impl CFGR {
     pub fn hclk<F>(mut self, freq: F) -> Self
     where
@@ -184,7 +166,7 @@ impl CFGR {
 
         // adjust flash wait states
         unsafe {
-            let flash = &*FLASH::ptr();
+            let flash = &*crate::stm32::FLASH::ptr();
             flash.acr.write(|w| {
                 w.latency().bits(if sysclk <= 24_000_000 {
                     0b000
@@ -196,9 +178,9 @@ impl CFGR {
             })
         }
 
-        // Set up rcc based on above calculated configuration.
-        let rcc = unsafe { &*RCC::ptr() };
+        let rcc = unsafe { &*crate::stm32::RCC::ptr() };
 
+        // Set up rcc based on above calculated configuration.
        
         // Enable requested clock sources
         // HSI
@@ -220,9 +202,9 @@ impl CFGR {
             if self.enable_hsi48 {
                 rcc.cfgr.modify(|_, w| w.pllsrc().bits(PllSource::HSI48 as u8));
             } else if self.enable_hsi {
-                rcc.cfgr.modify(|_, w| w.pllsrc().bits(PllSource::HSI_2 as u8));
+                rcc.cfgr.modify(|_, w| w.pllsrc().bits(PllSource::HSI_DIV2 as u8));
             } else {
-                rcc.cfgr.modify(|_, w| w.pllsrc().bits(PllSource::HSI_2 as u8));
+                rcc.cfgr.modify(|_, w| w.pllsrc().bits(PllSource::HSI_DIV2 as u8));
             }
 
             rcc.cr.write(|w| w.pllon().set_bit());

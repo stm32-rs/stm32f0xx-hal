@@ -66,7 +66,7 @@ impl DelayMs<u32> for Delay {
 
 impl DelayMs<u16> for Delay {
     fn delay_ms(&mut self, ms: u16) {
-        self.delay_us(ms as u32 * 1_000);
+        self.delay_us(u32::from(ms) * 1_000);
     }
 }
 

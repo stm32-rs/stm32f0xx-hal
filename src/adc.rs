@@ -91,7 +91,7 @@ pub enum AdcSampleTime {
 
 #[cfg(feature = "device-selected")]
 impl AdcSampleTime {
-    fn write_bits(&self, adc: &mut stm32::ADC) {
+    fn write_bits(self, adc: &mut stm32::ADC) {
         unsafe {
             adc.smpr.write(|w| {
                 w.smpr().bits(match self {
@@ -139,7 +139,7 @@ pub enum AdcAlign {
 
 #[cfg(feature = "device-selected")]
 impl AdcAlign {
-    fn write_bits(&self, adc: &mut stm32::ADC) {
+    fn write_bits(self, adc: &mut stm32::ADC) {
         adc.cfgr1.write(|w| {
             w.align().bit(match self {
                 AdcAlign::Left => true,
@@ -170,7 +170,7 @@ pub enum AdcPrecision {
 
 #[cfg(feature = "device-selected")]
 impl AdcPrecision {
-    fn write_bits(&self, adc: &mut stm32::ADC) {
+    fn write_bits(self, adc: &mut stm32::ADC) {
         unsafe {
             adc.cfgr1.write(|w| {
                 w.res().bits(match self {
@@ -226,11 +226,11 @@ adc_pins!(
     gpioc::PC5<Analog> => 15_u8,
 );
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// Internal temperature sensor (ADC Channel 16)
 pub struct VTemp;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// Internal voltage reference (ADC Channel 17)
 pub struct VRef;
 
@@ -244,7 +244,7 @@ adc_pins!(
 impl VTemp {
     /// Init a new VTemp
     pub fn new() -> Self {
-        VTemp {}
+        VTemp::default()
     }
 
     /// Enable the internal temperature sense, this has a wake up time
@@ -270,8 +270,8 @@ impl VTemp {
         let vtemp30_cal = i32::from(unsafe { ptr::read(VTEMPCAL30) }) * 100;
         let vtemp110_cal = i32::from(unsafe { ptr::read(VTEMPCAL110) }) * 100;
 
-        let mut temperature: i32 = (vtemp as i32) * 100;
-        temperature = (temperature * (vdda as i32) / (VDD_CALIB as i32)) - vtemp30_cal;
+        let mut temperature = i32::from(vtemp) * 100;
+        temperature = (temperature * (i32::from(vdda) / i32::from(VDD_CALIB))) - vtemp30_cal;
         temperature *= (110 - 30) * 100;
         temperature /= vtemp110_cal - vtemp30_cal;
         temperature += 3000;
@@ -318,7 +318,7 @@ impl VTemp {
 impl VRef {
     /// Init a new VRef
     pub fn new() -> Self {
-        VRef {}
+        VRef::default()
     }
 
     /// Enable the internal voltage reference, remember to disable when not in use.
@@ -356,12 +356,12 @@ impl VRef {
 
         adc.restore_cfg(prev_cfg);
 
-        ((VDD_CALIB as u32) * vrefint_cal / vref_val) as u16
+        (u32::from(VDD_CALIB) * vrefint_cal / vref_val) as u16
     }
 }
 
 #[cfg(feature = "stm32f042")]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// Battery reference voltage (ADC Channel 18)
 pub struct VBat;
 
@@ -374,7 +374,7 @@ adc_pins!(
 impl VBat {
     /// Init a new VBat
     pub fn new() -> Self {
-        VBat {}
+        VBat::default()
     }
 
     /// Enable the internal VBat sense, remember to disable when not in use
@@ -483,7 +483,7 @@ impl Adc {
         match self.align {
             AdcAlign::Left => u16::max_value(),
             AdcAlign::LeftAsRM => match self.precision {
-                AdcPrecision::B_6 => u8::max_value() as u16,
+                AdcPrecision::B_6 => u16::from(u8::max_value()),
                 _ => u16::max_value(),
             },
             AdcAlign::Right => match self.precision {
@@ -497,9 +497,9 @@ impl Adc {
 
     /// Read the value of a channel and converts the result to milli-volts
     pub fn read_abs_mv<PIN: Channel<Adc, ID = u8>>(&mut self, pin: &mut PIN) -> u16 {
-        let vdda = VRef::read_vdda(self) as u32;
+        let vdda = u32::from(VRef::read_vdda(self));
         let v: u32 = self.read(pin).unwrap();
-        let max_samp = self.max_sample() as u32;
+        let max_samp = u32::from(self.max_sample());
 
         (v * vdda / max_samp) as u16
     }

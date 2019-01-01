@@ -8,7 +8,11 @@ use crate::gpio::gpioc::*;
 #[cfg(feature = "stm32f030xc")]
 use crate::gpio::gpiod::*;
 #[allow(unused)]
+#[cfg(feature = "device-selected")]
+use crate::gpio::gpiof::*;
+#[allow(unused)]
 use crate::gpio::{Alternate, AF0, AF1, AF2, AF4, AF5};
+use crate::i2c::*;
 use crate::serial::*;
 use crate::spi::*;
 #[cfg(feature = "device-selected")]
@@ -36,8 +40,22 @@ pins! {
     PB3 => {AF0: SckPin<SPI1>},
     PB4 => {AF0: MisoPin<SPI1>},
     PB5 => {AF0: MosiPin<SPI1>},
-    PB6 => {AF0: TxPin<USART1>},
-    PB7 => {AF0: RxPin<USART1>}
+    PB6 => {
+        AF0: TxPin<USART1>,
+        AF1: SclPin<I2C1>
+    },
+    PB7 => {
+        AF0: RxPin<USART1>,
+        AF1: SdaPin<I2C1>
+    },
+    PB8 => {AF1: SclPin<I2C1>},
+    PB9 => {AF1: SdaPin<I2C1>}
+}
+
+#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
+pins! {
+    PA11 => {AF5: SclPin<I2C1>},
+    PA12 => {AF5: SdaPin<I2C1>}
 }
 
 #[cfg(feature = "stm32f030x6")]
@@ -108,4 +126,48 @@ pins! {
     PB13 => {AF0: SckPin<SPI2>},
     PB14 => {AF0: MisoPin<SPI2>},
     PB15 => {AF0: MosiPin<SPI2>}
+}
+
+#[cfg(any(
+    feature = "stm32f030x6",
+    feature = "stm32f030xc",
+    feature = "stm32f042",
+    feature = "stm32f070x6",
+))]
+pins! {
+    PA9 => {AF4: SclPin<I2C1>},
+    PA10 => {AF4: SdaPin<I2C1>}
+}
+
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f030x6",
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+    feature = "stm32f070xb"
+))]
+pins! {
+    PB10 => {AF1: SclPin<I2C1>},
+    PB11 => {AF1: SdaPin<I2C1>}
+}
+
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f030xc",
+    feature = "stm32f070x6",
+))]
+pins! {
+    PF1 => {AF1: SclPin<I2C1>},
+    PF0 => {AF1: SdaPin<I2C1>}
+}
+
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f030xc",
+    feature = "stm32f030xc",
+    feature = "stm32f070xb"
+))]
+pins! {
+    PB13 => {AF5: SclPin<I2C1>},
+    PB14 => {AF5: SdaPin<I2C1>}
 }

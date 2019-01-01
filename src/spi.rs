@@ -201,9 +201,58 @@ spi_pins! {
     }
 }
 
+/// Filler for a SCK pin
+///
+/// Usefull if you don't want to utilize the sck pin,
+/// but a pin parameter is required
+pub struct NoSck {
+    _1: (),
+}
+
+impl NoSck {
+    /// Create a new filler sck pin
+    pub unsafe fn new() -> Self {
+        Self { _1: () }
+    }
+}
+
+/// Filler for a MISO Pin
+///
+/// Usefull if you don't want to utilize the miso pin,
+/// but a pin parameter is required
+pub struct NoMiso {
+    _1: (),
+}
+
+impl NoMiso {
+    /// Create a new filler mosi pin
+    pub unsafe fn new() -> Self {
+        Self { _1: () }
+    }
+}
+
+/// Filler for a MOSI Pin
+///
+/// Usefull if you don't want to utilize the miso pin,
+/// but a pin parameter is required
+pub struct NoMosi {
+    _1: (),
+}
+
+impl NoMosi {
+    /// Create a new filler mosi pin
+    pub unsafe fn new() -> Self {
+        Self { _1: () }
+    }
+}
+
 macro_rules! spi {
     ($($SPI:ident: ($spi:ident, $spiXen:ident, $spiXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
+            impl SckPin<$SPI> for NoSck {}
+            impl MisoPin<$SPI> for NoMiso {}
+            impl MosiPin<$SPI> for NoMosi {}
+
             impl<SCKPIN, MISOPIN, MOSIPIN> Spi<$SPI, SCKPIN, MISOPIN, MOSIPIN> {
                 /// Creates a new spi instance
                 pub fn $spi<F>(

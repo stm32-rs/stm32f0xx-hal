@@ -36,7 +36,6 @@ use embedded_hal::prelude::*;
 #[allow(unused)]
 use crate::{gpio::*, rcc::Clocks, time::Bps};
 
-
 /// Serial error
 #[derive(Debug)]
 pub enum Error {

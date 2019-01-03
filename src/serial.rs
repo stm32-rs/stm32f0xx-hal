@@ -36,13 +36,6 @@ use embedded_hal::prelude::*;
 #[allow(unused)]
 use crate::{gpio::*, rcc::Clocks, time::Bps};
 
-/// Interrupt event
-pub enum Event {
-    /// New data has been received
-    Rxne,
-    /// New data can be sent
-    Txe,
-}
 
 /// Serial error
 #[derive(Debug)]
@@ -57,6 +50,16 @@ pub enum Error {
     Parity,
     #[doc(hidden)]
     _Extensible,
+}
+
+/// Interrupt event
+pub enum Event {
+    /// New data has been received
+    Rxne,
+    /// New data can be sent
+    Txe,
+    /// Idle line state detected
+    Idle,
 }
 
 pub trait TxPin<USART> {}
@@ -178,21 +181,51 @@ macro_rules! usart {
                     // NOTE(unsafe) This executes only during initialisation
                     let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
 
-                    /* Enable clock for USART */
+                    // Enable clock for USART
                     rcc.$apbenr.modify(|_, w| w.$usartXen().set_bit());
 
                     // Calculate correct baudrate divisor on the fly
                     let brr = clocks.pclk().0 / baud_rate.0;
                     usart.brr.write(|w| unsafe { w.bits(brr) });
 
-                    /* Reset other registers to disable advanced USART features */
+                    // Reset other registers to disable advanced USART features
                     usart.cr2.reset();
                     usart.cr3.reset();
 
-                    /* Enable transmission and receiving */
-                    usart.cr1.modify(|_, w| unsafe { w.bits(0xD) });
+                    // Enable transmission and receiving
+                    usart.cr1.modify(|_, w| w.te().set_bit().re().set_bit().ue().set_bit());
 
                     Serial { usart, pins }
+                }
+
+                /// Starts listening for an interrupt event
+                pub fn listen(&mut self, event: Event) {
+                    match event {
+                        Event::Rxne => {
+                            self.usart.cr1.modify(|_, w| w.rxneie().set_bit())
+                        },
+                        Event::Txe => {
+                            self.usart.cr1.modify(|_, w| w.txeie().set_bit())
+                        },
+                        Event::Idle => {
+                            self.usart.cr1.modify(|_, w| w.idleie().set_bit())
+                        },
+                    }
+                }
+
+                /// Stop listening for an interrupt event
+                pub fn unlisten(&mut self, event: Event) {
+                    match event {
+                        Event::Rxne => {
+                            self.usart.cr1.modify(|_, w| w.rxneie().clear_bit())
+                        },
+                        Event::Txe => {
+                            self.usart.cr1.modify(|_, w| w.txeie().clear_bit())
+                        },
+                        Event::Idle => {
+                            self.usart.cr1.modify(|_, w| w.idleie().clear_bit())
+                        },
+                    }
                 }
             }
         )+

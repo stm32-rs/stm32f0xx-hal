@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.11.0] - 2019-01-04
+
+### Added
+
+- Added ADC helper functions to read more intuitive values (#22) - @HarkonenBade
+- Added interrupt enabling/disabling support to USART ports
+- Added the option to have multiple Delay instances by cloning it - @david-sawatzke
+
+### Changed
+
+- Fixed a few clippy lints
+
+### Removed
+
+- Removed the free() method on the Delay provider (breaking change)
+
+## [v0.10.1] - 2018-12-25
+
 ### Added
 
 - Added Sync & Send ability to Pin
@@ -56,6 +74,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated stm32f0 dependency to v0.5.0.
 - Interrupt handler to new #[interrupt] attribute
 
-[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.11.0...HEAD
+[v0.11.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.10.1...v0.11.0
+[v0.10.1]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.10.0...v0.10.1
 [v0.10.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.8.0...v0.9.0

@@ -13,7 +13,8 @@ use crate::stm32::SPI1;
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
-    feature = "stm32f070xb"
+    feature = "stm32f070xb",
+    feature = "stm32f072",
 ))]
 use crate::stm32::SPI2;
 
@@ -87,10 +88,19 @@ spi_pins! {
         mosi => [gpiob::PB15<Alternate<AF0>>],
     }
 }
+#[cfg(feature = "stm32f072Vx")]
+spi_pins! {
+    SPI1 => {
+        sck => [gpioe::PE13<Alternate<AF1>>],
+        miso => [gpioe::PE14<Alternate<AF1>>],
+        mosi => [gpioe::PE15<Alternate<AF1>>],
+    }
+}
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
-    feature = "stm32f070xb"
+    feature = "stm32f070xb",
+    feature = "stm32f072",
 ))]
 spi_pins! {
     SPI2 => {
@@ -99,12 +109,25 @@ spi_pins! {
         mosi => [gpiob::PB15<Alternate<AF0>>],
     }
 }
-#[cfg(any(feature = "stm32f030xc", feature = "stm32f070xb"))]
+#[cfg(any(
+    feature = "stm32f030xc",
+    feature = "stm32f070xb",
+    feature = "stm32f072Vx",
+    feature = "stm32f072Rx",
+))]
 spi_pins! {
     SPI2 => {
         sck => [gpiob::PB10<Alternate<AF5>>],
         miso => [gpioc::PC2<Alternate<AF1>>],
         mosi => [gpioc::PC3<Alternate<AF1>>],
+    }
+}
+#[cfg(feature = "stm32f072Vx")]
+spi_pins! {
+    SPI2 => {
+        sck => [gpiod::PD1<Alternate<AF1>>],
+        miso => [gpiod::PD3<Alternate<AF1>>],
+        mosi => [gpiod::PD4<Alternate<AF1>>],
     }
 }
 

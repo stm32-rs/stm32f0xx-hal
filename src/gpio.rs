@@ -576,22 +576,22 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
 
 #[cfg(any(feature = "stm32f030", feature = "stm32f070"))]
 gpio!(GPIOC, gpioc, iopcen, PC, [
-    PC0: (pb0, 0, Input<Floating>),
-    PC1: (pb1, 1, Input<Floating>),
-    PC2: (pb2, 2, Input<Floating>),
-    PC3: (pb3, 3, Input<Floating>),
-    PC4: (pb4, 4, Input<Floating>),
-    PC5: (pb5, 5, Input<Floating>),
-    PC6: (pb6, 6, Input<Floating>),
-    PC7: (pb7, 7, Input<Floating>),
-    PC8: (pb8, 8, Input<Floating>),
-    PC9: (pb9, 9, Input<Floating>),
-    PC10: (pb10, 10, Input<Floating>),
-    PC11: (pb11, 11, Input<Floating>),
-    PC12: (pb12, 12, Input<Floating>),
-    PC13: (pb13, 13, Input<Floating>),
-    PC14: (pb14, 14, Input<Floating>),
-    PC15: (pb15, 15, Input<Floating>),
+    PC0: (pc0, 0, Input<Floating>),
+    PC1: (pc1, 1, Input<Floating>),
+    PC2: (pc2, 2, Input<Floating>),
+    PC3: (pc3, 3, Input<Floating>),
+    PC4: (pc4, 4, Input<Floating>),
+    PC5: (pc5, 5, Input<Floating>),
+    PC6: (pc6, 6, Input<Floating>),
+    PC7: (pc7, 7, Input<Floating>),
+    PC8: (pc8, 8, Input<Floating>),
+    PC9: (pc9, 9, Input<Floating>),
+    PC10: (pc10, 10, Input<Floating>),
+    PC11: (pc11, 11, Input<Floating>),
+    PC12: (pc12, 12, Input<Floating>),
+    PC13: (pc13, 13, Input<Floating>),
+    PC14: (pc14, 14, Input<Floating>),
+    PC15: (pc15, 15, Input<Floating>),
 ]);
 
 #[cfg(any(feature = "stm32f030", feature = "stm32f070"))]

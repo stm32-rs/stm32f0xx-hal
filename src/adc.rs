@@ -34,10 +34,28 @@
 //! ```
 
 #[cfg(feature = "device-selected")]
-use embedded_hal::adc::{Channel, OneShot};
+const VREFCAL: *const u16 = 0x1FFF_F7BA as *const u16;
 
 #[cfg(feature = "device-selected")]
-use crate::{stm32, gpio::*};
+const VTEMPCAL30: *const u16 = 0x1FFF_F7B8 as *const u16;
+
+#[cfg(feature = "device-selected")]
+const VTEMPCAL110: *const u16 = 0x1FFF_F7C2 as *const u16;
+
+#[cfg(feature = "device-selected")]
+const VDD_CALIB: u16 = 3300;
+
+#[cfg(feature = "device-selected")]
+use core::ptr;
+
+#[cfg(feature = "device-selected")]
+use embedded_hal::{
+    adc::{Channel, OneShot},
+    blocking::delay::DelayUs,
+};
+
+#[cfg(feature = "device-selected")]
+use crate::{delay::Delay, gpio::*, stm32};
 
 #[cfg(feature = "device-selected")]
 /// Analog to Digital converter interface
@@ -48,7 +66,7 @@ pub struct Adc {
     precision: AdcPrecision,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 /// ADC Sampling time
 ///
 /// Options for the sampling time, each is T + 0.5 ADC clock cycles.
@@ -73,7 +91,7 @@ pub enum AdcSampleTime {
 
 #[cfg(feature = "device-selected")]
 impl AdcSampleTime {
-    fn write_bits(&self, adc: &mut stm32::ADC) {
+    fn write_bits(self, adc: &mut stm32::ADC) {
         unsafe {
             adc.smpr.write(|w| {
                 w.smpr().bits(match self {
@@ -96,7 +114,7 @@ impl AdcSampleTime {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 /// ADC Result Alignment
 pub enum AdcAlign {
     /// Left aligned results (most significant bits)
@@ -121,7 +139,7 @@ pub enum AdcAlign {
 
 #[cfg(feature = "device-selected")]
 impl AdcAlign {
-    fn write_bits(&self, adc: &mut stm32::ADC) {
+    fn write_bits(self, adc: &mut stm32::ADC) {
         adc.cfgr1.write(|w| {
             w.align().bit(match self {
                 AdcAlign::Left => true,
@@ -137,7 +155,7 @@ impl AdcAlign {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 /// ADC Sampling Precision
 pub enum AdcPrecision {
     /// 12 bit precision
@@ -152,7 +170,7 @@ pub enum AdcPrecision {
 
 #[cfg(feature = "device-selected")]
 impl AdcPrecision {
-    fn write_bits(&self, adc: &mut stm32::ADC) {
+    fn write_bits(self, adc: &mut stm32::ADC) {
         unsafe {
             adc.cfgr1.write(|w| {
                 w.res().bits(match self {
@@ -208,11 +226,11 @@ adc_pins!(
     gpioc::PC5<Analog> => 15_u8,
 );
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// Internal temperature sensor (ADC Channel 16)
 pub struct VTemp;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// Internal voltage reference (ADC Channel 17)
 pub struct VRef;
 
@@ -226,7 +244,7 @@ adc_pins!(
 impl VTemp {
     /// Init a new VTemp
     pub fn new() -> Self {
-        VTemp {}
+        VTemp::default()
     }
 
     /// Enable the internal temperature sense, this has a wake up time
@@ -241,13 +259,66 @@ impl VTemp {
     pub fn disable(&mut self, adc: &mut Adc) {
         adc.rb.ccr.modify(|_, w| w.tsen().clear_bit());
     }
+
+    /// Checks if the temperature sensor is enabled, does not account for the
+    /// t<sub>START</sub> time however.
+    pub fn is_enabled(&self, adc: &Adc) -> bool {
+        adc.rb.ccr.read().tsen().bit_is_set()
+    }
+
+    fn convert_temp(vtemp: u16, vdda: u16) -> i16 {
+        let vtemp30_cal = i32::from(unsafe { ptr::read(VTEMPCAL30) }) * 100;
+        let vtemp110_cal = i32::from(unsafe { ptr::read(VTEMPCAL110) }) * 100;
+
+        let mut temperature = i32::from(vtemp) * 100;
+        temperature = (temperature * (i32::from(vdda) / i32::from(VDD_CALIB))) - vtemp30_cal;
+        temperature *= (110 - 30) * 100;
+        temperature /= vtemp110_cal - vtemp30_cal;
+        temperature += 3000;
+        temperature as i16
+    }
+
+    /// Read the value of the internal temperature sensor and return the
+    /// result in 100ths of a degree centigrade.
+    ///
+    /// Given a delay reference it will attempt to restrict to the
+    /// minimum delay needed to ensure a 10 us t<sub>START</sub> value.
+    /// Otherwise it will approximate the required delay using ADC reads.
+    pub fn read(adc: &mut Adc, delay: Option<&mut Delay>) -> i16 {
+        let mut vtemp = Self::new();
+        let vtemp_preenable = vtemp.is_enabled(&adc);
+
+        if !vtemp_preenable {
+            vtemp.enable(adc);
+
+            if let Some(dref) = delay {
+                dref.delay_us(2_u16);
+            } else {
+                // Double read of vdda to allow sufficient startup time for the temp sensor
+                VRef::read_vdda(adc);
+            }
+        }
+        let vdda = VRef::read_vdda(adc);
+
+        let prev_cfg = adc.default_cfg();
+
+        let vtemp_val = adc.read(&mut vtemp).unwrap();
+
+        if !vtemp_preenable {
+            vtemp.disable(adc);
+        }
+
+        adc.restore_cfg(prev_cfg);
+
+        Self::convert_temp(vtemp_val, vdda)
+    }
 }
 
 #[cfg(feature = "device-selected")]
 impl VRef {
     /// Init a new VRef
     pub fn new() -> Self {
-        VRef {}
+        VRef::default()
     }
 
     /// Enable the internal voltage reference, remember to disable when not in use.
@@ -259,10 +330,38 @@ impl VRef {
     pub fn disable(&mut self, adc: &mut Adc) {
         adc.rb.ccr.modify(|_, w| w.vrefen().clear_bit());
     }
+
+    /// Returns if the internal voltage reference is enabled.
+    pub fn is_enabled(&self, adc: &Adc) -> bool {
+        adc.rb.ccr.read().vrefen().bit_is_set()
+    }
+
+    /// Reads the value of VDDA in milli-volts
+    pub fn read_vdda(adc: &mut Adc) -> u16 {
+        let vrefint_cal = u32::from(unsafe { ptr::read(VREFCAL) });
+        let mut vref = Self::new();
+
+        let prev_cfg = adc.default_cfg();
+
+        let vref_val: u32 = if vref.is_enabled(&adc) {
+            adc.read(&mut vref).unwrap()
+        } else {
+            vref.enable(adc);
+
+            let ret = adc.read(&mut vref).unwrap();
+
+            vref.disable(adc);
+            ret
+        };
+
+        adc.restore_cfg(prev_cfg);
+
+        (u32::from(VDD_CALIB) * vrefint_cal / vref_val) as u16
+    }
 }
 
 #[cfg(feature = "stm32f042")]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// Battery reference voltage (ADC Channel 18)
 pub struct VBat;
 
@@ -275,7 +374,7 @@ adc_pins!(
 impl VBat {
     /// Init a new VBat
     pub fn new() -> Self {
-        VBat {}
+        VBat::default()
     }
 
     /// Enable the internal VBat sense, remember to disable when not in use
@@ -288,7 +387,34 @@ impl VBat {
     pub fn disable(&mut self, adc: &mut Adc) {
         adc.rb.ccr.modify(|_, w| w.vbaten().clear_bit());
     }
+
+    /// Returns if the internal VBat sense is enabled
+    pub fn is_enabled(&self, adc: &Adc) -> bool {
+        adc.rb.ccr.read().vbaten().bit_is_set()
+    }
+
+    /// Reads the value of VBat in milli-volts
+    pub fn read(adc: &mut Adc) -> u16 {
+        let mut vbat = Self::new();
+
+        let vbat_val: u16 = if vbat.is_enabled(&adc) {
+            adc.read_abs_mv(&mut vbat)
+        } else {
+            vbat.enable(adc);
+
+            let ret = adc.read_abs_mv(&mut vbat);
+
+            vbat.disable(adc);
+            ret
+        };
+
+        vbat_val * 2
+    }
 }
+
+/// A stored ADC config, can be restored by using the `Adc::restore_cfg` method
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct StoredConfig(AdcSampleTime, AdcAlign, AdcPrecision);
 
 #[cfg(feature = "device-selected")]
 impl Adc {
@@ -307,6 +433,28 @@ impl Adc {
         s.select_clock();
         s.calibrate();
         s
+    }
+
+    /// Saves a copy of the current ADC config
+    pub fn save_cfg(&mut self) -> StoredConfig {
+        StoredConfig(self.sample_time, self.align, self.precision)
+    }
+
+    /// Restores a stored config
+    pub fn restore_cfg(&mut self, cfg: StoredConfig) {
+        self.sample_time = cfg.0;
+        self.align = cfg.1;
+        self.precision = cfg.2;
+    }
+
+    /// Resets the ADC config to default, returning the existing config as
+    /// a stored config.
+    pub fn default_cfg(&mut self) -> StoredConfig {
+        let cfg = self.save_cfg();
+        self.sample_time = AdcSampleTime::default();
+        self.align = AdcAlign::default();
+        self.precision = AdcPrecision::default();
+        cfg
     }
 
     /// Set the Adc sampling time
@@ -328,6 +476,32 @@ impl Adc {
     /// Options can be found in [AdcPrecision](crate::adc::AdcPrecision).
     pub fn set_precision(&mut self, precision: AdcPrecision) {
         self.precision = precision;
+    }
+
+    /// Returns the largest possible sample value for the current settings
+    pub fn max_sample(&self) -> u16 {
+        match self.align {
+            AdcAlign::Left => u16::max_value(),
+            AdcAlign::LeftAsRM => match self.precision {
+                AdcPrecision::B_6 => u16::from(u8::max_value()),
+                _ => u16::max_value(),
+            },
+            AdcAlign::Right => match self.precision {
+                AdcPrecision::B_12 => (1 << 12) - 1,
+                AdcPrecision::B_10 => (1 << 10) - 1,
+                AdcPrecision::B_8 => (1 << 8) - 1,
+                AdcPrecision::B_6 => (1 << 6) - 1,
+            },
+        }
+    }
+
+    /// Read the value of a channel and converts the result to milli-volts
+    pub fn read_abs_mv<PIN: Channel<Adc, ID = u8>>(&mut self, pin: &mut PIN) -> u16 {
+        let vdda = u32::from(VRef::read_vdda(self));
+        let v: u32 = self.read(pin).unwrap();
+        let max_samp = u32::from(self.max_sample());
+
+        (v * vdda / max_samp) as u16
     }
 
     fn calibrate(&mut self) {

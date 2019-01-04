@@ -281,11 +281,13 @@ impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::transfer::Def
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
-{}
+{
+}
 
 #[cfg(feature = "device-selected")]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::write::Default<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
-{}
+{
+}

@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added ADC helper functions to read more intuitive values (#22) - @HarkonenBade
+- Added interrupt enabling/disabling support to USART ports
 - Added the option to have multiple Delay instances by cloning it - @david-sawatzke
+
+### Changed
+
+- Fixed a few clippy lints
 
 ## [v0.10.1] - 2018-12-25
 

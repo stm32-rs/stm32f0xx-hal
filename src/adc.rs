@@ -219,8 +219,7 @@ adc_pins!(
 #[cfg(any(
     feature = "stm32f030",
     feature = "stm32f070",
-    feature = "stm32072Rx",
-    feature = "stm32072Vx"
+    feature = "stm32f072"
 ))]
 adc_pins!(
     gpioc::PC0<Analog> => 10_u8,

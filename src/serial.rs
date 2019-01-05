@@ -227,31 +227,66 @@ pub struct Tx<USART> {
 unsafe impl<USART> Send for Tx<USART> {}
 
 macro_rules! usart {
-    ($($USART:ident: ($usart:ident, $usartXen:ident, $apbenr:ident),)+) => {
+    ($($USART:ident: ($usart:ident, $usarttx:ident, $usartrx:ident, $usartXen:ident, $apbenr:ident),)+) => {
         $(
             use crate::stm32::$USART;
-            impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN> {
+            impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN>
+            where
+                TXPIN: TxPin<$USART>,
+                RXPIN: RxPin<$USART>,
+            {
                 /// Creates a new serial instance
                 pub fn $usart(usart: $USART, pins: (TXPIN, RXPIN), baud_rate: Bps, rcc: &mut Rcc) -> Self
-                where
-                    TXPIN: TxPin<$USART>,
-                    RXPIN: RxPin<$USART>,
                 {
+                    let mut serial = Serial { usart, pins };
+                    serial.enable(baud_rate, rcc);
+                    serial
+                }
+            }
+
+            impl<TXPIN> Serial<$USART, TXPIN, ()>
+            where
+                TXPIN: TxPin<$USART>,
+            {
+                /// Creates a new tx-only serial instance
+                pub fn $usarttx(usart: $USART, txpin: TXPIN, baud_rate: Bps, rcc: &mut Rcc) -> Self
+                {
+                    let rxpin = ();
+                    let mut serial = Serial { usart, pins: (txpin, rxpin) };
+                    serial.enable(baud_rate, rcc);
+                    serial
+                }
+            }
+
+            impl<RXPIN> Serial<$USART, (), RXPIN>
+            where
+                RXPIN: RxPin<$USART>,
+            {
+                /// Creates a new tx-only serial instance
+                pub fn $usartrx(usart: $USART, rxpin: RXPIN, baud_rate: Bps, rcc: &mut Rcc) -> Self
+                {
+                    let txpin = ();
+                    let mut serial = Serial { usart, pins: (txpin, rxpin) };
+                    serial.enable(baud_rate, rcc);
+                    serial
+                }
+            }
+
+            impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN> {
+                fn enable(&mut self, baud_rate: Bps, rcc: &mut Rcc) {
                     // Enable clock for USART
                     rcc.regs.$apbenr.modify(|_, w| w.$usartXen().set_bit());
 
                     // Calculate correct baudrate divisor on the fly
                     let brr = rcc.clocks.pclk().0 / baud_rate.0;
-                    usart.brr.write(|w| unsafe { w.bits(brr) });
+                    self.usart.brr.write(|w| unsafe { w.bits(brr) });
 
                     // Reset other registers to disable advanced USART features
-                    usart.cr2.reset();
-                    usart.cr3.reset();
+                    self.usart.cr2.reset();
+                    self.usart.cr3.reset();
 
                     // Enable transmission and receiving
-                    usart.cr1.modify(|_, w| w.te().set_bit().re().set_bit().ue().set_bit());
-
-                    Serial { usart, pins }
+                    self.usart.cr1.modify(|_, w| w.te().set_bit().re().set_bit().ue().set_bit());
                 }
 
                 /// Starts listening for an interrupt event
@@ -289,7 +324,7 @@ macro_rules! usart {
 }
 
 usart! {
-    USART1: (usart1, usart1en, apb2enr),
+    USART1: (usart1, usart1tx, usart1rx, usart1en, apb2enr),
 }
 #[cfg(any(
     feature = "stm32f030x8",
@@ -302,7 +337,7 @@ usart! {
     feature = "stm32f091",
 ))]
 usart! {
-    USART2: (usart2, usart2en, apb1enr),
+    USART2: (usart2, usart2tx, usart2rx,usart2en, apb1enr),
 }
 #[cfg(any(
     feature = "stm32f030xc",
@@ -312,13 +347,13 @@ usart! {
     feature = "stm32f091",
 ))]
 usart! {
-    USART3: (usart3, usart3en, apb1enr),
-    USART4: (usart4, usart4en, apb1enr),
+    USART3: (usart3, usart3tx, usart3rx,usart3en, apb1enr),
+    USART4: (usart4, usart4tx, usart4rx,usart4en, apb1enr),
 }
 #[cfg(any(feature = "stm32f030xc", feature = "stm32f091"))]
 usart! {
-    USART5: (usart5, usart5en, apb1enr),
-    USART6: (usart6, usart6en, apb2enr),
+    USART5: (usart5, usart5tx, usart5rx,usart5en, apb1enr),
+    USART6: (usart6, usart6tx, usart6rx,usart6en, apb2enr),
 }
 
 // It's s needed for the impls, but rustc doesn't recognize that
@@ -350,6 +385,22 @@ where
         } else {
             nb::Error::WouldBlock
         })
+    }
+}
+
+impl<USART, TXPIN, RXPIN> embedded_hal::serial::Read<u8> for Serial<USART, TXPIN, RXPIN>
+where
+    USART: Deref<Target = SerialRegisterBlock>,
+    RXPIN: RxPin<USART>,
+{
+    type Error = Error;
+
+    /// Tries to read a byte from the uart
+    fn read(&mut self) -> nb::Result<u8, Error> {
+        Rx {
+            usart: &self.usart as *const _,
+        }
+        .read()
     }
 }
 
@@ -388,13 +439,42 @@ where
     }
 }
 
+impl<USART, TXPIN, RXPIN> embedded_hal::serial::Write<u8> for Serial<USART, TXPIN, RXPIN>
+where
+    USART: Deref<Target = SerialRegisterBlock>,
+    TXPIN: TxPin<USART>,
+{
+    type Error = void::Void;
+
+    /// Ensures that none of the previously written words are still buffered
+    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+        Tx {
+            usart: &self.usart as *const _,
+        }
+        .flush()
+    }
+
+    /// Tries to write a byte to the uart
+    /// Fails if the transmit buffer is full
+    fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
+        Tx {
+            usart: &self.usart as *const _,
+        }
+        .write(byte)
+    }
+}
+
 impl<USART, TXPIN, RXPIN> Serial<USART, TXPIN, RXPIN>
 where
     USART: Deref<Target = SerialRegisterBlock>,
 {
     /// Splits the UART Peripheral in a Tx and an Rx part
     /// This is required for sending/receiving
-    pub fn split(self) -> (Tx<USART>, Rx<USART>) {
+    pub fn split(self) -> (Tx<USART>, Rx<USART>)
+    where
+        TXPIN: TxPin<USART>,
+        RXPIN: RxPin<USART>,
+    {
         (
             Tx {
                 usart: &self.usart as *const _,
@@ -404,6 +484,7 @@ where
             },
         )
     }
+
     pub fn release(self) -> (USART, (TXPIN, RXPIN)) {
         (self.usart, self.pins)
     }

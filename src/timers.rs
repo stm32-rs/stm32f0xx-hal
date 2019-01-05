@@ -225,6 +225,7 @@ timers! {
     feature = "stm32f030xc",
     feature = "stm32f070xb",
     feature = "stm32f072",
+    feature = "stm32f091",
 ))]
 timers! {
     TIM6: (tim6, tim6en, tim6rst, apb1enr, apb1rstr),
@@ -235,12 +236,13 @@ timers! {
     feature = "stm32f030xc",
     feature = "stm32f070xb",
     feature = "stm32f072",
+    feature = "stm32f091",
 ))]
 timers! {
     TIM7: (tim7, tim7en, tim7rst, apb1enr, apb1rstr),
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f091"))]
 timers! {
     TIM2: (tim2, tim2en, tim2rst, apb1enr, apb1rstr),
 }

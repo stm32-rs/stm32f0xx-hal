@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Support for stm32f0x1 line - @jessebraham
 - Support for HSE as a system clocksource (#25 - breaking change) - @zklapow
+- Add ability to use a Tx/Rx only serial instance - @david-sawatzke
 
 ### Changed
 

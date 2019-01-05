@@ -169,17 +169,17 @@ usart_pins! {
 }
 // TODO: The ST SVD files are missing the entire PE enable register.
 //       Re-enable as soon as this gets fixed.
-// #[cfg(feature = "stm32f091")]
-// usart_pins! {
-//     USART5 => {
-//         tx => [gpioe::PE10<Alternate<AF1>>],
-//         rx => [gpioe::PE11<Alternate<AF1>>],
-//     }
-//     USART6 => {
-//         tx => [gpiof::PF9<Alternate<AF1>>],
-//         rx => [gpiof::PF10<Alternate<AF1>>],
-//     }
-// }
+#[cfg(feature = "stm32f091")]
+usart_pins! {
+    // USART5 => {
+    //     tx => [gpioe::PE10<Alternate<AF1>>],
+    //     rx => [gpioe::PE11<Alternate<AF1>>],
+    // }
+    USART6 => {
+        tx => [gpiof::PF9<Alternate<AF1>>],
+        rx => [gpiof::PF10<Alternate<AF1>>],
+    }
+}
 
 /// Serial abstraction
 #[allow(unused)]

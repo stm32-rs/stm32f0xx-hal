@@ -56,6 +56,9 @@ stm32f070 = ["stm32f0/stm32f0x0", "device-selected"]
 stm32f070x6 = ["stm32f070"]
 stm32f070xb = ["stm32f070"]
 stm32f072 = ["stm32f0/stm32f0x2", "device-selected"]
+stm32f091 = ["stm32f0/stm32f0x1", "device-selected"]
+stm32f091xb = ["stm32f091"]
+stm32f091xc = ["stm32f091"]
 
 [profile.dev]
 debug = true

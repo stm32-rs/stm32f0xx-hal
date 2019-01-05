@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Support for STM32F091 - @jessebraham
+
 ## [v0.11.1] - 2019-01-05
 
 ### Added

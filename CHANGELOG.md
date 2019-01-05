@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.11.1] - 2019-01-05
+
 ### Added
 
 - Added peripheral definitions for the stm32f072xx line - @Yatekii
@@ -83,7 +85,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated stm32f0 dependency to v0.5.0.
 - Interrupt handler to new #[interrupt] attribute
 
-[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.11.1...HEAD
+[v0.11.1]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.11.0...v0.11.1
 [v0.11.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.10.1...v0.11.0
 [v0.10.1]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.10.0...v0.10.1
 [v0.10.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.9.0...v0.10.0

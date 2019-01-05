@@ -106,6 +106,7 @@ i2c_pins! {
 pub enum Error {
     OVERRUN,
     NACK,
+    TIMEOUT,
 }
 
 #[allow(unused)]
@@ -122,10 +123,10 @@ macro_rules! i2c {
                     // NOTE(unsafe) This executes only during initialisation
                     let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
 
-                    /* Enable clock for I2C */
+                    // Enable clock for I2C
                     rcc.$apbenr.modify(|_, w| w.$i2cXen().set_bit());
 
-                    /* Reset I2C */
+                    // Reset I2C
                     rcc.$apbrstr.modify(|_, w| w.$i2cXrst().set_bit());
                     rcc.$apbrstr.modify(|_, w| w.$i2cXrst().clear_bit());
                     I2c { i2c, pins }.i2c_init(speed)
@@ -163,7 +164,7 @@ where
     fn i2c_init(self: Self, speed: KiloHertz) -> Self {
         use core::cmp;
 
-        /* Make sure the I2C unit is disabled so we can configure it */
+        // Make sure the I2C unit is disabled so we can configure it
         self.i2c.cr1.modify(|_, w| w.pe().clear_bit());
 
         // Calculate settings for I2C speed modes
@@ -191,7 +192,7 @@ where
             scldel = 3;
         }
 
-        /* Enable I2C signal generator, and configure I2C for 400KHz full speed */
+        // Enable I2C signal generator, and configure I2C for 400KHz full speed
         self.i2c.timingr.write(|w| {
             w.presc()
                 .bits(presc)
@@ -205,7 +206,22 @@ where
                 .bits(scll)
         });
 
-        /* Enable the I2C processing */
+        // Enable timeout checks for 8MHz clock
+        // NOTE: This will only have an effect on periperals with SMBus capability
+        self.i2c.timeoutr.write(|w| {
+            w.timeouta()
+                .bits(0x61)
+                .tidle()
+                .clear_bit()
+                .timouten()
+                .set_bit()
+                .timeoutb()
+                .bits(0x1f)
+                .texten()
+                .set_bit()
+        });
+
+        // Enable the I2C processing
         self.i2c.cr1.modify(|_, w| w.pe().set_bit());
 
         self
@@ -215,26 +231,45 @@ where
         (self.i2c, self.pins)
     }
 
-    fn send_byte(&self, byte: u8) -> Result<(), Error> {
-        /* Wait until we're ready for sending */
-        while self.i2c.isr.read().txis().bit_is_clear() {}
+    fn check_and_clear_error_flags(&self) -> Result<(), Error> {
+        let isr = self.i2c.isr.read();
 
-        /* Push out a byte of data */
-        self.i2c.txdr.write(|w| unsafe { w.bits(u32::from(byte)) });
-
-        /* If we received a NACK, then this is an error */
-        if self.i2c.isr.read().nackf().bit_is_set() {
+        if isr.nackf().bit_is_set() | isr.timeout().bit_is_set() {
             self.i2c
                 .icr
-                .write(|w| w.stopcf().set_bit().nackcf().set_bit());
+                .write(|w| w.timoutcf().set_bit().stopcf().set_bit().nackcf().set_bit());
+        }
+
+        // If we received a NACK, then this is an error
+        if isr.nackf().bit_is_set() {
             return Err(Error::NACK);
+        }
+
+        // If we received a TIMEOUT, then this is an error
+        if isr.timeout().bit_is_set() {
+            return Err(Error::TIMEOUT);
         }
 
         Ok(())
     }
 
+    fn send_byte(&self, byte: u8) -> Result<(), Error> {
+        // Wait until we're ready for sending
+        while self.i2c.isr.read().txis().bit_is_clear() {
+            self.check_and_clear_error_flags()?;
+        }
+
+        // Push out a byte of data
+        self.i2c.txdr.write(|w| unsafe { w.bits(u32::from(byte)) });
+
+        self.check_and_clear_error_flags()?;
+        Ok(())
+    }
+
     fn recv_byte(&self) -> Result<u8, Error> {
-        while self.i2c.isr.read().rxne().bit_is_clear() {}
+        while self.i2c.isr.read().rxne().bit_is_clear() {
+            self.check_and_clear_error_flags()?;
+        }
         let value = self.i2c.rxdr.read().bits() as u8;
         Ok(value)
     }
@@ -248,8 +283,7 @@ where
     type Error = Error;
 
     fn write_read(&mut self, addr: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Error> {
-        /* Set up current address, we're trying a "read" command and not going to set anything
-         * and make sure we end a non-NACKed read (i.e. if we found a device) properly */
+        // Set up current slave address for writing and disable autoending
         self.i2c.cr2.modify(|_, w| {
             w.sadd()
                 .bits(u16::from(addr) << 1)
@@ -261,37 +295,29 @@ where
                 .clear_bit()
         });
 
-        /* Send a START condition */
+        // Send a START condition
         self.i2c.cr2.modify(|_, w| w.start().set_bit());
 
-        /* Wait until the transmit buffer is empty and there hasn't been either a NACK or STOP
-         * being received */
+        // Wait until the transmit buffer is empty and there hasn't been any error condition
         let mut isr;
         while {
             isr = self.i2c.isr.read();
-            isr.txis().bit_is_clear()
-                && isr.nackf().bit_is_clear()
-                && isr.stopf().bit_is_clear()
-                && isr.tc().bit_is_clear()
-        } {}
-
-        /* If we received a NACK, then this is an error */
-        if isr.nackf().bit_is_set() {
-            self.i2c
-                .icr
-                .write(|w| w.stopcf().set_bit().nackcf().set_bit());
-            return Err(Error::NACK);
+            isr.txis().bit_is_clear() && isr.tc().bit_is_clear()
+        } {
+            self.check_and_clear_error_flags()?;
         }
 
+        // Send out all individual bytes
         for c in bytes {
             self.send_byte(*c)?;
         }
 
-        /* Wait until data was sent */
-        while self.i2c.isr.read().tc().bit_is_clear() {}
+        // Wait until data was sent
+        while self.i2c.isr.read().tc().bit_is_clear() {
+            self.check_and_clear_error_flags()?;
+        }
 
-        /* Set up current address, we're trying a "read" command and not going to set anything
-         * and make sure we end a non-NACKed read (i.e. if we found a device) properly */
+        // Set up current address for reading
         self.i2c.cr2.modify(|_, w| {
             w.sadd()
                 .bits(u16::from(addr) << 1)
@@ -301,21 +327,19 @@ where
                 .set_bit()
         });
 
-        /* Send a START condition */
+        // Send another START condition
         self.i2c.cr2.modify(|_, w| w.start().set_bit());
 
-        /* Send the autoend after setting the start to get a restart */
+        // Send the autoend after setting the start to get a restart
         self.i2c.cr2.modify(|_, w| w.autoend().set_bit());
 
-        /* Read in all bytes */
+        // Now read in all bytes
         for c in buffer.iter_mut() {
             *c = self.recv_byte()?;
         }
 
-        /* Clear flags if they somehow ended up set */
-        self.i2c
-            .icr
-            .write(|w| w.stopcf().set_bit().nackcf().set_bit());
+        // Check and clear flags if they somehow ended up set
+        self.check_and_clear_error_flags()?;
 
         Ok(())
     }
@@ -329,8 +353,7 @@ where
     type Error = Error;
 
     fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Error> {
-        /* Set up current address, we're trying a "read" command and not going to set anything
-         * and make sure we end a non-NACKed read (i.e. if we found a device) properly */
+        // Set up current slave address for writing and enable autoending
         self.i2c.cr2.modify(|_, w| {
             w.sadd()
                 .bits(u16::from(addr) << 1)
@@ -342,17 +365,17 @@ where
                 .set_bit()
         });
 
-        /* Send a START condition */
+        // Send a START condition
         self.i2c.cr2.modify(|_, w| w.start().set_bit());
 
+        // Send out all individual bytes
         for c in bytes {
             self.send_byte(*c)?;
         }
 
-        /* Fallthrough is success */
-        self.i2c
-            .icr
-            .write(|w| w.stopcf().set_bit().nackcf().set_bit());
+        // Check and clear flags if they somehow ended up set
+        self.check_and_clear_error_flags()?;
+
         Ok(())
     }
 }

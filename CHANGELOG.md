@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Timeout support and more robust error handling for I2C
+
 ## [v0.11.0] - 2019-01-04
 
 ### Added

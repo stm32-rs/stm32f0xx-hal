@@ -567,7 +567,7 @@ gpio!(GPIOB, gpiob, iopben, PB, [
     PB15: (pb15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f072Cx"))]
+#[cfg(feature = "stm32f042")]
 gpio!(GPIOC, gpioc, iopcen, PC, [
     PC13: (pc13, 13, Input<Floating>),
     PC14: (pc14, 14, Input<Floating>),
@@ -577,8 +577,7 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
 #[cfg(any(
     feature = "stm32f030",
     feature = "stm32f070",
-    feature = "stm32f072Vx",
-    feature = "stm32f072Rx"
+    feature = "stm32f072"
 ))]
 gpio!(GPIOC, gpioc, iopcen, PC, [
     PC0: (pc0, 0, Input<Floating>),
@@ -601,14 +600,13 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
 
 #[cfg(any(
     feature = "stm32f030",
-    feature = "stm32f070",
-    feature = "stm32f072Rx"
+    feature = "stm32f070"
 ))]
 gpio!(GPIOD, gpiod, iopden, PD, [
     PD2: (pd2, 2, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f072Vx"))]
+#[cfg(feature = "stm32f072")]
 gpio!(GPIOD, gpiod, iopden, PD, [
     PD0: (pd0, 0, Input<Floating>),
     PD1: (pd1, 1, Input<Floating>),
@@ -631,7 +629,7 @@ gpio!(GPIOD, gpiod, iopden, PD, [
 // TODO: The ST SVD files are missing the entire PE enable register.
 //       Re-enable as soon as this gets fixed.
 
-// #[cfg(any(feature = "stm32f072Vx"))]
+// #[cfg(feature = "stm32f072")]
 // gpio!(GPIOE, gpioe, iopeen, PE, [
 //     PE0: (pe0, 0, Input<Floating>),
 //     PE1: (pe1, 1, Input<Floating>),
@@ -668,17 +666,13 @@ gpio!(GPIOF, gpiof, iopfen, PF, [
     PF7: (pf7, 5, Input<Floating>),
 ]);
 
-#[cfg(any(
-    feature = "stm32f070",
-    feature = "stm32f072Cx",
-    feature = "stm32f072Rx",
-))]
+#[cfg(feature = "stm32f070")]
 gpio!(GPIOF, gpiof, iopfen, PF, [
     PF0: (pf0, 0, Input<Floating>),
     PF1: (pf1, 1, Input<Floating>),
 ]);
 
-#[cfg(feature = "stm32f072Vx")]
+#[cfg(feature = "stm32f072")]
 gpio!(GPIOF, gpiof, iopfen, PF, [
     PF0: (pf0, 0, Input<Floating>),
     PF1: (pf1, 1, Input<Floating>),

@@ -92,7 +92,7 @@ spi_pins! {
 // TODO: The ST SVD files are missing the entire PE enable register.
 //       So those pins do not exist in the register definitions.
 //       Re-enable as soon as this gets fixed.
-// #[cfg(feature = "stm32f072Vx")]
+// #[cfg(feature = "stm32f072")]
 // spi_pins! {
 //     SPI1 => {
 //         sck => [gpioe::PE13<Alternate<AF1>>],
@@ -116,8 +116,7 @@ spi_pins! {
 #[cfg(any(
     feature = "stm32f030xc",
     feature = "stm32f070xb",
-    feature = "stm32f072Vx",
-    feature = "stm32f072Rx",
+    feature = "stm32f072",
 ))]
 spi_pins! {
     SPI2 => {
@@ -126,7 +125,7 @@ spi_pins! {
         mosi => [gpioc::PC3<Alternate<AF1>>],
     }
 }
-#[cfg(feature = "stm32f072Vx")]
+#[cfg(feature = "stm32f072")]
 spi_pins! {
     SPI2 => {
         sck => [gpiod::PD1<Alternate<AF1>>],

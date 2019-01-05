@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added peripheral definitions for the stm32f072xx line - @Yatekii
+
+### Changed
+
+- Fixed broken PC GPIO definitions with feature = "stm32f030" and feature = "stm32f070"
+
 ## [v0.11.0] - 2019-01-04
 
 ### Added

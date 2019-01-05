@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Fixed broken PC GPIO definitions with feature = "stm32f030" and feature = "stm32f070"
+- More robust error handling for I2C
 
 ## [v0.11.0] - 2019-01-04
 

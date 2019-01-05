@@ -15,6 +15,7 @@ use crate::stm32::SPI1;
     feature = "stm32f030xc",
     feature = "stm32f070xb",
     feature = "stm32f072",
+    feature = "stm32f091",
 ))]
 use crate::stm32::SPI2;
 
@@ -88,11 +89,10 @@ spi_pins! {
         mosi => [gpiob::PB15<Alternate<AF0>>],
     }
 }
-
 // TODO: The ST SVD files are missing the entire PE enable register.
 //       So those pins do not exist in the register definitions.
 //       Re-enable as soon as this gets fixed.
-// #[cfg(feature = "stm32f072")]
+// #[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
 // spi_pins! {
 //     SPI1 => {
 //         sck => [gpioe::PE13<Alternate<AF1>>],
@@ -100,11 +100,13 @@ spi_pins! {
 //         mosi => [gpioe::PE15<Alternate<AF1>>],
 //     }
 // }
+
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f070xb",
     feature = "stm32f072",
+    feature = "stm32f091",
 ))]
 spi_pins! {
     SPI2 => {
@@ -117,6 +119,7 @@ spi_pins! {
     feature = "stm32f030xc",
     feature = "stm32f070xb",
     feature = "stm32f072",
+    feature = "stm32f091",
 ))]
 spi_pins! {
     SPI2 => {
@@ -125,7 +128,7 @@ spi_pins! {
         mosi => [gpioc::PC3<Alternate<AF1>>],
     }
 }
-#[cfg(feature = "stm32f072")]
+#[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
 spi_pins! {
     SPI2 => {
         sck => [gpiod::PD1<Alternate<AF1>>],
@@ -175,7 +178,8 @@ spi! {
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
-    feature = "stm32f070xb"
+    feature = "stm32f070xb",
+    feature = "stm32f091",
 ))]
 spi! {
     SPI2: (spi2, spi2en, spi2rst, apb1enr, apb1rstr),

@@ -19,6 +19,7 @@ Currently supported configuration are:
 * stm32f070x6
 * stm32f070xb
 * stm32f072
+* stm32f091
 
 The idea behind this crate is to gloss over the slight differences in the
 various peripherals available on those MCUs so a HAL can be written for all

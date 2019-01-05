@@ -87,7 +87,7 @@ impl CFGR {
         self
     }
 
-    #[cfg(feature = "stm32f042")]
+    #[cfg(any(feature = "stm32f042", feature = "stm32f091"))]
     pub fn enable_hsi48(mut self, is_enabled: bool) -> Self {
         self.enable_hsi48 = is_enabled;
         self

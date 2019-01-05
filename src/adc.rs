@@ -219,7 +219,8 @@ adc_pins!(
 #[cfg(any(
     feature = "stm32f030",
     feature = "stm32f070",
-    feature = "stm32f072"
+    feature = "stm32f072",
+    feature = "stm32f091"
 ))]
 adc_pins!(
     gpioc::PC0<Analog> => 10_u8,
@@ -364,17 +365,17 @@ impl VRef {
     }
 }
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f091"))]
 #[derive(Debug, Default)]
 /// Battery reference voltage (ADC Channel 18)
 pub struct VBat;
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f091"))]
 adc_pins!(
     VBat  => 18_u8,
 );
 
-#[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f091"))]
 impl VBat {
     /// Init a new VBat
     pub fn new() -> Self {

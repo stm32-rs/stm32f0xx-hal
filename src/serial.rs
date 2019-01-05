@@ -143,8 +143,8 @@ usart_pins! {
 #[cfg(any(feature = "stm32f072Vx", feature = "stm32f072Rx"))]
 usart_pins! {
     USART3 => {
-        tx => [gpiob::PB10<Alternate<AF4>>, gpioc::PC4<Alternate<AF1>>, gpioc::PC10<Alternate<AF1>>],
-        rx => [gpiob::PB11<Alternate<AF4>>, gpioc::PC5<Alternate<AF1>>, gpioc::PC11<Alternate<AF1>>],
+        tx => [gpioc::PC4<Alternate<AF1>>, gpioc::PC10<Alternate<AF1>>],
+        rx => [gpioc::PC5<Alternate<AF1>>, gpioc::PC11<Alternate<AF1>>],
     }
 }
 #[cfg(feature = "stm32f072Vx")]

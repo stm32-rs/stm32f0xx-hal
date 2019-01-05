@@ -1,5 +1,5 @@
-use crate::time::Hertz;
 use crate::stm32::rcc::cfgr::SWW;
+use crate::time::Hertz;
 
 /// Extension trait that constrains the `RCC` peripheral
 pub trait RccExt {
@@ -47,8 +47,8 @@ pub struct CFGR {
 #[cfg(feature = "device-selected")]
 impl CFGR {
     pub fn hse<F>(mut self, freq: F) -> Self
-        where
-            F: Into<Hertz>,
+    where
+        F: Into<Hertz>,
     {
         self.clock_src = SysClkSource::HSE(freq.into().0);
         self
@@ -91,7 +91,7 @@ impl CFGR {
         let src_clk_freq = match self.clock_src {
             SysClkSource::HSE(freq) => freq,
             SysClkSource::HSI48 => HSI48,
-            _ => HSI
+            _ => HSI,
         };
 
         // Pll check
@@ -170,7 +170,7 @@ impl CFGR {
                     .modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
 
                 while !rcc.cr.read().hserdy().bit_is_set() {}
-            },
+            }
             SysClkSource::HSI48 => {
                 rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
                 while rcc.cr2.read().hsi48rdy().bit_is_clear() {}
@@ -178,7 +178,7 @@ impl CFGR {
             SysClkSource::HSI => {
                 rcc.cr.write(|w| w.hsion().set_bit());
                 while rcc.cr.read().hsirdy().bit_is_clear() {}
-            },
+            }
         };
 
         let rcc = unsafe { &*crate::stm32::RCC::ptr() };
@@ -194,11 +194,8 @@ impl CFGR {
             };
 
             // Set PLL source and multiplier
-            rcc.cfgr.write(|w| unsafe {
-                w
-                    .pllsrc().bits(pllsrc_bit)
-                    .pllmul().bits(pllmul_bits)
-            });
+            rcc.cfgr
+                .write(|w| unsafe { w.pllsrc().bits(pllsrc_bit).pllmul().bits(pllmul_bits) });
 
             rcc.cr.write(|w| w.pllon().set_bit());
             while rcc.cr.read().pllrdy().bit_is_clear() {}
@@ -214,16 +211,14 @@ impl CFGR {
             };
 
             // use HSI as source
-            rcc.cfgr
-                .write(|w| unsafe {
-                    w
-                        .ppre()
-                        .bits(ppre_bits)
-                        .hpre()
-                        .bits(hpre_bits)
-                        .sw()
-                        .variant(sw_var)
-                });
+            rcc.cfgr.write(|w| unsafe {
+                w.ppre()
+                    .bits(ppre_bits)
+                    .hpre()
+                    .bits(hpre_bits)
+                    .sw()
+                    .variant(sw_var)
+            });
         }
 
         Clocks {

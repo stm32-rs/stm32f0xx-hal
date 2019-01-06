@@ -239,7 +239,9 @@ macro_rules! usart {
                 pub fn $usart(usart: $USART, pins: (TXPIN, RXPIN), baud_rate: Bps, rcc: &mut Rcc) -> Self
                 {
                     let mut serial = Serial { usart, pins };
-                    serial.enable(baud_rate, rcc);
+                    serial.configure(baud_rate, rcc);
+                    // Enable transmission and receiving
+                    serial.usart.cr1.modify(|_, w| w.te().set_bit().re().set_bit().ue().set_bit());
                     serial
                 }
             }
@@ -253,7 +255,9 @@ macro_rules! usart {
                 {
                     let rxpin = ();
                     let mut serial = Serial { usart, pins: (txpin, rxpin) };
-                    serial.enable(baud_rate, rcc);
+                    serial.configure(baud_rate, rcc);
+                    // Enable transmission
+                    serial.usart.cr1.modify(|_, w| w.te().set_bit().ue().set_bit());
                     serial
                 }
             }
@@ -267,13 +271,15 @@ macro_rules! usart {
                 {
                     let txpin = ();
                     let mut serial = Serial { usart, pins: (txpin, rxpin) };
-                    serial.enable(baud_rate, rcc);
+                    serial.configure(baud_rate, rcc);
+                    // Enable receiving
+                    serial.usart.cr1.modify(|_, w| w.re().set_bit().ue().set_bit());
                     serial
                 }
             }
 
             impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN> {
-                fn enable(&mut self, baud_rate: Bps, rcc: &mut Rcc) {
+                fn configure(&mut self, baud_rate: Bps, rcc: &mut Rcc) {
                     // Enable clock for USART
                     rcc.regs.$apbenr.modify(|_, w| w.$usartXen().set_bit());
 
@@ -284,9 +290,6 @@ macro_rules! usart {
                     // Reset other registers to disable advanced USART features
                     self.usart.cr2.reset();
                     self.usart.cr3.reset();
-
-                    // Enable transmission and receiving
-                    self.usart.cr1.modify(|_, w| w.te().set_bit().re().set_bit().ue().set_bit());
                 }
 
                 /// Starts listening for an interrupt event

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Support for STM32F091 - @jessebraham
+- Support for HSE as a system clocksource (#25 - breaking change) - @zklapow
 
 ## [v0.11.1] - 2019-01-05
 

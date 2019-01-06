@@ -19,7 +19,7 @@ license = "0BSD"
 name = "stm32f0xx-hal"
 readme = "README.md"
 repository = "https://github.com/stm32-rs/stm32f0xx-hal"
-version = "0.11.0"
+version = "0.11.1"
 
 [package.metadata.docs.rs]
 features = ["stm32f042", "rt"]
@@ -48,13 +48,15 @@ device-selected = []
 rt = ["stm32f0/rt"]
 stm32f042 = ["stm32f0/stm32f0x2", "device-selected"]
 stm32f030 = ["stm32f0/stm32f0x0", "device-selected"]
-stm32f030x4 = ["stm32f030x6", "device-selected"]
-stm32f030x6 = ["stm32f030", "device-selected"]
-stm32f030x8 = ["stm32f030", "device-selected"]
-stm32f030xc = ["stm32f030", "device-selected"]
+stm32f030x4 = ["stm32f030x6"]
+stm32f030x6 = ["stm32f030"]
+stm32f030x8 = ["stm32f030"]
+stm32f030xc = ["stm32f030"]
 stm32f070 = ["stm32f0/stm32f0x0", "device-selected"]
-stm32f070x6 = ["stm32f070", "device-selected"]
-stm32f070xb = ["stm32f070", "device-selected"]
+stm32f070x6 = ["stm32f070"]
+stm32f070xb = ["stm32f070"]
+stm32f072 = ["stm32f0/stm32f0x2", "device-selected"]
+stm32f091 = ["stm32f0/stm32f0x1", "device-selected"]
 
 [profile.dev]
 debug = true

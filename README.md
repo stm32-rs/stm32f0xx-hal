@@ -1,5 +1,8 @@
 stm32f0xx-hal
 =============
+[![Travis](https://img.shields.io/travis/stm32-rs/stm32f0xx-hal.svg)](https://travis-ci.org/stm32-rs/stm32f0xx-hal)
+[![Crates.io](https://img.shields.io/crates/v/stm32f0xx-hal.svg)](https://crates.io/crates/stm32f0xx-hal)
+[![docs.rs](https://docs.rs/stm32f0xx-hal/badge.svg)](https://docs.rs/stm32f0xx-hal/)
 
 _stm32f0xx-hal_ contains a hardware abstraction on top of the peripheral access
 API for the STMicro STM32F0xx family of microcontrollers. It replaces the
@@ -15,6 +18,8 @@ Currently supported configuration are:
 * stm32f070
 * stm32f070x6
 * stm32f070xb
+* stm32f072
+* stm32f091
 
 The idea behind this crate is to gloss over the slight differences in the
 various peripherals available on those MCUs so a HAL can be written for all

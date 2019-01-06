@@ -48,6 +48,7 @@ i2c_pins! {
     feature = "stm32f030x6",
     feature = "stm32f030xc",
     feature = "stm32f042",
+    feature = "stm32f091",
 ))]
 i2c_pins! {
     I2C1 => {
@@ -69,7 +70,7 @@ i2c_pins! {
         sda => [gpiob::PB14<Alternate<AF5>>, gpiof::PF0<Alternate<AF1>>],
     }
 }
-#[cfg(feature = "stm32f070")]
+#[cfg(any(feature = "stm32f070", feature = "stm32f072", feature = "stm32f091"))]
 i2c_pins! {
     I2C1 => {
         scl => [gpiob::PB6<Alternate<AF1>>, gpiob::PB8<Alternate<AF1>>],
@@ -83,22 +84,38 @@ i2c_pins! {
         sda => [gpioa::PA10<Alternate<AF4>>, gpiof::PF1<Alternate<AF1>>],
     }
 }
-#[cfg(any(
-    feature = "stm32f030x8",
-    feature = "stm32f030xc",
-    feature = "stm32f070xb"
-))]
+#[cfg(feature = "stm32f091")]
+i2c_pins! {
+    I2C1 => {
+        scl => [gpiof::PF1<Alternate<AF1>>],
+        sda => [gpiof::PF0<Alternate<AF1>>],
+    }
+}
+
+#[cfg(any(feature = "stm32f030x8"))]
 i2c_pins! {
     I2C2 => {
         scl => [gpiob::PB10<Alternate<AF1>>],
         sda => [gpiob::PB11<Alternate<AF1>>],
     }
 }
-#[cfg(any(feature = "stm32f030xc", feature = "stm32f070xb"))]
+#[cfg(any(
+    feature = "stm32f030xc",
+    feature = "stm32f070xb",
+    feature = "stm32f072",
+    feature = "stm32f091",
+))]
 i2c_pins! {
     I2C2 => {
-        scl => [gpiob::PB13<Alternate<AF5>>],
-        sda => [gpiob::PB14<Alternate<AF5>>],
+        scl => [gpiob::PB10<Alternate<AF1>>, gpiob::PB13<Alternate<AF5>>],
+        sda => [gpiob::PB11<Alternate<AF1>>, gpiob::PB14<Alternate<AF5>>],
+    }
+}
+#[cfg(feature = "stm32f091")]
+i2c_pins! {
+    I2C2 => {
+        scl => [gpioa::PA11<Alternate<AF5>>],
+        sda => [gpioa::PA12<Alternate<AF5>>],
     }
 }
 
@@ -122,10 +139,10 @@ macro_rules! i2c {
                     // NOTE(unsafe) This executes only during initialisation
                     let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
 
-                    /* Enable clock for I2C */
+                    // Enable clock for I2C
                     rcc.$apbenr.modify(|_, w| w.$i2cXen().set_bit());
 
-                    /* Reset I2C */
+                    // Reset I2C
                     rcc.$apbrstr.modify(|_, w| w.$i2cXrst().set_bit());
                     rcc.$apbrstr.modify(|_, w| w.$i2cXrst().clear_bit());
                     I2c { i2c, pins }.i2c_init(speed)
@@ -144,7 +161,9 @@ i2c! {
     feature = "stm32f030xc",
     // XXX: This can't be right
     feature = "stm32f030xc",
-    feature = "stm32f070xb"
+    feature = "stm32f070xb",
+    feature = "stm32f072",
+    feature = "stm32f091",
 ))]
 i2c! {
     I2C2: (i2c2, i2c2en, i2c2rst, apb1enr, apb1rstr),
@@ -163,7 +182,7 @@ where
     fn i2c_init(self: Self, speed: KiloHertz) -> Self {
         use core::cmp;
 
-        /* Make sure the I2C unit is disabled so we can configure it */
+        // Make sure the I2C unit is disabled so we can configure it
         self.i2c.cr1.modify(|_, w| w.pe().clear_bit());
 
         // Calculate settings for I2C speed modes
@@ -191,7 +210,7 @@ where
             scldel = 3;
         }
 
-        /* Enable I2C signal generator, and configure I2C for 400KHz full speed */
+        // Enable I2C signal generator, and configure I2C for 400KHz full speed
         self.i2c.timingr.write(|w| {
             w.presc()
                 .bits(presc)
@@ -205,7 +224,7 @@ where
                 .bits(scll)
         });
 
-        /* Enable the I2C processing */
+        // Enable the I2C processing
         self.i2c.cr1.modify(|_, w| w.pe().set_bit());
 
         self
@@ -215,15 +234,9 @@ where
         (self.i2c, self.pins)
     }
 
-    fn send_byte(&self, byte: u8) -> Result<(), Error> {
-        /* Wait until we're ready for sending */
-        while self.i2c.isr.read().txis().bit_is_clear() {}
-
-        /* Push out a byte of data */
-        self.i2c.txdr.write(|w| unsafe { w.bits(u32::from(byte)) });
-
-        /* If we received a NACK, then this is an error */
-        if self.i2c.isr.read().nackf().bit_is_set() {
+    fn check_and_clear_error_flags(&self, isr: &crate::stm32::i2c1::isr::R) -> Result<(), Error> {
+        // If we received a NACK, then this is an error
+        if isr.nackf().bit_is_set() {
             self.i2c
                 .icr
                 .write(|w| w.stopcf().set_bit().nackcf().set_bit());
@@ -233,8 +246,28 @@ where
         Ok(())
     }
 
+    fn send_byte(&self, byte: u8) -> Result<(), Error> {
+        // Wait until we're ready for sending
+        while {
+            let isr = self.i2c.isr.read();
+            self.check_and_clear_error_flags(&isr)?;
+            isr.txis().bit_is_clear()
+        } {}
+
+        // Push out a byte of data
+        self.i2c.txdr.write(|w| unsafe { w.bits(u32::from(byte)) });
+
+        self.check_and_clear_error_flags(&self.i2c.isr.read())?;
+        Ok(())
+    }
+
     fn recv_byte(&self) -> Result<u8, Error> {
-        while self.i2c.isr.read().rxne().bit_is_clear() {}
+        while {
+            let isr = self.i2c.isr.read();
+            self.check_and_clear_error_flags(&isr)?;
+            isr.rxne().bit_is_clear()
+        } {}
+
         let value = self.i2c.rxdr.read().bits() as u8;
         Ok(value)
     }
@@ -248,8 +281,7 @@ where
     type Error = Error;
 
     fn write_read(&mut self, addr: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Error> {
-        /* Set up current address, we're trying a "read" command and not going to set anything
-         * and make sure we end a non-NACKed read (i.e. if we found a device) properly */
+        // Set up current slave address for writing and disable autoending
         self.i2c.cr2.modify(|_, w| {
             w.sadd()
                 .bits(u16::from(addr) << 1)
@@ -261,37 +293,29 @@ where
                 .clear_bit()
         });
 
-        /* Send a START condition */
+        // Send a START condition
         self.i2c.cr2.modify(|_, w| w.start().set_bit());
 
-        /* Wait until the transmit buffer is empty and there hasn't been either a NACK or STOP
-         * being received */
-        let mut isr;
+        // Wait until the transmit buffer is empty and there hasn't been any error condition
         while {
-            isr = self.i2c.isr.read();
-            isr.txis().bit_is_clear()
-                && isr.nackf().bit_is_clear()
-                && isr.stopf().bit_is_clear()
-                && isr.tc().bit_is_clear()
+            let isr = self.i2c.isr.read();
+            self.check_and_clear_error_flags(&isr)?;
+            isr.txis().bit_is_clear() && isr.tc().bit_is_clear()
         } {}
 
-        /* If we received a NACK, then this is an error */
-        if isr.nackf().bit_is_set() {
-            self.i2c
-                .icr
-                .write(|w| w.stopcf().set_bit().nackcf().set_bit());
-            return Err(Error::NACK);
-        }
-
+        // Send out all individual bytes
         for c in bytes {
             self.send_byte(*c)?;
         }
 
-        /* Wait until data was sent */
-        while self.i2c.isr.read().tc().bit_is_clear() {}
+        // Wait until data was sent
+        while {
+            let isr = self.i2c.isr.read();
+            self.check_and_clear_error_flags(&isr)?;
+            isr.tc().bit_is_clear()
+        } {}
 
-        /* Set up current address, we're trying a "read" command and not going to set anything
-         * and make sure we end a non-NACKed read (i.e. if we found a device) properly */
+        // Set up current address for reading
         self.i2c.cr2.modify(|_, w| {
             w.sadd()
                 .bits(u16::from(addr) << 1)
@@ -301,21 +325,19 @@ where
                 .set_bit()
         });
 
-        /* Send a START condition */
+        // Send another START condition
         self.i2c.cr2.modify(|_, w| w.start().set_bit());
 
-        /* Send the autoend after setting the start to get a restart */
+        // Send the autoend after setting the start to get a restart
         self.i2c.cr2.modify(|_, w| w.autoend().set_bit());
 
-        /* Read in all bytes */
+        // Now read in all bytes
         for c in buffer.iter_mut() {
             *c = self.recv_byte()?;
         }
 
-        /* Clear flags if they somehow ended up set */
-        self.i2c
-            .icr
-            .write(|w| w.stopcf().set_bit().nackcf().set_bit());
+        // Check and clear flags if they somehow ended up set
+        self.check_and_clear_error_flags(&self.i2c.isr.read())?;
 
         Ok(())
     }
@@ -329,8 +351,7 @@ where
     type Error = Error;
 
     fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Error> {
-        /* Set up current address, we're trying a "read" command and not going to set anything
-         * and make sure we end a non-NACKed read (i.e. if we found a device) properly */
+        // Set up current slave address for writing and enable autoending
         self.i2c.cr2.modify(|_, w| {
             w.sadd()
                 .bits(u16::from(addr) << 1)
@@ -342,17 +363,17 @@ where
                 .set_bit()
         });
 
-        /* Send a START condition */
+        // Send a START condition
         self.i2c.cr2.modify(|_, w| w.start().set_bit());
 
+        // Send out all individual bytes
         for c in bytes {
             self.send_byte(*c)?;
         }
 
-        /* Fallthrough is success */
-        self.i2c
-            .icr
-            .write(|w| w.stopcf().set_bit().nackcf().set_bit());
+        // Check and clear flags if they somehow ended up set
+        self.check_and_clear_error_flags(&self.i2c.isr.read())?;
+
         Ok(())
     }
 }

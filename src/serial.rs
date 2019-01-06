@@ -95,7 +95,7 @@ usart_pins! {
         rx => [gpioa::PA3<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>],
     }
 }
-#[cfg(feature = "stm32f070")]
+#[cfg(any(feature = "stm32f070", feature = "stm32f072", feature = "stm32f091"))]
 usart_pins! {
     USART1 => {
         tx => [gpioa::PA9<Alternate<AF1>>, gpiob::PB6<Alternate<AF0>>],
@@ -107,6 +107,8 @@ usart_pins! {
     feature = "stm32f030xc",
     feature = "stm32f042",
     feature = "stm32f070",
+    feature = "stm32f072",
+    feature = "stm32f091",
 ))]
 usart_pins! {
     USART2 => {
@@ -114,7 +116,19 @@ usart_pins! {
         rx => [gpioa::PA3<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>],
     }
 }
-#[cfg(any(feature = "stm32f030xc", feature = "stm32f070xb"))]
+#[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+usart_pins! {
+    USART2 => {
+        tx => [gpiod::PD5<Alternate<AF0>>],
+        rx => [gpiod::PD6<Alternate<AF0>>],
+    }
+}
+#[cfg(any(
+    feature = "stm32f030xc",
+    feature = "stm32f070xb",
+    feature = "stm32f072",
+    feature = "stm32f091",
+))]
 usart_pins! {
     USART3 => {
         // According to the datasheet PB10 is both tx and rx, but in stm32cubemx it's only tx
@@ -126,7 +140,23 @@ usart_pins! {
         rx => [gpioa::PA1<Alternate<AF4>>, gpioc::PC11<Alternate<AF0>>],
     }
 }
-#[cfg(feature = "stm32f030xc")]
+#[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+usart_pins! {
+    USART3 => {
+        tx => [gpiod::PD8<Alternate<AF0>>],
+        rx => [gpiod::PD9<Alternate<AF0>>],
+    }
+}
+// TODO: The ST SVD files are missing the entire PE enable register.
+//       Re-enable as soon as this gets fixed.
+// #[cfg(feature = "stm32f091")]
+// usart_pins! {
+//     USART4 => {
+//         tx => [gpioe::PE8<Alternate<AF1>>],
+//         rx => [gpioe::PE9<Alternate<AF1>>],
+//     }
+// }
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f091"))]
 usart_pins! {
     USART5 => {
         tx => [gpiob::PB3<Alternate<AF4>>, gpioc::PC12<Alternate<AF2>>],
@@ -135,6 +165,19 @@ usart_pins! {
     USART6 => {
         tx => [gpioa::PA4<Alternate<AF5>>, gpioc::PC0<Alternate<AF2>>],
         rx => [gpioa::PA5<Alternate<AF5>>, gpioc::PC1<Alternate<AF2>>],
+    }
+}
+// TODO: The ST SVD files are missing the entire PE enable register.
+//       Re-enable as soon as this gets fixed.
+#[cfg(feature = "stm32f091")]
+usart_pins! {
+    // USART5 => {
+    //     tx => [gpioe::PE10<Alternate<AF1>>],
+    //     rx => [gpioe::PE11<Alternate<AF1>>],
+    // }
+    USART6 => {
+        tx => [gpiof::PF9<Alternate<AF1>>],
+        rx => [gpiof::PF10<Alternate<AF1>>],
     }
 }
 
@@ -240,16 +283,23 @@ usart! {
     feature = "stm32f030xc",
     feature = "stm32f042",
     feature = "stm32f070",
+    feature = "stm32f072",
+    feature = "stm32f091",
 ))]
 usart! {
     USART2: (usart2, usart2en, apb1enr),
 }
-#[cfg(any(feature = "stm32f030xc", feature = "stm32f070xb"))]
+#[cfg(any(
+    feature = "stm32f030xc",
+    feature = "stm32f070xb",
+    feature = "stm32f072",
+    feature = "stm32f091",
+))]
 usart! {
     USART3: (usart3, usart3en, apb1enr),
     USART4: (usart4, usart4en, apb1enr),
 }
-#[cfg(feature = "stm32f030xc")]
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f091"))]
 usart! {
     USART5: (usart5, usart5en, apb1enr),
     USART6: (usart6, usart6en, apb2enr),

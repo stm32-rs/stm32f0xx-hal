@@ -574,30 +574,78 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
     PC15: (pc15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f070",
+    feature = "stm32f072",
+    feature = "stm32f091",
+))]
 gpio!(GPIOC, gpioc, iopcen, PC, [
-    PC0: (pb0, 0, Input<Floating>),
-    PC1: (pb1, 1, Input<Floating>),
-    PC2: (pb2, 2, Input<Floating>),
-    PC3: (pb3, 3, Input<Floating>),
-    PC4: (pb4, 4, Input<Floating>),
-    PC5: (pb5, 5, Input<Floating>),
-    PC6: (pb6, 6, Input<Floating>),
-    PC7: (pb7, 7, Input<Floating>),
-    PC8: (pb8, 8, Input<Floating>),
-    PC9: (pb9, 9, Input<Floating>),
-    PC10: (pb10, 10, Input<Floating>),
-    PC11: (pb11, 11, Input<Floating>),
-    PC12: (pb12, 12, Input<Floating>),
-    PC13: (pb13, 13, Input<Floating>),
-    PC14: (pb14, 14, Input<Floating>),
-    PC15: (pb15, 15, Input<Floating>),
+    PC0: (pc0, 0, Input<Floating>),
+    PC1: (pc1, 1, Input<Floating>),
+    PC2: (pc2, 2, Input<Floating>),
+    PC3: (pc3, 3, Input<Floating>),
+    PC4: (pc4, 4, Input<Floating>),
+    PC5: (pc5, 5, Input<Floating>),
+    PC6: (pc6, 6, Input<Floating>),
+    PC7: (pc7, 7, Input<Floating>),
+    PC8: (pc8, 8, Input<Floating>),
+    PC9: (pc9, 9, Input<Floating>),
+    PC10: (pc10, 10, Input<Floating>),
+    PC11: (pc11, 11, Input<Floating>),
+    PC12: (pc12, 12, Input<Floating>),
+    PC13: (pc13, 13, Input<Floating>),
+    PC14: (pc14, 14, Input<Floating>),
+    PC15: (pc15, 15, Input<Floating>),
 ]);
 
 #[cfg(any(feature = "stm32f030", feature = "stm32f070"))]
 gpio!(GPIOD, gpiod, iopden, PD, [
     PD2: (pd2, 2, Input<Floating>),
 ]);
+
+#[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+gpio!(GPIOD, gpiod, iopden, PD, [
+    PD0: (pd0, 0, Input<Floating>),
+    PD1: (pd1, 1, Input<Floating>),
+    PD2: (pd2, 2, Input<Floating>),
+    PD3: (pd3, 3, Input<Floating>),
+    PD4: (pd4, 4, Input<Floating>),
+    PD5: (pd5, 5, Input<Floating>),
+    PD6: (pd6, 6, Input<Floating>),
+    PD7: (pd7, 7, Input<Floating>),
+    PD8: (pd8, 8, Input<Floating>),
+    PD9: (pd9, 9, Input<Floating>),
+    PD10: (pd10, 10, Input<Floating>),
+    PD11: (pd11, 11, Input<Floating>),
+    PD12: (pd12, 12, Input<Floating>),
+    PD13: (pd13, 13, Input<Floating>),
+    PD14: (pd14, 14, Input<Floating>),
+    PD15: (pd15, 15, Input<Floating>),
+]);
+
+// TODO: The ST SVD files are missing the entire PE enable register.
+//       Re-enable as soon as this gets fixed.
+
+// #[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+// gpio!(GPIOE, gpioe, iopeen, PE, [
+//     PE0: (pe0, 0, Input<Floating>),
+//     PE1: (pe1, 1, Input<Floating>),
+//     PE2: (pe2, 2, Input<Floating>),
+//     PE3: (pe3, 3, Input<Floating>),
+//     PE4: (pe4, 4, Input<Floating>),
+//     PE5: (pe5, 5, Input<Floating>),
+//     PE6: (pe6, 6, Input<Floating>),
+//     PE7: (pe7, 7, Input<Floating>),
+//     PE8: (pe8, 8, Input<Floating>),
+//     PE9: (pe9, 9, Input<Floating>),
+//     PE10: (pe10, 10, Input<Floating>),
+//     PE11: (pe11, 11, Input<Floating>),
+//     PE12: (pe12, 12, Input<Floating>),
+//     PE13: (pe13, 13, Input<Floating>),
+//     PE14: (pe14, 14, Input<Floating>),
+//     PE15: (pe15, 15, Input<Floating>),
+// ]);
 
 #[cfg(feature = "stm32f042")]
 gpio!(GPIOF, gpiof, iopfen, PF, [
@@ -620,4 +668,15 @@ gpio!(GPIOF, gpiof, iopfen, PF, [
 gpio!(GPIOF, gpiof, iopfen, PF, [
     PF0: (pf0, 0, Input<Floating>),
     PF1: (pf1, 1, Input<Floating>),
+]);
+
+#[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+gpio!(GPIOF, gpiof, iopfen, PF, [
+    PF0: (pf0, 0, Input<Floating>),
+    PF1: (pf1, 1, Input<Floating>),
+    PF2: (pf2, 2, Input<Floating>),
+    PF3: (pf3, 3, Input<Floating>),
+    PF6: (pf6, 6, Input<Floating>),
+    PF9: (pf9, 9, Input<Floating>),
+    PF10: (pf10, 10, Input<Floating>),
 ]);

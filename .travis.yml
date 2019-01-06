@@ -12,6 +12,8 @@ env:
   - MCU=stm32f070
   - MCU=stm32f070x6
   - MCU=stm32f070xb
+  - MCU=stm32f072
+  - MCU=stm32f091
 matrix:
   allow_failures:
     - rust: nightly

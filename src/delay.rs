@@ -99,7 +99,7 @@ impl DelayUs<u32> for Delay {
 
             let start_count = SYST::get_current();
             total_rvr -= current_rvr;
-            while ((start_count - SYST::get_current()) % MAX_SYSTICK) < current_rvr {}
+            while (start_count.wrapping_sub(SYST::get_current()) % MAX_SYSTICK) < current_rvr {}
         }
     }
 }

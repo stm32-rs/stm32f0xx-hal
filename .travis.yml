@@ -11,7 +11,7 @@ env:
 matrix:
   allow_failures:
     - rust: nightly
-    - COMMAND=size_check
+    - env: COMMAND=size_check
   fast_finish: true
 
 install:

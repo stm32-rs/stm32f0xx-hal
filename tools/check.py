@@ -7,7 +7,7 @@ import sys
 
 def run_inner(args):
     print("Running `{}`...".format(" ".join(args)))
-    ret = subprocess.run(args).returncode == 0
+    ret = subprocess.call(args) == 0
     print("")
     return ret
 
@@ -24,10 +24,9 @@ def run(mcu):
 
 def main():
     cargo_meta = json.loads(
-        subprocess.run("cargo metadata --no-deps --format-version=1",
+        subprocess.check_output("cargo metadata --no-deps --format-version=1",
                        shell=True,
-                       stdout=subprocess.PIPE,
-                       universal_newlines=True).stdout
+                       universal_newlines=True)
         )
 
     crate_info = cargo_meta["packages"][0]

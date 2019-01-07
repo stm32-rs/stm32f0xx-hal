@@ -3,36 +3,13 @@ rust:
   - stable
   - nightly
 cache: cargo
-env:
-  - MCU=stm32f042
-  - MCU=stm32f030
-  - MCU=stm32f030x6
-  - MCU=stm32f030x8
-  - MCU=stm32f030xc
-  - MCU=stm32f070
-  - MCU=stm32f070x6
-  - MCU=stm32f070xb
-  - MCU=stm32f072
-  - MCU=stm32f091
+
 matrix:
   allow_failures:
     - rust: nightly
   fast_finish: true
-stages:
-  - plain
-  - test
 
 install:
   - rustup target add thumbv6m-none-eabi
 
-jobs:
-  include:
-    - stage: plain
-      rust: stable
-      script: cargo check
-    - stage: plain
-      rust: nightly
-      allow_failures: true
-      script: cargo check
-
-script: cargo check --features=$MCU --examples
+script: tools/check.py

@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Support for STM32F091 - @jessebraham
 - Support for HSE as a system clocksource (#25 - breaking change) - @zklapow
 
+### Fixed
+
+- Fixed panic in delay overflow handling for debug builds - @david-sawatzke
+
 ## [v0.11.1] - 2019-01-05
 
 ### Added

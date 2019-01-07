@@ -1,3 +1,4 @@
+#[cfg(feature="device-selected")]
 use crate::stm32::rcc::cfgr::SWW;
 use crate::time::Hertz;
 
@@ -26,7 +27,9 @@ pub struct Rcc {
     pub cfgr: CFGR,
 }
 
+#[allow(unused)]
 const HSI: u32 = 8_000_000; // Hz
+#[allow(unused)]
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
 #[allow(unused)]

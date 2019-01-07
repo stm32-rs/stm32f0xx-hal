@@ -12,14 +12,11 @@ def run_inner(args):
     return ret
 
 
-def run(mcu):
+def run(mcu, cargo_cmd):
     if mcu == "":
-        return run_inner(["cargo", "check"])
+        return run_inner(cargo_cmd)
     else:
-        return run_inner(["cargo",
-                          "check",
-                          "--examples",
-                          "--features={}".format(mcu)])
+        return run_inner(cargo_cmd + ["--examples", "--features={}".format(mcu)])
 
 
 def main():
@@ -35,8 +32,15 @@ def main():
                        for x in crate_info["features"].keys()
                        if x != "device-selected" and x != "rt"]
 
-    if not all(map(run, features)):
+    if 'size_check' in sys.argv:
+        cargo_cmd = ['cargo', 'build', '--release']
+    else:
+        cargo_cmd = ['cargo', 'check']
+
+    if not all(map(lambda f: run(f, cargo_cmd),
+                   features)):
         sys.exit(-1)
+
 
 if __name__ == "__main__":
     main()

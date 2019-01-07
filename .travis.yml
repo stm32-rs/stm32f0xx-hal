@@ -4,12 +4,17 @@ rust:
   - nightly
 cache: cargo
 
+env:
+  - COMMAND=""
+  - COMMAND=size_check
+
 matrix:
   allow_failures:
     - rust: nightly
+    - COMMAND=size_check
   fast_finish: true
 
 install:
   - rustup target add thumbv6m-none-eabi
 
-script: tools/check.py
+script: tools/check.py $COMMAND

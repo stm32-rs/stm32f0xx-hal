@@ -18,6 +18,21 @@ matrix:
   allow_failures:
     - rust: nightly
   fast_finish: true
-script:
+stages:
+  - plain
+  - test
+
+install:
   - rustup target add thumbv6m-none-eabi
-  - cargo build --features=$MCU --examples --release
+
+jobs:
+  include:
+    - stage: plain
+      rust: stable
+      script: cargo check
+    - stage: plain
+      rust: nightly
+      allow_failures: true
+      script: cargo check
+
+script: cargo check --features=$MCU --examples

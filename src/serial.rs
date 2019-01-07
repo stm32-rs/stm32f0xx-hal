@@ -41,6 +41,8 @@ use embedded_hal::prelude::*;
 
 use crate::{gpio::*, rcc::Rcc, time::Bps};
 
+use core::marker::PhantomData;
+
 /// Serial error
 #[derive(Debug)]
 pub enum Error {
@@ -208,10 +210,13 @@ pub struct Serial<USART, TXPIN, RXPIN> {
     pins: (TXPIN, RXPIN),
 }
 
+// Common register
+type SerialRegisterBlock = crate::stm32::usart1::RegisterBlock;
+
 /// Serial receiver
 pub struct Rx<USART> {
-    // This is ok, because the USART types only contains PhantomData
-    usart: *const USART,
+    usart: *const SerialRegisterBlock,
+    _instance: PhantomData<USART>,
 }
 
 // NOTE(unsafe) Required to allow protected shared access in handlers
@@ -219,8 +224,8 @@ unsafe impl<USART> Send for Rx<USART> {}
 
 /// Serial transmitter
 pub struct Tx<USART> {
-    // This is ok, because the USART types only contains PhantomData
-    usart: *const USART,
+    usart: *const SerialRegisterBlock,
+    _instance: PhantomData<USART>,
 }
 
 // NOTE(unsafe) Required to allow protected shared access in handlers
@@ -359,10 +364,6 @@ usart! {
     USART6: (usart6, usart6tx, usart6rx,usart6en, apb2enr),
 }
 
-// It's s needed for the impls, but rustc doesn't recognize that
-#[allow(dead_code)]
-type SerialRegisterBlock = crate::stm32::usart1::RegisterBlock;
-
 impl<USART> embedded_hal::serial::Read<u8> for Rx<USART>
 where
     USART: Deref<Target = SerialRegisterBlock>,
@@ -371,23 +372,7 @@ where
 
     /// Tries to read a byte from the uart
     fn read(&mut self) -> nb::Result<u8, Error> {
-        // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*self.usart).isr.read() };
-
-        Err(if isr.pe().bit_is_set() {
-            nb::Error::Other(Error::Parity)
-        } else if isr.fe().bit_is_set() {
-            nb::Error::Other(Error::Framing)
-        } else if isr.nf().bit_is_set() {
-            nb::Error::Other(Error::Noise)
-        } else if isr.ore().bit_is_set() {
-            nb::Error::Other(Error::Overrun)
-        } else if isr.rxne().bit_is_set() {
-            // NOTE(read_volatile) see `write_volatile` below
-            return Ok(unsafe { ptr::read_volatile(&(*self.usart).rdr as *const _ as *const _) });
-        } else {
-            nb::Error::WouldBlock
-        })
+        read(self.usart)
     }
 }
 
@@ -400,10 +385,7 @@ where
 
     /// Tries to read a byte from the uart
     fn read(&mut self) -> nb::Result<u8, Error> {
-        Rx {
-            usart: &self.usart as *const _,
-        }
-        .read()
+        read(&*self.usart)
     }
 }
 
@@ -415,30 +397,13 @@ where
 
     /// Ensures that none of the previously written words are still buffered
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
-        // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*self.usart).isr.read() };
-
-        if isr.tc().bit_is_set() {
-            Ok(())
-        } else {
-            Err(nb::Error::WouldBlock)
-        }
+        flush(self.usart)
     }
 
     /// Tries to write a byte to the uart
     /// Fails if the transmit buffer is full
     fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
-        // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*self.usart).isr.read() };
-
-        if isr.txe().bit_is_set() {
-            // NOTE(unsafe) atomic write to stateless register
-            // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
-            unsafe { ptr::write_volatile(&(*self.usart).tdr as *const _ as *mut _, byte) }
-            Ok(())
-        } else {
-            Err(nb::Error::WouldBlock)
-        }
+        write(self.usart, byte)
     }
 }
 
@@ -451,19 +416,13 @@ where
 
     /// Ensures that none of the previously written words are still buffered
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
-        Tx {
-            usart: &self.usart as *const _,
-        }
-        .flush()
+        flush(&*self.usart)
     }
 
     /// Tries to write a byte to the uart
     /// Fails if the transmit buffer is full
     fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
-        Tx {
-            usart: &self.usart as *const _,
-        }
-        .write(byte)
+        write(&*self.usart, byte)
     }
 }
 
@@ -480,10 +439,12 @@ where
     {
         (
             Tx {
-                usart: &self.usart as *const _,
+                usart: &*self.usart,
+                _instance: PhantomData,
             },
             Rx {
-                usart: &self.usart as *const _,
+                usart: &*self.usart,
+                _instance: PhantomData,
             },
         )
     }
@@ -503,4 +464,53 @@ where
         let _ = s.as_bytes().iter().map(|c| block!(self.write(*c))).last();
         Ok(())
     }
+}
+
+/// Ensures that none of the previously written words are still buffered
+fn flush(usart: *const SerialRegisterBlock) -> nb::Result<(), void::Void> {
+    // NOTE(unsafe) atomic read with no side effects
+    let isr = unsafe { (*usart).isr.read() };
+
+    if isr.tc().bit_is_set() {
+        Ok(())
+    } else {
+        Err(nb::Error::WouldBlock)
+    }
+}
+
+/// Tries to write a byte to the uart
+/// Fails if the transmit buffer is full
+fn write(usart: *const SerialRegisterBlock, byte: u8) -> nb::Result<(), void::Void> {
+    // NOTE(unsafe) atomic read with no side effects
+    let isr = unsafe { (*usart).isr.read() };
+
+    if isr.txe().bit_is_set() {
+        // NOTE(unsafe) atomic write to stateless register
+        // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
+        unsafe { ptr::write_volatile(&(*usart).tdr as *const _ as *mut _, byte) }
+        Ok(())
+    } else {
+        Err(nb::Error::WouldBlock)
+    }
+}
+
+/// Tries to read a byte from the uart
+fn read(usart: *const SerialRegisterBlock) -> nb::Result<u8, Error> {
+    // NOTE(unsafe) atomic read with no side effects
+    let isr = unsafe { (*usart).isr.read() };
+
+    Err(if isr.pe().bit_is_set() {
+        nb::Error::Other(Error::Parity)
+    } else if isr.fe().bit_is_set() {
+        nb::Error::Other(Error::Framing)
+    } else if isr.nf().bit_is_set() {
+        nb::Error::Other(Error::Noise)
+    } else if isr.ore().bit_is_set() {
+        nb::Error::Other(Error::Overrun)
+    } else if isr.rxne().bit_is_set() {
+        // NOTE(read_volatile) see `write_volatile` below
+        return Ok(unsafe { ptr::read_volatile(&(*usart).rdr as *const _ as *const _) });
+    } else {
+        nb::Error::WouldBlock
+    })
 }

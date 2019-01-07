@@ -1,3 +1,40 @@
+//! API for the integrate SPI peripherals
+//!
+//! The spi bus acts as the master (generating the clock) and you need to handle the CS separately.
+//!
+//! The most significant bit is transmitted first & only 8-bit transfers are supported
+//!
+//! # Example
+//! Echo incoming data in the next transfer
+//! ``` no_run
+//! use stm32f0xx_hal as hal;
+//!
+//! use crate::hal::stm32;
+//! use crate::hal::prelude::*;
+//! use crate::hal::spi::{Spi, Mode, Phase, Polarity};
+//!
+//! let p = stm32::Peripherals::take().unwrap();
+//! let clcks = p.RCC.constrain().cfgr.freeze();
+//!
+//! let gpioa = p.GPIOA.split();
+//!
+//! // Configure pins for SPI
+//! let sck = gpioa.pa5.into_alternate_af0();
+//! let miso = gpioa.pa6.into_alternate_af0();
+//! let mosi = gpioa.pa7.into_alternate_af0();
+//!
+//! // Configure SPI with 1MHz rate
+//! let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), Mode {
+//!     polarity: Polarity::IdleHigh,
+//!     phase: Phase::CaptureOnSecondTransition,
+//! }, 1.mhz(), clocks);
+//!
+//! let mut data = [ 0 ];
+//! loop {
+//!     spi.transfer(&mut data).unwrap();
+//! }
+//! ```
+
 #[allow(unused)]
 use core::{ops::Deref, ptr};
 
@@ -142,6 +179,7 @@ macro_rules! spi {
     ($($SPI:ident: ($spi:ident, $spiXen:ident, $spiXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
             impl<SCKPIN, MISOPIN, MOSIPIN> Spi<$SPI, SCKPIN, MISOPIN, MOSIPIN> {
+                /// Creates a new spi instance
                 pub fn $spi<F>(
                     spi: $SPI,
                     pins: (SCKPIN, MISOPIN, MOSIPIN),

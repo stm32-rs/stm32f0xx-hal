@@ -17,21 +17,24 @@ use cortex_m_rt::entry;
 #[entry]
 fn main() -> ! {
     if let Some(p) = stm32::Peripherals::take() {
-        let gpioa = p.GPIOA.split();
-        let rcc = p.RCC.constrain();
-        let clocks = rcc.cfgr.sysclk(48.mhz()).freeze();
+        cortex_m::interrupt::free(move |cs| {
+            let mut flash = p.FLASH;
+            let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut flash);
 
-        let tx = gpioa.pa9.into_alternate_af1();
-        let rx = gpioa.pa10.into_alternate_af1();
+            let gpioa = p.GPIOA.split(&mut rcc);
 
-        let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), clocks);
+            let tx = gpioa.pa9.into_alternate_af1(cs);
+            let rx = gpioa.pa10.into_alternate_af1(cs);
 
-        let (mut tx, mut rx) = serial.split();
+            let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
 
-        loop {
-            let received = block!(rx.read()).unwrap();
-            block!(tx.write(received)).ok();
-        }
+            let (mut tx, mut rx) = serial.split();
+
+            loop {
+                let received = block!(rx.read()).unwrap();
+                block!(tx.write(received)).ok();
+            }
+        });
     }
 
     loop {

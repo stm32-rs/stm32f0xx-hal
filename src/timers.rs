@@ -13,26 +13,30 @@
 //! use crate::hal::timers::*;
 //! use nb::block;
 //!
-//! let mut p = stm32::Peripherals::take().unwrap();
+//! cortex_m::interrupt::free(|cs| {
+//!     let mut p = stm32::Peripherals::take().unwrap();
+//!     let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
 //!
-//! let mut led = gpioa.pa1.into_push_pull_pull_output();
-//! let rcc = p.RCC.constrain().cfgr.freeze();
-//! let mut timer = Timer::tim1(p.TIM1, Hertz(1), clocks);
-//! loop {
-//!     led.toggle();
-//!     block!(timer.wait()).ok();
-//! }
+//!     let gpioa = p.GPIOA.split(&mut rcc);
+//!
+//!     let mut led = gpioa.pa1.into_push_pull_pull_output(cs);
+//!
+//!     let mut timer = Timer::tim1(p.TIM1, Hertz(1), &mut rcc);
+//!     loop {
+//!         led.toggle();
+//!         block!(timer.wait()).ok();
+//!     }
+//! });
 //! ```
-
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
-use crate::rcc::Clocks;
+use crate::rcc::{Clocks, Rcc};
+
+use crate::time::Hertz;
 use embedded_hal::timer::{CountDown, Periodic};
 use nb;
 use void::Void;
-
-use crate::time::Hertz;
 
 /// Hardware timers
 pub struct Timer<TIM> {
@@ -48,12 +52,15 @@ pub enum Event {
 
 impl Timer<SYST> {
     /// Configures the SYST clock as a periodic count down timer
-    pub fn syst<T>(mut syst: SYST, timeout: T, clocks: Clocks) -> Self
+    pub fn syst<T>(mut syst: SYST, timeout: T, rcc: &Rcc) -> Self
     where
         T: Into<Hertz>,
     {
         syst.set_clock_source(SystClkSource::Core);
-        let mut timer = Timer { tim: syst, clocks };
+        let mut timer = Timer {
+            tim: syst,
+            clocks: rcc.clocks,
+        };
         timer.start(timeout);
         timer
     }
@@ -106,7 +113,6 @@ impl CountDown for Timer<SYST> {
 
 impl Periodic for Timer<SYST> {}
 
-#[allow(unused)]
 macro_rules! timers {
     ($($TIM:ident: ($tim:ident, $timXen:ident, $timXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
@@ -116,20 +122,17 @@ macro_rules! timers {
                 // even if the `$TIM` are non overlapping (compare to the `free` function below
                 // which just works)
                 /// Configures a TIM peripheral as a periodic count down timer
-                pub fn $tim<T>(tim: $TIM, timeout: T, clocks: Clocks) -> Self
+                pub fn $tim<T>(tim: $TIM, timeout: T, rcc: &mut Rcc) -> Self
                 where
                     T: Into<Hertz>,
                 {
-                    // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
-
                     // enable and reset peripheral to a clean slate state
-                    rcc.$apbenr.modify(|_, w| w.$timXen().set_bit());
-                    rcc.$apbrstr.modify(|_, w| w.$timXrst().set_bit());
-                    rcc.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
+                    rcc.regs.$apbenr.modify(|_, w| w.$timXen().set_bit());
+                    rcc.regs.$apbrstr.modify(|_, w| w.$timXrst().set_bit());
+                    rcc.regs.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
 
                     let mut timer = Timer {
-                        clocks,
+                        clocks: rcc.clocks,
                         tim,
                     };
                     timer.start(timeout);
@@ -211,7 +214,6 @@ macro_rules! timers {
     }
 }
 
-#[cfg(feature = "device-selected")]
 timers! {
     TIM1: (tim1, tim1en, tim1rst, apb2enr, apb2rstr),
     TIM3: (tim3, tim3en, tim3rst, apb1enr, apb1rstr),

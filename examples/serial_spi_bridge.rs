@@ -30,34 +30,37 @@ fn main() -> ! {
     };
 
     if let Some(p) = stm32::Peripherals::take() {
-        let rcc = p.RCC.constrain();
-        let clocks = rcc.cfgr.freeze();
-        let gpioa = p.GPIOA.split();
+        cortex_m::interrupt::free(move |cs| {
+            let mut flash = p.FLASH;
+            let mut rcc = p.RCC.configure().freeze(&mut flash);
 
-        // Configure pins for SPI
-        let sck = gpioa.pa5.into_alternate_af0();
-        let miso = gpioa.pa6.into_alternate_af0();
-        let mosi = gpioa.pa7.into_alternate_af0();
+            let gpioa = p.GPIOA.split(&mut rcc);
 
-        // Configure SPI with 1MHz rate
-        let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), MODE, 1.mhz(), clocks);
+            // Configure pins for SPI
+            let sck = gpioa.pa5.into_alternate_af0(cs);
+            let miso = gpioa.pa6.into_alternate_af0(cs);
+            let mosi = gpioa.pa7.into_alternate_af0(cs);
 
-        let tx = gpioa.pa9.into_alternate_af1();
-        let rx = gpioa.pa10.into_alternate_af1();
+            // Configure SPI with 1MHz rate
+            let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), MODE, 1.mhz(), &mut rcc);
 
-        let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), clocks);
+            let tx = gpioa.pa9.into_alternate_af1(cs);
+            let rx = gpioa.pa10.into_alternate_af1(cs);
 
-        let (mut tx, mut rx) = serial.split();
+            let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
 
-        loop {
-            let serial_received = block!(rx.read()).unwrap();
+            let (mut tx, mut rx) = serial.split();
 
-            block!(spi.send(serial_received)).ok();
+            loop {
+                let serial_received = block!(rx.read()).unwrap();
 
-            let spi_received = block!(spi.read()).unwrap();
+                block!(spi.send(serial_received)).ok();
 
-            block!(tx.write(spi_received)).ok();
-        }
+                let spi_received = block!(spi.read()).unwrap();
+
+                block!(tx.write(spi_received)).ok();
+            }
+        });
     }
 
     loop {

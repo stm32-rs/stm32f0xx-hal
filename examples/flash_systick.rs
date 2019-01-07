@@ -23,32 +23,34 @@ static GPIO: Mutex<RefCell<Option<gpioa::PA1<Output<PushPull>>>>> = Mutex::new(R
 #[entry]
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
-        let gpioa = p.GPIOA.split();
-        let rcc = p.RCC.constrain();
-        let _ = rcc.cfgr.sysclk(48.mhz()).freeze();
-        let mut syst = cp.SYST;
-
-        /* (Re-)configure PA1 as output */
-        let led = gpioa.pa1.into_push_pull_output();
-
         cortex_m::interrupt::free(move |cs| {
+            let mut flash = p.FLASH;
+            let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut flash);
+
+            let gpioa = p.GPIOA.split(&mut rcc);
+
+            let mut syst = cp.SYST;
+
+            /* (Re-)configure PA1 as output */
+            let led = gpioa.pa1.into_push_pull_output(cs);
+
             *GPIO.borrow(cs).borrow_mut() = Some(led);
+
+            /* Initialise SysTick counter with a defined value */
+            unsafe { syst.cvr.write(1) };
+
+            /* Set source for SysTick counter, here full operating frequency (== 8MHz) */
+            syst.set_clock_source(Core);
+
+            /* Set reload value, i.e. timer delay 48 MHz/4 Mcounts == 12Hz or 83ms */
+            syst.set_reload(4_000_000 - 1);
+
+            /* Start counter */
+            syst.enable_counter();
+
+            /* Start interrupt generation */
+            syst.enable_interrupt();
         });
-
-        /* Initialise SysTick counter with a defined value */
-        unsafe { syst.cvr.write(1) };
-
-        /* Set source for SysTick counter, here full operating frequency (== 8MHz) */
-        syst.set_clock_source(Core);
-
-        /* Set reload value, i.e. timer delay 48 MHz/4 Mcounts == 12Hz or 83ms */
-        syst.set_reload(4_000_000 - 1);
-
-        /* Start counter */
-        syst.enable_counter();
-
-        /* Start interrupt generation */
-        syst.enable_interrupt();
     }
 
     loop {

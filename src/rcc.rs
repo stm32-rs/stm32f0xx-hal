@@ -1,53 +1,47 @@
-#[cfg(feature="device-selected")]
 use crate::stm32::rcc::cfgr::SWW;
 use crate::time::Hertz;
 
-/// Extension trait that constrains the `RCC` peripheral
+/// Extension trait that sets up the `RCC` peripheral
 pub trait RccExt {
-    /// Constrains the `RCC` peripheral so it plays nicely with the other abstractions
-    fn constrain(self) -> Rcc;
+    /// Configure the clocks of the RCC peripheral
+    fn configure(self) -> CFGR;
 }
 
-#[cfg(feature = "device-selected")]
 impl RccExt for crate::stm32::RCC {
-    fn constrain(self) -> Rcc {
-        Rcc {
-            cfgr: CFGR {
-                hclk: None,
-                pclk: None,
-                sysclk: None,
-                clock_src: SysClkSource::HSI,
-            },
+    fn configure(self) -> CFGR {
+        CFGR {
+            hclk: None,
+            pclk: None,
+            sysclk: None,
+            clock_src: SysClkSource::HSI,
+            rcc: self,
         }
     }
 }
 
 /// Constrained RCC peripheral
 pub struct Rcc {
-    pub cfgr: CFGR,
+    pub clocks: Clocks,
+    pub(crate) regs: crate::stm32::RCC,
 }
 
-#[allow(unused)]
 const HSI: u32 = 8_000_000; // Hz
-#[allow(unused)]
 const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
 
-#[allow(unused)]
 enum SysClkSource {
     HSI,
     HSE(u32),
     HSI48,
 }
 
-#[allow(unused)]
 pub struct CFGR {
     hclk: Option<u32>,
     pclk: Option<u32>,
     sysclk: Option<u32>,
     clock_src: SysClkSource,
+    rcc: crate::stm32::RCC,
 }
 
-#[cfg(feature = "device-selected")]
 impl CFGR {
     pub fn hse<F>(mut self, freq: F) -> Self
     where
@@ -81,7 +75,7 @@ impl CFGR {
         self
     }
 
-    pub fn freeze(self) -> Clocks {
+    pub fn freeze(self, flash: &mut crate::stm32::FLASH) -> Rcc {
         // Default to lowest frequency clock on all systems.
         let sysclk = self.sysclk.unwrap_or(HSI);
 
@@ -150,11 +144,8 @@ impl CFGR {
         let ppre: u8 = 1 << (ppre_bits - 0b011);
         let pclk = hclk / cast::u32(ppre);
 
-        let rcc = unsafe { &*crate::stm32::RCC::ptr() };
-
         // adjust flash wait states
         unsafe {
-            let flash = &*crate::stm32::FLASH::ptr();
             flash.acr.write(|w| {
                 w.latency().bits(if sysclk <= 24_000_000 {
                     0b000
@@ -169,22 +160,21 @@ impl CFGR {
         // Enable the requested clock
         match self.clock_src {
             SysClkSource::HSE(_) => {
-                rcc.cr
+                self.rcc
+                    .cr
                     .modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
 
-                while !rcc.cr.read().hserdy().bit_is_set() {}
+                while !self.rcc.cr.read().hserdy().bit_is_set() {}
             }
             SysClkSource::HSI48 => {
-                rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
-                while rcc.cr2.read().hsi48rdy().bit_is_clear() {}
+                self.rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
+                while self.rcc.cr2.read().hsi48rdy().bit_is_clear() {}
             }
             SysClkSource::HSI => {
-                rcc.cr.write(|w| w.hsion().set_bit());
-                while rcc.cr.read().hsirdy().bit_is_clear() {}
+                self.rcc.cr.write(|w| w.hsion().set_bit());
+                while self.rcc.cr.read().hsirdy().bit_is_clear() {}
             }
         };
-
-        let rcc = unsafe { &*crate::stm32::RCC::ptr() };
 
         // Set up rcc based on above calculated configuration.
 
@@ -197,13 +187,14 @@ impl CFGR {
             };
 
             // Set PLL source and multiplier
-            rcc.cfgr
+            self.rcc
+                .cfgr
                 .write(|w| unsafe { w.pllsrc().bits(pllsrc_bit).pllmul().bits(pllmul_bits) });
 
-            rcc.cr.write(|w| w.pllon().set_bit());
-            while rcc.cr.read().pllrdy().bit_is_clear() {}
+            self.rcc.cr.write(|w| w.pllon().set_bit());
+            while self.rcc.cr.read().pllrdy().bit_is_clear() {}
 
-            rcc.cfgr.modify(|_, w| unsafe {
+            self.rcc.cfgr.modify(|_, w| unsafe {
                 w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll()
             });
         } else {
@@ -214,7 +205,7 @@ impl CFGR {
             };
 
             // use HSI as source
-            rcc.cfgr.write(|w| unsafe {
+            self.rcc.cfgr.write(|w| unsafe {
                 w.ppre()
                     .bits(ppre_bits)
                     .hpre()
@@ -223,11 +214,13 @@ impl CFGR {
                     .variant(sw_var)
             });
         }
-
-        Clocks {
-            hclk: Hertz(hclk),
-            pclk: Hertz(pclk),
-            sysclk: Hertz(sysclk),
+        Rcc {
+            clocks: Clocks {
+                hclk: Hertz(hclk),
+                pclk: Hertz(pclk),
+                sysclk: Hertz(sysclk),
+            },
+            regs: self.rcc,
         }
     }
 }

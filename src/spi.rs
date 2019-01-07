@@ -13,56 +13,51 @@
 //! use crate::hal::prelude::*;
 //! use crate::hal::spi::{Spi, Mode, Phase, Polarity};
 //!
-//! let p = stm32::Peripherals::take().unwrap();
-//! let clcks = p.RCC.constrain().cfgr.freeze();
+//! cortex_m::interrupt::free(|cs| {
+//!     let mut p = stm32::Peripherals::take().unwrap();
+//!     let mut rcc = p.RCC.constrain().freeze(&mut p.FLASH);
 //!
-//! let gpioa = p.GPIOA.split();
+//!     let gpioa = p.GPIOA.split(&mut rcc);
 //!
-//! // Configure pins for SPI
-//! let sck = gpioa.pa5.into_alternate_af0();
-//! let miso = gpioa.pa6.into_alternate_af0();
-//! let mosi = gpioa.pa7.into_alternate_af0();
+//!     // Configure pins for SPI
+//!     let sck = gpioa.pa5.into_alternate_af0(cs);
+//!     let miso = gpioa.pa6.into_alternate_af0(cs);
+//!     let mosi = gpioa.pa7.into_alternate_af0()cs;
 //!
-//! // Configure SPI with 1MHz rate
-//! let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), Mode {
-//!     polarity: Polarity::IdleHigh,
-//!     phase: Phase::CaptureOnSecondTransition,
-//! }, 1.mhz(), clocks);
+//!     // Configure SPI with 1MHz rate
+//!     let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), Mode {
+//!         polarity: Polarity::IdleHigh,
+//!         phase: Phase::CaptureOnSecondTransition,
+//!     }, 1.mhz(), &mut rcc);
 //!
-//! let mut data = [ 0 ];
-//! loop {
-//!     spi.transfer(&mut data).unwrap();
-//! }
+//!     let mut data = [ 0 ];
+//!     loop {
+//!         spi.transfer(&mut data).unwrap();
+//!     }
+//! });
 //! ```
 
-#[allow(unused)]
 use core::{ops::Deref, ptr};
 
-#[allow(unused)]
 use nb;
 
 pub use embedded_hal::spi::{Mode, Phase, Polarity};
 
 // TODO Put this inside the macro
 // Currently that causes a compiler panic
-#[cfg(feature = "device-selected")]
 use crate::stm32::SPI1;
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f070xb",
-    feature = "stm32f072",
     feature = "stm32f091",
 ))]
 use crate::stm32::SPI2;
 
-#[allow(unused)]
 use crate::gpio::*;
 
-#[allow(unused)]
-use crate::rcc::Clocks;
+use crate::rcc::{Clocks, Rcc};
 
-#[allow(unused)]
 use crate::time::Hertz;
 
 /// SPI error
@@ -79,7 +74,6 @@ pub enum Error {
 }
 
 /// SPI abstraction
-#[allow(unused)]
 pub struct Spi<SPI, SCKPIN, MISOPIN, MOSIPIN> {
     spi: SPI,
     pins: (SCKPIN, MISOPIN, MOSIPIN),
@@ -89,7 +83,6 @@ pub trait SckPin<SPI> {}
 pub trait MisoPin<SPI> {}
 pub trait MosiPin<SPI> {}
 
-#[cfg(feature = "device-selected")]
 macro_rules! spi_pins {
     ($($SPI:ident => {
         sck => [$($sck:ty),+ $(,)*],
@@ -110,7 +103,6 @@ macro_rules! spi_pins {
     }
 }
 
-#[cfg(feature = "device-selected")]
 spi_pins! {
     SPI1 => {
         sck => [gpioa::PA5<Alternate<AF0>>, gpiob::PB3<Alternate<AF0>>],
@@ -174,7 +166,6 @@ spi_pins! {
     }
 }
 
-#[allow(unused)]
 macro_rules! spi {
     ($($SPI:ident: ($spi:ident, $spiXen:ident, $spiXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
@@ -185,7 +176,7 @@ macro_rules! spi {
                     pins: (SCKPIN, MISOPIN, MOSIPIN),
                     mode: Mode,
                     speed: F,
-                    clocks: Clocks,
+                    rcc: &mut Rcc,
                 ) -> Self
                 where
                     SCKPIN: SckPin<$SPI>,
@@ -193,23 +184,20 @@ macro_rules! spi {
                     MOSIPIN: MosiPin<$SPI>,
                     F: Into<Hertz>,
                 {
-                    // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
-
                     /* Enable clock for SPI */
-                    rcc.$apbenr.modify(|_, w| w.$spiXen().set_bit());
+                    rcc.regs.$apbenr.modify(|_, w| w.$spiXen().set_bit());
 
                     /* Reset SPI */
-                    rcc.$apbrstr.modify(|_, w| w.$spiXrst().set_bit());
-                    rcc.$apbrstr.modify(|_, w| w.$spiXrst().clear_bit());
-                    Spi { spi, pins }.spi_init(mode, speed, clocks)
+                    rcc.regs.$apbrstr.modify(|_, w| w.$spiXrst().set_bit());
+                    rcc.regs.$apbrstr.modify(|_, w| w.$spiXrst().clear_bit());
+
+                    Spi { spi, pins }.spi_init(mode, speed, rcc.clocks)
                 }
             }
         )+
     }
 }
 
-#[cfg(feature = "device-selected")]
 spi! {
     SPI1: (spi1, spi1en, spi1rst, apb2enr, apb2rstr),
 }
@@ -225,10 +213,8 @@ spi! {
 
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
-#[cfg(feature = "device-selected")]
 type SpiRegisterBlock = crate::stm32::spi1::RegisterBlock;
 
-#[cfg(feature = "device-selected")]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
@@ -299,7 +285,6 @@ where
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::spi::FullDuplex<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
@@ -344,7 +329,6 @@ where
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::transfer::Default<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where
@@ -352,7 +336,6 @@ where
 {
 }
 
-#[cfg(feature = "device-selected")]
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::write::Default<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where

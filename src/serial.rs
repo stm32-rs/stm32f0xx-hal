@@ -2,39 +2,44 @@
 //!
 //! This only implements the usual asynchronous bidirectional 8-bit transfers, everything else is missing
 //!
-//! # Example
-//! Serial Echo
+//! # Examples
 //! ``` no_run
 //! use stm32f0xx_hal as hal;
 //!
-//! use crate::hal::stm32;
 //! use crate::hal::prelude::*;
 //! use crate::hal::serial::Serial;
+//! use crate::hal::stm32;
+//!
 //! use nb::block;
 //!
-//! let mut p = stm32::Peripherals::take().unwrap();
+//! cortex_m::interrupt::free(|cs| {
+//!     let rcc = p.RCC.configure().sysclk(48.mhz()).freeze();
 //!
-//! let mut led = gpioa.pa1.into_push_pull_pull_output();
-//! let rcc = p.RCC.constrain().cfgr.freeze();
-//! let mut timer = Timer::tim1(p.TIM1, Hertz(1), clocks);
-//! loop {
-//!     led.toggle();
-//!     block!(timer.wait()).ok();
-//! }
+//!     let gpioa = p.GPIOA.split(&mut rcc);
+//!
+//!     let tx = gpioa.pa9.into_alternate_af1(cs);
+//!     let rx = gpioa.pa10.into_alternate_af1(cs);
+//!
+//!     let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
+//!
+//!     let (mut tx, mut rx) = serial.split();
+//!
+//!     loop {
+//!         let received = block!(rx.read()).unwrap();
+//!         block!(tx.write(received)).ok();
+//!     }
+//! });
 //! ```
 
-#[allow(unused)]
 use core::{
     fmt::{Result, Write},
     ops::Deref,
     ptr,
 };
 
-#[allow(unused)]
 use embedded_hal::prelude::*;
 
-#[allow(unused)]
-use crate::{gpio::*, rcc::Clocks, time::Bps};
+use crate::{gpio::*, rcc::Rcc, time::Bps};
 
 /// Serial error
 #[derive(Debug)]
@@ -64,7 +69,6 @@ pub enum Event {
 pub trait TxPin<USART> {}
 pub trait RxPin<USART> {}
 
-#[cfg(feature = "device-selected")]
 macro_rules! usart_pins {
     ($($USART:ident => {
         tx => [$($tx:ty),+ $(,)*],
@@ -182,14 +186,12 @@ usart_pins! {
 }
 
 /// Serial abstraction
-#[allow(unused)]
 pub struct Serial<USART, TXPIN, RXPIN> {
     usart: USART,
     pins: (TXPIN, RXPIN),
 }
 
 /// Serial receiver
-#[allow(unused)]
 pub struct Rx<USART> {
     // This is ok, because the USART types only contains PhantomData
     usart: *const USART,
@@ -199,7 +201,6 @@ pub struct Rx<USART> {
 unsafe impl<USART> Send for Rx<USART> {}
 
 /// Serial transmitter
-#[allow(unused)]
 pub struct Tx<USART> {
     // This is ok, because the USART types only contains PhantomData
     usart: *const USART,
@@ -208,26 +209,22 @@ pub struct Tx<USART> {
 // NOTE(unsafe) Required to allow protected shared access in handlers
 unsafe impl<USART> Send for Tx<USART> {}
 
-#[cfg(feature = "device-selected")]
 macro_rules! usart {
     ($($USART:ident: ($usart:ident, $usartXen:ident, $apbenr:ident),)+) => {
         $(
             use crate::stm32::$USART;
             impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN> {
                 /// Creates a new serial instance
-                pub fn $usart(usart: $USART, pins: (TXPIN, RXPIN), baud_rate: Bps, clocks: Clocks) -> Self
+                pub fn $usart(usart: $USART, pins: (TXPIN, RXPIN), baud_rate: Bps, rcc: &mut Rcc) -> Self
                 where
                     TXPIN: TxPin<$USART>,
                     RXPIN: RxPin<$USART>,
                 {
-                    // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
-
                     // Enable clock for USART
-                    rcc.$apbenr.modify(|_, w| w.$usartXen().set_bit());
+                    rcc.regs.$apbenr.modify(|_, w| w.$usartXen().set_bit());
 
                     // Calculate correct baudrate divisor on the fly
-                    let brr = clocks.pclk().0 / baud_rate.0;
+                    let brr = rcc.clocks.pclk().0 / baud_rate.0;
                     usart.brr.write(|w| unsafe { w.bits(brr) });
 
                     // Reset other registers to disable advanced USART features
@@ -274,7 +271,6 @@ macro_rules! usart {
     }
 }
 
-#[cfg(feature = "device-selected")]
 usart! {
     USART1: (usart1, usart1en, apb2enr),
 }
@@ -307,10 +303,8 @@ usart! {
 
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
-#[cfg(feature = "device-selected")]
 type SerialRegisterBlock = crate::stm32::usart1::RegisterBlock;
 
-#[cfg(feature = "device-selected")]
 impl<USART> embedded_hal::serial::Read<u8> for Rx<USART>
 where
     USART: Deref<Target = SerialRegisterBlock>,
@@ -339,7 +333,6 @@ where
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl<USART> embedded_hal::serial::Write<u8> for Tx<USART>
 where
     USART: Deref<Target = SerialRegisterBlock>,
@@ -375,7 +368,6 @@ where
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl<USART, TXPIN, RXPIN> Serial<USART, TXPIN, RXPIN>
 where
     USART: Deref<Target = SerialRegisterBlock>,
@@ -397,7 +389,6 @@ where
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl<USART> Write for Tx<USART>
 where
     Tx<USART>: embedded_hal::serial::Write<u8>,

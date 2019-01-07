@@ -16,37 +16,36 @@ use cortex_m_rt::entry;
 #[entry]
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
-        let gpioa = p.GPIOA.split();
-        let gpiob = p.GPIOB.split();
+        cortex_m::interrupt::free(move |cs| {
+            let mut flash = p.FLASH;
+            let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut flash);
 
-        /* (Re-)configure PA1 as output */
-        let led1 = gpioa.pa1.into_push_pull_output();
+            let gpioa = p.GPIOA.split(&mut rcc);
+            let gpiob = p.GPIOB.split(&mut rcc);
 
-        /* (Re-)configure PB1 as output */
-        let led2 = gpiob.pb1.into_push_pull_output();
+            /* (Re-)configure PA1 as output */
+            let led1 = gpioa.pa1.into_push_pull_output(cs);
 
-        /* Constrain clocking registers */
-        let rcc = p.RCC.constrain();
+            /* (Re-)configure PB1 as output */
+            let led2 = gpiob.pb1.into_push_pull_output(cs);
 
-        /* Configure clock to 8 MHz (i.e. the default) and freeze it */
-        let clocks = rcc.cfgr.sysclk(8.mhz()).freeze();
+            /* Get delay provider */
+            let mut delay = Delay::new(cp.SYST, &rcc);
 
-        /* Get delay provider */
-        let mut delay = Delay::new(cp.SYST, clocks);
+            /* Store them together */
+            let mut leds = [led1.downgrade(), led2.downgrade()];
+            loop {
+                for l in &mut leds {
+                    l.set_high();
+                }
+                delay.delay_ms(1_000_u16);
 
-        /* Store them together */
-        let mut leds = [led1.downgrade(), led2.downgrade()];
-        loop {
-            for l in &mut leds {
-                l.set_high();
+                for l in &mut leds {
+                    l.set_low();
+                }
+                delay.delay_ms(1_000_u16);
             }
-            delay.delay_ms(1_000_u16);
-
-            for l in &mut leds {
-                l.set_low();
-            }
-            delay.delay_ms(1_000_u16);
-        }
+        });
     }
 
     loop {

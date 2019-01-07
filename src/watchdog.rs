@@ -41,20 +41,16 @@
 //! // Whoops, got stuck, the watchdog issues a reset after 10 ms
 //! iwdg.feed();
 //! ```
-#[allow(unused)]
 use embedded_hal::watchdog;
 
-#[cfg(feature = "device-selected")]
 use crate::stm32::IWDG;
 use crate::time::Hertz;
 
-#[cfg(feature = "device-selected")]
 /// Watchdog instance
 pub struct Watchdog {
     iwdg: IWDG,
 }
 
-#[cfg(feature = "device-selected")]
 impl watchdog::Watchdog for Watchdog {
     /// Feed the watchdog, so that at least one `period` goes by before the next
     /// reset
@@ -93,14 +89,12 @@ impl Into<IwdgTimeout> for Hertz {
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl Watchdog {
     pub fn new(iwdg: IWDG) -> Self {
         Self { iwdg }
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl watchdog::WatchdogEnable for Watchdog {
     type Time = IwdgTimeout;
     fn start<T>(&mut self, period: T)

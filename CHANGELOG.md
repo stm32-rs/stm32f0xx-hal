@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Optimize delay implemenation (#42) - @david-sawatzke
+- Enforced more rigorous safety guarentees (#41 - Very breaking change) - @HarkonenBade
 
 ### Fixed
 

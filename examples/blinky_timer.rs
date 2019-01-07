@@ -17,22 +17,21 @@ use nb::block;
 #[entry]
 fn main() -> ! {
     if let Some(p) = stm32::Peripherals::take() {
-        let gpioa = p.GPIOA.split();
-        /* (Re-)configure PA1 as output */
-        let mut led = gpioa.pa1.into_push_pull_output();
+        cortex_m::interrupt::free(move |cs| {
+            let mut flash = p.FLASH;
+            let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut flash);
 
-        /* Constrain clocking registers */
-        let rcc = p.RCC.constrain();
+            let gpioa = p.GPIOA.split(&mut rcc);
+            /* (Re-)configure PA1 as output */
+            let mut led = gpioa.pa1.into_push_pull_output(cs);
 
-        /* Configure clock to 8 MHz (i.e. the default) and freeze it */
-        let clocks = rcc.cfgr.sysclk(8.mhz()).freeze();
+            let mut timer = Timer::tim1(p.TIM1, Hertz(1), &mut rcc);
 
-        let mut timer = Timer::tim1(p.TIM1, Hertz(1), clocks);
-
-        loop {
-            led.toggle();
-            block!(timer.wait()).ok();
-        }
+            loop {
+                led.toggle();
+                block!(timer.wait()).ok();
+            }
+        });
     }
 
     loop {

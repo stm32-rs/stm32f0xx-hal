@@ -35,10 +35,16 @@ use embedded_hal::blocking::delay::{DelayMs, DelayUs};
 /// System timer (SysTick) as a delay provider
 #[derive(Clone)]
 pub struct Delay {
-    clocks: Clocks,
+    scale: Scale,
 }
 
-const MAX_SYSTICK: u32 = 0x00FF_FFFF;
+#[derive(Clone)]
+enum Scale {
+    Mult(u32),
+    Div(u32),
+}
+
+const SYSTICK_RANGE: u32 = 0x0100_0000;
 
 impl Delay {
     /// Configures the system timer (SysTick) as a delay provider
@@ -47,10 +53,17 @@ impl Delay {
     pub fn new(mut syst: SYST, clocks: Clocks) -> Delay {
         syst.set_clock_source(SystClkSource::Core);
 
-        syst.set_reload(MAX_SYSTICK);
+        syst.set_reload(SYSTICK_RANGE - 1);
         syst.clear_current();
         syst.enable_counter();
-        Delay { clocks }
+
+        let scale = if clocks.sysclk().0 < 1_000_000 {
+            Scale::Div(1_000_000 / clocks.sysclk().0)
+        } else {
+            Scale::Mult(clocks.sysclk().0 / 1_000_000)
+        };
+
+        Delay { scale }
     }
 }
 
@@ -84,10 +97,9 @@ impl DelayUs<u32> for Delay {
         // Here less than maximum is used so we have some play if there's a long running interrupt.
         const MAX_RVR: u32 = 0x007F_FFFF;
 
-        let mut total_rvr = if self.clocks.sysclk().0 < 1_000_000 {
-            us / (1_000_000 / self.clocks.sysclk().0)
-        } else {
-            us * (self.clocks.sysclk().0 / 1_000_000)
+        let mut total_rvr = match self.scale {
+            Scale::Div(x) => us / x,
+            Scale::Mult(x) => us * x,
         };
 
         while total_rvr != 0 {
@@ -99,7 +111,7 @@ impl DelayUs<u32> for Delay {
 
             let start_count = SYST::get_current();
             total_rvr -= current_rvr;
-            while (start_count.wrapping_sub(SYST::get_current()) % MAX_SYSTICK) < current_rvr {}
+            while (start_count.wrapping_sub(SYST::get_current()) % SYSTICK_RANGE) < current_rvr {}
         }
     }
 }

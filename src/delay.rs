@@ -35,13 +35,7 @@ use embedded_hal::blocking::delay::{DelayMs, DelayUs};
 /// System timer (SysTick) as a delay provider
 #[derive(Clone)]
 pub struct Delay {
-    scale: Scale,
-}
-
-#[derive(Clone)]
-enum Scale {
-    Mult(u32),
-    Div(u32),
+    scale: u32,
 }
 
 const SYSTICK_RANGE: u32 = 0x0100_0000;
@@ -56,12 +50,8 @@ impl Delay {
         syst.set_reload(SYSTICK_RANGE - 1);
         syst.clear_current();
         syst.enable_counter();
-
-        let scale = if clocks.sysclk().0 < 1_000_000 {
-            Scale::Div(1_000_000 / clocks.sysclk().0)
-        } else {
-            Scale::Mult(clocks.sysclk().0 / 1_000_000)
-        };
+        assert!(clocks.hclk().0 >= 1_000_000);
+        let scale = clocks.hclk().0 / 1_000_000;
 
         Delay { scale }
     }
@@ -97,10 +87,7 @@ impl DelayUs<u32> for Delay {
         // Here less than maximum is used so we have some play if there's a long running interrupt.
         const MAX_RVR: u32 = 0x007F_FFFF;
 
-        let mut total_rvr = match self.scale {
-            Scale::Div(x) => us / x,
-            Scale::Mult(x) => us * x,
-        };
+        let mut total_rvr = us * self.scale;
 
         while total_rvr != 0 {
             let current_rvr = if total_rvr <= MAX_RVR {

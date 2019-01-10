@@ -654,8 +654,14 @@ gpio!(GPIOF, gpiof, iopfen, PF, [
     PF1: (pf1, 1, Input<Floating>),
     PF4: (pf4, 4, Input<Floating>),
     PF5: (pf5, 5, Input<Floating>),
-    PF6: (pf6, 5, Input<Floating>),
-    PF7: (pf7, 5, Input<Floating>),
+    PF6: (pf6, 6, Input<Floating>),
+    PF7: (pf7, 7, Input<Floating>),
+]);
+
+#[cfg(feature = "stm32f031")]
+gpio!(GPIOF, gpiof, iopfen, PF, [
+    PF6: (pf6, 6, Input<Floating>),
+    PF7: (pf7, 7, Input<Floating>),
 ]);
 
 #[cfg(feature = "stm32f070")]

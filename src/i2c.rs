@@ -43,6 +43,7 @@ i2c_pins! {
 #[cfg(any(
     feature = "stm32f030x6",
     feature = "stm32f030xc",
+    feature = "stm32f031",
     feature = "stm32f042",
     feature = "stm32f091",
 ))]
@@ -52,7 +53,7 @@ i2c_pins! {
         sda => [gpioa::PA10<Alternate<AF4>>],
     }
 }
-#[cfg(any(feature = "stm32f042", feature = "stm32f030x6"))]
+#[cfg(any(feature = "stm32f031", feature = "stm32f042", feature = "stm32f030x6"))]
 i2c_pins! {
     I2C1 => {
         scl => [gpiob::PB10<Alternate<AF1>>],
@@ -66,7 +67,12 @@ i2c_pins! {
         sda => [gpiob::PB14<Alternate<AF5>>, gpiof::PF0<Alternate<AF1>>],
     }
 }
-#[cfg(any(feature = "stm32f070", feature = "stm32f072", feature = "stm32f091"))]
+#[cfg(any(
+    feature = "stm32f031",
+    feature = "stm32f070",
+    feature = "stm32f072",
+    feature = "stm32f091",
+))]
 i2c_pins! {
     I2C1 => {
         scl => [gpiob::PB6<Alternate<AF1>>, gpiob::PB8<Alternate<AF1>>],

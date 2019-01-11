@@ -49,6 +49,7 @@ use crate::stm32::SPI1;
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f051",
     feature = "stm32f070xb",
     feature = "stm32f071",
     feature = "stm32f091",

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- Support for STM32F091 - @jessebraham
+- Support for stm32f0x1 line - @jessebraham
 - Support for HSE as a system clocksource (#25 - breaking change) - @zklapow
 
 ### Changed
@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Reworked GPIOs and added fully erased pins
 - Timer support
-- Support for STM32F070
+- Support for STM32F070 - @jessebraham
 - Additional peripheral support for STM32F030
 - Watchdog support
 

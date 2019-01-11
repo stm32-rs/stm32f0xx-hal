@@ -85,32 +85,45 @@ macro_rules! usart_pins {
     }
 }
 
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f042",
+    feature = "stm32f051",
+    feature = "stm32f071",
+))]
 usart_pins! {
     USART1 =>  {
         tx => [gpioa::PA9<Alternate<AF1>>, gpiob::PB6<Alternate<AF0>>],
         rx => [gpioa::PA10<Alternate<AF1>>, gpiob::PB6<Alternate<AF0>>],
     }
 }
-#[cfg(feature = "stm32f030x6")]
+#[cfg(any(feature = "stm32f031", feature = "stm32f030x6"))]
 usart_pins! {
     USART1 => {
         tx => [gpioa::PA2<Alternate<AF1>>, gpioa::PA14<Alternate<AF1>>],
         rx => [gpioa::PA3<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>],
     }
 }
-#[cfg(any(feature = "stm32f070", feature = "stm32f072", feature = "stm32f091"))]
+#[cfg(any(
+    feature = "stm32f031",
+    feature = "stm32f070",
+    feature = "stm32f072",
+    feature = "stm32f091",
+))]
 usart_pins! {
     USART1 => {
         tx => [gpioa::PA9<Alternate<AF1>>, gpiob::PB6<Alternate<AF0>>],
         rx => [gpioa::PA10<Alternate<AF1>>, gpiob::PB7<Alternate<AF0>>],
     }
 }
+
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f042",
+    feature = "stm32f051",
     feature = "stm32f070",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]
@@ -120,16 +133,18 @@ usart_pins! {
         rx => [gpioa::PA3<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>],
     }
 }
-#[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+#[cfg(any(feature = "stm32f072", feature = "stm32f071", feature = "stm32f091"))]
 usart_pins! {
     USART2 => {
         tx => [gpiod::PD5<Alternate<AF0>>],
         rx => [gpiod::PD6<Alternate<AF0>>],
     }
 }
+
 #[cfg(any(
     feature = "stm32f030xc",
     feature = "stm32f070xb",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]
@@ -144,13 +159,14 @@ usart_pins! {
         rx => [gpioa::PA1<Alternate<AF4>>, gpioc::PC11<Alternate<AF0>>],
     }
 }
-#[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+#[cfg(any(feature = "stm32f071", feature = "stm32f072", feature = "stm32f091"))]
 usart_pins! {
     USART3 => {
         tx => [gpiod::PD8<Alternate<AF0>>],
         rx => [gpiod::PD9<Alternate<AF0>>],
     }
 }
+
 // TODO: The ST SVD files are missing the entire PE enable register.
 //       Re-enable as soon as this gets fixed.
 // #[cfg(feature = "stm32f091")]
@@ -160,6 +176,7 @@ usart_pins! {
 //         rx => [gpioe::PE9<Alternate<AF1>>],
 //     }
 // }
+
 #[cfg(any(feature = "stm32f030xc", feature = "stm32f091"))]
 usart_pins! {
     USART5 => {
@@ -278,7 +295,9 @@ usart! {
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f042",
+    feature = "stm32f051",
     feature = "stm32f070",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]
@@ -288,6 +307,7 @@ usart! {
 #[cfg(any(
     feature = "stm32f030xc",
     feature = "stm32f070xb",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]

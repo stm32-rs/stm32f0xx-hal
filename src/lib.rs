@@ -6,7 +6,12 @@ pub use stm32f0;
 #[cfg(any(feature = "stm32f030", feature = "stm32f070"))]
 pub use stm32f0::stm32f0x0 as stm32;
 
-#[cfg(feature = "stm32f091")]
+#[cfg(any(
+    feature = "stm32f031",
+    feature = "stm32f051",
+    feature = "stm32f071",
+    feature = "stm32f091",
+))]
 pub use stm32f0::stm32f0x1 as stm32;
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]

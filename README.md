@@ -18,8 +18,11 @@ Supported Configurations
 ------------------------
 
 * __stm32f030__ (stm32f030x4, stm32f030x6, stm32f030x8, stm32f030xc)  
+* __stm32f031__  
 * __stm32f042__  
+* __stm32f051__  
 * __stm32f070__ (stm32f070x6, stm32f070xb)  
+* __stm32f071__  
 * __stm32f072__  
 * __stm32f091__  
 

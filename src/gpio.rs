@@ -570,7 +570,9 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
 
 #[cfg(any(
     feature = "stm32f030",
+    feature = "stm32f051",
     feature = "stm32f070",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]
@@ -593,12 +595,12 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
     PC15: (pc15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f030", feature = "stm32f070"))]
+#[cfg(any(feature = "stm32f030", feature = "stm32f051", feature = "stm32f070"))]
 gpio!(GPIOD, gpiod, iopden, PD, [
     PD2: (pd2, 2, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+#[cfg(any(feature = "stm32f071", feature = "stm32f072", feature = "stm32f091"))]
 gpio!(GPIOD, gpiod, iopden, PD, [
     PD0: (pd0, 0, Input<Floating>),
     PD1: (pd1, 1, Input<Floating>),
@@ -621,7 +623,7 @@ gpio!(GPIOD, gpiod, iopden, PD, [
 // TODO: The ST SVD files are missing the entire PE enable register.
 //       Re-enable as soon as this gets fixed.
 
-// #[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+// #[cfg(any(feature = "stm32f071", feature = "stm32f072", feature = "stm32f091"))]
 // gpio!(GPIOE, gpioe, iopeen, PE, [
 //     PE0: (pe0, 0, Input<Floating>),
 //     PE1: (pe1, 1, Input<Floating>),
@@ -648,14 +650,20 @@ gpio!(GPIOF, gpiof, iopfen, PF, [
     PF11: (pf11, 11, Input<Floating>),
 ]);
 
-#[cfg(feature = "stm32f030")]
+#[cfg(any(feature = "stm32f030", feature = "stm32f051"))]
 gpio!(GPIOF, gpiof, iopfen, PF, [
     PF0: (pf0, 0, Input<Floating>),
     PF1: (pf1, 1, Input<Floating>),
     PF4: (pf4, 4, Input<Floating>),
     PF5: (pf5, 5, Input<Floating>),
-    PF6: (pf6, 5, Input<Floating>),
-    PF7: (pf7, 5, Input<Floating>),
+    PF6: (pf6, 6, Input<Floating>),
+    PF7: (pf7, 7, Input<Floating>),
+]);
+
+#[cfg(feature = "stm32f031")]
+gpio!(GPIOF, gpiof, iopfen, PF, [
+    PF6: (pf6, 6, Input<Floating>),
+    PF7: (pf7, 7, Input<Floating>),
 ]);
 
 #[cfg(feature = "stm32f070")]
@@ -664,7 +672,7 @@ gpio!(GPIOF, gpiof, iopfen, PF, [
     PF1: (pf1, 1, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f072", feature = "stm32f091"))]
+#[cfg(any(feature = "stm32f071", feature = "stm32f072", feature = "stm32f091"))]
 gpio!(GPIOF, gpiof, iopfen, PF, [
     PF0: (pf0, 0, Input<Floating>),
     PF1: (pf1, 1, Input<Floating>),

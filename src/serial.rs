@@ -1,8 +1,12 @@
 //! API for the integrated USART ports
 //!
-//! This only implements the usual asynchronous bidirectional 8-bit transfers, everything else is missing
+//! This only implements the usual asynchronous bidirectional 8-bit transfers.
+//!
+//! It's possible to use a read-only/write-only serial implementation with
+//! `usartXrx`/`usartXtx`.
 //!
 //! # Examples
+//! Echo
 //! ``` no_run
 //! use stm32f0xx_hal as hal;
 //!
@@ -20,13 +24,36 @@
 //!     let tx = gpioa.pa9.into_alternate_af1(cs);
 //!     let rx = gpioa.pa10.into_alternate_af1(cs);
 //!
-//!     let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
-//!
-//!     let (mut tx, mut rx) = serial.split();
+//!     let mut serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
 //!
 //!     loop {
-//!         let received = block!(rx.read()).unwrap();
-//!         block!(tx.write(received)).ok();
+//!         let received = block!(serial.read()).unwrap();
+//!         block!(serial.write(received)).ok();
+//!     }
+//! });
+//! ```
+//!
+//! Hello World
+//! ``` no_run
+//! use stm32f0xx_hal as hal;
+//!
+//! use crate::hal::prelude::*;
+//! use crate::hal::serial::Serial;
+//! use crate::hal::stm32;
+//!
+//! use nb::block;
+//!
+//! cortex_m::interrupt::free(|cs| {
+//!     let rcc = p.RCC.configure().sysclk(48.mhz()).freeze();
+//!
+//!     let gpioa = p.GPIOA.split(&mut rcc);
+//!
+//!     let tx = gpioa.pa9.into_alternate_af1(cs);
+//!
+//!     let mut serial = Serial::usart1tx(p.USART1, tx, 115_200.bps(), &mut rcc);
+//!
+//!     loop {
+//!         serial.write_str("Hello World!\r\n");
 //!     }
 //! });
 //! ```
@@ -466,6 +493,19 @@ where
     }
 }
 
+impl<USART, TXPIN, RXPIN> Write for Serial<USART, TXPIN, RXPIN>
+where
+    USART: Deref<Target = SerialRegisterBlock>,
+    TXPIN: TxPin<USART>,
+{
+    fn write_str(&mut self, s: &str) -> Result {
+        use nb::block;
+
+        let _ = s.as_bytes().iter().map(|c| block!(self.write(*c))).last();
+        Ok(())
+    }
+}
+
 /// Ensures that none of the previously written words are still buffered
 fn flush(usart: *const SerialRegisterBlock) -> nb::Result<(), void::Void> {
     // NOTE(unsafe) atomic read with no side effects
@@ -478,7 +518,7 @@ fn flush(usart: *const SerialRegisterBlock) -> nb::Result<(), void::Void> {
     }
 }
 
-/// Tries to write a byte to the uart
+/// Tries to write a byte to the UART
 /// Fails if the transmit buffer is full
 fn write(usart: *const SerialRegisterBlock, byte: u8) -> nb::Result<(), void::Void> {
     // NOTE(unsafe) atomic read with no side effects
@@ -494,7 +534,7 @@ fn write(usart: *const SerialRegisterBlock, byte: u8) -> nb::Result<(), void::Vo
     }
 }
 
-/// Tries to read a byte from the uart
+/// Tries to read a byte from the UART
 fn read(usart: *const SerialRegisterBlock) -> nb::Result<u8, Error> {
     // NOTE(unsafe) atomic read with no side effects
     let isr = unsafe { (*usart).isr.read() };

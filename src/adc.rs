@@ -12,52 +12,45 @@
 //! use crate::hal::prelude::*;
 //! use crate::hal::adc::Adc;
 //!
-//! let mut p = stm32::Peripherals::take().unwrap();
+//! cortex_m::interrupt::free(|cs| {
+//!     let mut p = stm32::Peripherals::take().unwrap();
+//!     let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
 //!
-//! let mut led = gpioa.pa1.into_push_pull_pull_output();
-//! let mut an_in = gpioa.pa0.into_analog();
+//!     let gpioa = p.GPIOA.split(&mut rcc);
 //!
-//! let rcc = p.RCC.constrain().cfgr.freeze();
-//! let mut delay = Delay::new(cp.SYST, clocks);
+//!     let mut led = gpioa.pa1.into_push_pull_pull_output(cs);
+//!     let mut an_in = gpioa.pa0.into_analog(cs);
 //!
-//! let mut adc = Adc::new(p.ADC);
+//!     let mut delay = Delay::new(cp.SYST, &rcc);
 //!
-//! loop {
-//!     let val: u16 = adc.read(&mut an_in).unwrap();
-//!     if val < ((1 << 8) - 1) {
-//!         led.set_low();
-//!     } else {
-//!         led.set_high();
+//!     let mut adc = Adc::new(p.ADC, &mut rcc);
+//!
+//!     loop {
+//!         let val: u16 = adc.read(&mut an_in).unwrap();
+//!         if val < ((1 << 8) - 1) {
+//!             led.set_low();
+//!         } else {
+//!             led.set_high();
+//!         }
+//!         delay.delay_ms(50_u16);
 //!     }
-//!     delay.delay_ms(50_u16);
-//! }
+//! });
 //! ```
 
-#[cfg(feature = "device-selected")]
 const VREFCAL: *const u16 = 0x1FFF_F7BA as *const u16;
-
-#[cfg(feature = "device-selected")]
 const VTEMPCAL30: *const u16 = 0x1FFF_F7B8 as *const u16;
-
-#[cfg(feature = "device-selected")]
 const VTEMPCAL110: *const u16 = 0x1FFF_F7C2 as *const u16;
-
-#[cfg(feature = "device-selected")]
 const VDD_CALIB: u16 = 3300;
 
-#[cfg(feature = "device-selected")]
 use core::ptr;
 
-#[cfg(feature = "device-selected")]
 use embedded_hal::{
     adc::{Channel, OneShot},
     blocking::delay::DelayUs,
 };
 
-#[cfg(feature = "device-selected")]
-use crate::{delay::Delay, gpio::*, stm32};
+use crate::{delay::Delay, gpio::*, rcc::Rcc, stm32};
 
-#[cfg(feature = "device-selected")]
 /// Analog to Digital converter interface
 pub struct Adc {
     rb: stm32::ADC,
@@ -89,7 +82,6 @@ pub enum AdcSampleTime {
     T_239,
 }
 
-#[cfg(feature = "device-selected")]
 impl AdcSampleTime {
     fn write_bits(self, adc: &mut stm32::ADC) {
         unsafe {
@@ -137,7 +129,6 @@ pub enum AdcAlign {
     LeftAsRM,
 }
 
-#[cfg(feature = "device-selected")]
 impl AdcAlign {
     fn write_bits(self, adc: &mut stm32::ADC) {
         adc.cfgr1.write(|w| {
@@ -168,7 +159,6 @@ pub enum AdcPrecision {
     B_6,
 }
 
-#[cfg(feature = "device-selected")]
 impl AdcPrecision {
     fn write_bits(self, adc: &mut stm32::ADC) {
         unsafe {
@@ -189,7 +179,6 @@ impl AdcPrecision {
     }
 }
 
-#[cfg(feature = "device-selected")]
 macro_rules! adc_pins {
     ($($pin:ty => $chan:expr),+ $(,)*) => {
         $(
@@ -202,7 +191,6 @@ macro_rules! adc_pins {
     };
 }
 
-#[cfg(feature = "device-selected")]
 adc_pins!(
     gpioa::PA0<Analog> => 0_u8,
     gpioa::PA1<Analog> => 1_u8,
@@ -239,13 +227,11 @@ pub struct VTemp;
 /// Internal voltage reference (ADC Channel 17)
 pub struct VRef;
 
-#[cfg(feature = "device-selected")]
 adc_pins!(
     VTemp => 16_u8,
     VRef  => 17_u8,
 );
 
-#[cfg(feature = "device-selected")]
 impl VTemp {
     /// Init a new VTemp
     pub fn new() -> Self {
@@ -319,7 +305,6 @@ impl VTemp {
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl VRef {
     /// Init a new VRef
     pub fn new() -> Self {
@@ -421,21 +406,20 @@ impl VBat {
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct StoredConfig(AdcSampleTime, AdcAlign, AdcPrecision);
 
-#[cfg(feature = "device-selected")]
 impl Adc {
     /// Init a new Adc
     ///
     /// Sets all configurable parameters to defaults, enables the HSI14 clock
     /// for the ADC if it is not already enabled and performs a boot time
     /// calibration. As such this method may take an appreciable time to run.
-    pub fn new(adc: stm32::ADC) -> Self {
+    pub fn new(adc: stm32::ADC, rcc: &mut Rcc) -> Self {
         let mut s = Self {
             rb: adc,
             sample_time: AdcSampleTime::default(),
             align: AdcAlign::default(),
             precision: AdcPrecision::default(),
         };
-        s.select_clock();
+        s.select_clock(rcc);
         s.calibrate();
         s
     }
@@ -527,12 +511,10 @@ impl Adc {
         while self.rb.cr.read().adcal().bit_is_set() {}
     }
 
-    fn select_clock(&mut self) {
-        let rcc = unsafe { &*stm32::RCC::ptr() };
-
-        rcc.apb2enr.modify(|_, w| w.adcen().set_bit());
-        rcc.cr2.write(|w| w.hsi14on().set_bit());
-        while rcc.cr2.read().hsi14rdy().bit_is_clear() {}
+    fn select_clock(&mut self, rcc: &mut Rcc) {
+        rcc.regs.apb2enr.modify(|_, w| w.adcen().set_bit());
+        rcc.regs.cr2.write(|w| w.hsi14on().set_bit());
+        while rcc.regs.cr2.read().hsi14rdy().bit_is_clear() {}
     }
 
     fn power_up(&mut self) {
@@ -569,7 +551,6 @@ impl Adc {
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl<WORD, PIN> OneShot<Adc, WORD, PIN> for Adc
 where
     WORD: From<u16>,

@@ -18,36 +18,35 @@ use cortex_m_rt::entry;
 #[entry]
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
-        let gpioa = p.GPIOA.split();
+        cortex_m::interrupt::free(move |cs| {
+            let mut flash = p.FLASH;
+            let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut flash);
 
-        /* (Re-)configure PA1 as output */
-        let mut led = gpioa.pa1.into_push_pull_output();
+            let gpioa = p.GPIOA.split(&mut rcc);
 
-        /* (Re-)configure PA0 as analog in */
-        let mut an_in = gpioa.pa0.into_analog();
+            /* (Re-)configure PA1 as output */
+            let mut led = gpioa.pa1.into_push_pull_output(cs);
 
-        /* Constrain clocking registers */
-        let rcc = p.RCC.constrain();
+            /* (Re-)configure PA0 as analog in */
+            let mut an_in = gpioa.pa0.into_analog(cs);
 
-        /* Configure clock to 8 MHz (i.e. the default) and freeze it */
-        let clocks = rcc.cfgr.sysclk(8.mhz()).freeze();
+            /* Get delay provider */
+            let mut delay = Delay::new(cp.SYST, &rcc);
 
-        /* Get delay provider */
-        let mut delay = Delay::new(cp.SYST, clocks);
+            let mut adc = Adc::new(p.ADC, &mut rcc);
 
-        let mut adc = Adc::new(p.ADC);
+            loop {
+                led.toggle();
 
-        loop {
-            led.toggle();
+                let val: u16 = adc.read(&mut an_in).unwrap();
 
-            let val: u16 = adc.read(&mut an_in).unwrap();
+                /* shift the value right by 3, same as divide by 8, reduces
+                the 0-4095 range into something approximating 1-512 */
+                let time: u16 = (val >> 3) + 1;
 
-            /* shift the value right by 3, same as divide by 8, reduces
-            the 0-4095 range into something approximating 1-512 */
-            let time: u16 = (val >> 3) + 1;
-
-            delay.delay_ms(time);
-        }
+                delay.delay_ms(time);
+            }
+        });
     }
 
     loop {

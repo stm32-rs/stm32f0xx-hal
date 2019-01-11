@@ -18,8 +18,8 @@
 //! let mut p = stm32::Peripherals::take().unwrap();
 //! let mut cp = cortex_m::Peripherals::take().unwrap();
 //!
-//! let clocks = p.RCC.constrain().cfgr.freeze();
-//! let mut delay = Delay::new(cp.SYST, clocks);
+//! let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
+//! let mut delay = Delay::new(cp.SYST, &rcc);
 //! loop {
 //!     delay.delay_ms(1_000_u16);
 //! }
@@ -29,7 +29,8 @@ use cast::{u16, u32};
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
-use crate::rcc::Clocks;
+use crate::rcc::Rcc;
+
 use embedded_hal::blocking::delay::{DelayMs, DelayUs};
 
 /// System timer (SysTick) as a delay provider
@@ -42,14 +43,15 @@ const SYSTICK_RANGE: u32 = 0x0100_0000;
 
 impl Delay {
     /// Configures the system timer (SysTick) as a delay provider
-    pub fn new(mut syst: SYST, clocks: Clocks) -> Delay {
+    pub fn new(mut syst: SYST, rcc: &Rcc) -> Delay {
         syst.set_clock_source(SystClkSource::Core);
 
         syst.set_reload(SYSTICK_RANGE - 1);
         syst.clear_current();
         syst.enable_counter();
-        assert!(clocks.hclk().0 >= 1_000_000);
-        let scale = clocks.hclk().0 / 1_000_000;
+
+        assert!(rcc.clocks.hclk().0 >= 1_000_000);
+        let scale = rcc.clocks.hclk().0 / 1_000_000;
 
         Delay { scale }
         // As access to the count register is possible without a reference to the systick, we can

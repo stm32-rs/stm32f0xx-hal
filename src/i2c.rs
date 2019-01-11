@@ -1,17 +1,14 @@
-#[allow(unused)]
 use core::ops::Deref;
 
-#[allow(unused)]
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-#[allow(unused)]
 use crate::{
     gpio::*,
+    rcc::Rcc,
     time::{KiloHertz, U32Ext},
 };
 
 /// I2C abstraction
-#[allow(unused)]
 pub struct I2c<I2C, SCLPIN, SDAPIN> {
     i2c: I2C,
     pins: (SCLPIN, SDAPIN),
@@ -20,7 +17,6 @@ pub struct I2c<I2C, SCLPIN, SDAPIN> {
 pub trait SclPin<I2C> {}
 pub trait SdaPin<I2C> {}
 
-#[allow(unused)]
 macro_rules! i2c_pins {
     ($($I2C:ident => {
         scl => [$($scl:ty),+ $(,)*],
@@ -125,26 +121,22 @@ pub enum Error {
     NACK,
 }
 
-#[allow(unused)]
 macro_rules! i2c {
     ($($I2C:ident: ($i2c:ident, $i2cXen:ident, $i2cXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
             use crate::stm32::$I2C;
             impl<SCLPIN, SDAPIN> I2c<$I2C, SCLPIN, SDAPIN> {
-                pub fn $i2c(i2c: $I2C, pins: (SCLPIN, SDAPIN), speed: KiloHertz) -> Self
+                pub fn $i2c(i2c: $I2C, pins: (SCLPIN, SDAPIN), speed: KiloHertz, rcc: &mut Rcc) -> Self
                 where
                     SCLPIN: SclPin<$I2C>,
                     SDAPIN: SdaPin<$I2C>,
                 {
-                    // NOTE(unsafe) This executes only during initialisation
-                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
-
                     // Enable clock for I2C
-                    rcc.$apbenr.modify(|_, w| w.$i2cXen().set_bit());
+                    rcc.regs.$apbenr.modify(|_, w| w.$i2cXen().set_bit());
 
                     // Reset I2C
-                    rcc.$apbrstr.modify(|_, w| w.$i2cXrst().set_bit());
-                    rcc.$apbrstr.modify(|_, w| w.$i2cXrst().clear_bit());
+                    rcc.regs.$apbrstr.modify(|_, w| w.$i2cXrst().set_bit());
+                    rcc.regs.$apbrstr.modify(|_, w| w.$i2cXrst().clear_bit());
                     I2c { i2c, pins }.i2c_init(speed)
                 }
             }
@@ -152,7 +144,6 @@ macro_rules! i2c {
     }
 }
 
-#[cfg(feature = "device-selected")]
 i2c! {
     I2C1: (i2c1, i2c1en, i2c1rst, apb1enr, apb1rstr),
 }
@@ -169,12 +160,10 @@ i2c! {
     I2C2: (i2c2, i2c2en, i2c2rst, apb1enr, apb1rstr),
 }
 
-#[cfg(feature = "device-selected")]
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
 type I2cRegisterBlock = crate::stm32::i2c1::RegisterBlock;
 
-#[cfg(feature = "device-selected")]
 impl<I2C, SCLPIN, SDAPIN> I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,
@@ -273,7 +262,6 @@ where
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl<I2C, SCLPIN, SDAPIN> WriteRead for I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,
@@ -343,7 +331,6 @@ where
     }
 }
 
-#[cfg(feature = "device-selected")]
 impl<I2C, SCLPIN, SDAPIN> Write for I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,

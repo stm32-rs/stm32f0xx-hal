@@ -85,7 +85,7 @@ macro_rules! usart_pins {
     }
 }
 
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
+#[cfg(any(feature = "stm32f030", feature = "stm32f042", feature = "stm32f051"))]
 usart_pins! {
     USART1 =>  {
         tx => [gpioa::PA9<Alternate<AF1>>, gpiob::PB6<Alternate<AF0>>],
@@ -111,10 +111,12 @@ usart_pins! {
         rx => [gpioa::PA10<Alternate<AF1>>, gpiob::PB7<Alternate<AF0>>],
     }
 }
+
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f042",
+    feature = "stm32f051",
     feature = "stm32f070",
     feature = "stm32f072",
     feature = "stm32f091",
@@ -283,6 +285,7 @@ usart! {
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f042",
+    feature = "stm32f051",
     feature = "stm32f070",
     feature = "stm32f072",
     feature = "stm32f091",

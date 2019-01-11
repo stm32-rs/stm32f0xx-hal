@@ -1,8 +1,12 @@
 //! API for the integrated USART ports
 //!
-//! This only implements the usual asynchronous bidirectional 8-bit transfers, everything else is missing
+//! This only implements the usual asynchronous bidirectional 8-bit transfers.
+//!
+//! It's possible to use a read-only/write-only serial implementation with
+//! `usartXrx`/`usartXtx`.
 //!
 //! # Examples
+//! Echo
 //! ``` no_run
 //! use stm32f0xx_hal as hal;
 //!
@@ -20,13 +24,36 @@
 //!     let tx = gpioa.pa9.into_alternate_af1(cs);
 //!     let rx = gpioa.pa10.into_alternate_af1(cs);
 //!
-//!     let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
-//!
-//!     let (mut tx, mut rx) = serial.split();
+//!     let mut serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
 //!
 //!     loop {
-//!         let received = block!(rx.read()).unwrap();
-//!         block!(tx.write(received)).ok();
+//!         let received = block!(serial.read()).unwrap();
+//!         block!(serial.write(received)).ok();
+//!     }
+//! });
+//! ```
+//!
+//! Hello World
+//! ``` no_run
+//! use stm32f0xx_hal as hal;
+//!
+//! use crate::hal::prelude::*;
+//! use crate::hal::serial::Serial;
+//! use crate::hal::stm32;
+//!
+//! use nb::block;
+//!
+//! cortex_m::interrupt::free(|cs| {
+//!     let rcc = p.RCC.configure().sysclk(48.mhz()).freeze();
+//!
+//!     let gpioa = p.GPIOA.split(&mut rcc);
+//!
+//!     let tx = gpioa.pa9.into_alternate_af1(cs);
+//!
+//!     let mut serial = Serial::usart1tx(p.USART1, tx, 115_200.bps(), &mut rcc);
+//!
+//!     loop {
+//!         serial.write_str("Hello World!\r\n");
 //!     }
 //! });
 //! ```
@@ -40,6 +67,8 @@ use core::{
 use embedded_hal::prelude::*;
 
 use crate::{gpio::*, rcc::Rcc, time::Bps};
+
+use core::marker::PhantomData;
 
 /// Serial error
 #[derive(Debug)]
@@ -208,10 +237,13 @@ pub struct Serial<USART, TXPIN, RXPIN> {
     pins: (TXPIN, RXPIN),
 }
 
+// Common register
+type SerialRegisterBlock = crate::stm32::usart1::RegisterBlock;
+
 /// Serial receiver
 pub struct Rx<USART> {
-    // This is ok, because the USART types only contains PhantomData
-    usart: *const USART,
+    usart: *const SerialRegisterBlock,
+    _instance: PhantomData<USART>,
 }
 
 // NOTE(unsafe) Required to allow protected shared access in handlers
@@ -219,39 +251,77 @@ unsafe impl<USART> Send for Rx<USART> {}
 
 /// Serial transmitter
 pub struct Tx<USART> {
-    // This is ok, because the USART types only contains PhantomData
-    usart: *const USART,
+    usart: *const SerialRegisterBlock,
+    _instance: PhantomData<USART>,
 }
 
 // NOTE(unsafe) Required to allow protected shared access in handlers
 unsafe impl<USART> Send for Tx<USART> {}
 
 macro_rules! usart {
-    ($($USART:ident: ($usart:ident, $usartXen:ident, $apbenr:ident),)+) => {
+    ($($USART:ident: ($usart:ident, $usarttx:ident, $usartrx:ident, $usartXen:ident, $apbenr:ident),)+) => {
         $(
             use crate::stm32::$USART;
-            impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN> {
+            impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN>
+            where
+                TXPIN: TxPin<$USART>,
+                RXPIN: RxPin<$USART>,
+            {
                 /// Creates a new serial instance
                 pub fn $usart(usart: $USART, pins: (TXPIN, RXPIN), baud_rate: Bps, rcc: &mut Rcc) -> Self
-                where
-                    TXPIN: TxPin<$USART>,
-                    RXPIN: RxPin<$USART>,
                 {
+                    let mut serial = Serial { usart, pins };
+                    serial.configure(baud_rate, rcc);
+                    // Enable transmission and receiving
+                    serial.usart.cr1.modify(|_, w| w.te().set_bit().re().set_bit().ue().set_bit());
+                    serial
+                }
+            }
+
+            impl<TXPIN> Serial<$USART, TXPIN, ()>
+            where
+                TXPIN: TxPin<$USART>,
+            {
+                /// Creates a new tx-only serial instance
+                pub fn $usarttx(usart: $USART, txpin: TXPIN, baud_rate: Bps, rcc: &mut Rcc) -> Self
+                {
+                    let rxpin = ();
+                    let mut serial = Serial { usart, pins: (txpin, rxpin) };
+                    serial.configure(baud_rate, rcc);
+                    // Enable transmission
+                    serial.usart.cr1.modify(|_, w| w.te().set_bit().ue().set_bit());
+                    serial
+                }
+            }
+
+            impl<RXPIN> Serial<$USART, (), RXPIN>
+            where
+                RXPIN: RxPin<$USART>,
+            {
+                /// Creates a new tx-only serial instance
+                pub fn $usartrx(usart: $USART, rxpin: RXPIN, baud_rate: Bps, rcc: &mut Rcc) -> Self
+                {
+                    let txpin = ();
+                    let mut serial = Serial { usart, pins: (txpin, rxpin) };
+                    serial.configure(baud_rate, rcc);
+                    // Enable receiving
+                    serial.usart.cr1.modify(|_, w| w.re().set_bit().ue().set_bit());
+                    serial
+                }
+            }
+
+            impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN> {
+                fn configure(&mut self, baud_rate: Bps, rcc: &mut Rcc) {
                     // Enable clock for USART
                     rcc.regs.$apbenr.modify(|_, w| w.$usartXen().set_bit());
 
                     // Calculate correct baudrate divisor on the fly
                     let brr = rcc.clocks.pclk().0 / baud_rate.0;
-                    usart.brr.write(|w| unsafe { w.bits(brr) });
+                    self.usart.brr.write(|w| unsafe { w.bits(brr) });
 
                     // Reset other registers to disable advanced USART features
-                    usart.cr2.reset();
-                    usart.cr3.reset();
-
-                    // Enable transmission and receiving
-                    usart.cr1.modify(|_, w| w.te().set_bit().re().set_bit().ue().set_bit());
-
-                    Serial { usart, pins }
+                    self.usart.cr2.reset();
+                    self.usart.cr3.reset();
                 }
 
                 /// Starts listening for an interrupt event
@@ -289,7 +359,7 @@ macro_rules! usart {
 }
 
 usart! {
-    USART1: (usart1, usart1en, apb2enr),
+    USART1: (usart1, usart1tx, usart1rx, usart1en, apb2enr),
 }
 #[cfg(any(
     feature = "stm32f030x8",
@@ -302,7 +372,7 @@ usart! {
     feature = "stm32f091",
 ))]
 usart! {
-    USART2: (usart2, usart2en, apb1enr),
+    USART2: (usart2, usart2tx, usart2rx,usart2en, apb1enr),
 }
 #[cfg(any(
     feature = "stm32f030xc",
@@ -312,18 +382,14 @@ usart! {
     feature = "stm32f091",
 ))]
 usart! {
-    USART3: (usart3, usart3en, apb1enr),
-    USART4: (usart4, usart4en, apb1enr),
+    USART3: (usart3, usart3tx, usart3rx,usart3en, apb1enr),
+    USART4: (usart4, usart4tx, usart4rx,usart4en, apb1enr),
 }
 #[cfg(any(feature = "stm32f030xc", feature = "stm32f091"))]
 usart! {
-    USART5: (usart5, usart5en, apb1enr),
-    USART6: (usart6, usart6en, apb2enr),
+    USART5: (usart5, usart5tx, usart5rx,usart5en, apb1enr),
+    USART6: (usart6, usart6tx, usart6rx,usart6en, apb2enr),
 }
-
-// It's s needed for the impls, but rustc doesn't recognize that
-#[allow(dead_code)]
-type SerialRegisterBlock = crate::stm32::usart1::RegisterBlock;
 
 impl<USART> embedded_hal::serial::Read<u8> for Rx<USART>
 where
@@ -333,23 +399,20 @@ where
 
     /// Tries to read a byte from the uart
     fn read(&mut self) -> nb::Result<u8, Error> {
-        // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*self.usart).isr.read() };
+        read(self.usart)
+    }
+}
 
-        Err(if isr.pe().bit_is_set() {
-            nb::Error::Other(Error::Parity)
-        } else if isr.fe().bit_is_set() {
-            nb::Error::Other(Error::Framing)
-        } else if isr.nf().bit_is_set() {
-            nb::Error::Other(Error::Noise)
-        } else if isr.ore().bit_is_set() {
-            nb::Error::Other(Error::Overrun)
-        } else if isr.rxne().bit_is_set() {
-            // NOTE(read_volatile) see `write_volatile` below
-            return Ok(unsafe { ptr::read_volatile(&(*self.usart).rdr as *const _ as *const _) });
-        } else {
-            nb::Error::WouldBlock
-        })
+impl<USART, TXPIN, RXPIN> embedded_hal::serial::Read<u8> for Serial<USART, TXPIN, RXPIN>
+where
+    USART: Deref<Target = SerialRegisterBlock>,
+    RXPIN: RxPin<USART>,
+{
+    type Error = Error;
+
+    /// Tries to read a byte from the uart
+    fn read(&mut self) -> nb::Result<u8, Error> {
+        read(&*self.usart)
     }
 }
 
@@ -361,30 +424,32 @@ where
 
     /// Ensures that none of the previously written words are still buffered
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
-        // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*self.usart).isr.read() };
-
-        if isr.tc().bit_is_set() {
-            Ok(())
-        } else {
-            Err(nb::Error::WouldBlock)
-        }
+        flush(self.usart)
     }
 
     /// Tries to write a byte to the uart
     /// Fails if the transmit buffer is full
     fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
-        // NOTE(unsafe) atomic read with no side effects
-        let isr = unsafe { (*self.usart).isr.read() };
+        write(self.usart, byte)
+    }
+}
 
-        if isr.txe().bit_is_set() {
-            // NOTE(unsafe) atomic write to stateless register
-            // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
-            unsafe { ptr::write_volatile(&(*self.usart).tdr as *const _ as *mut _, byte) }
-            Ok(())
-        } else {
-            Err(nb::Error::WouldBlock)
-        }
+impl<USART, TXPIN, RXPIN> embedded_hal::serial::Write<u8> for Serial<USART, TXPIN, RXPIN>
+where
+    USART: Deref<Target = SerialRegisterBlock>,
+    TXPIN: TxPin<USART>,
+{
+    type Error = void::Void;
+
+    /// Ensures that none of the previously written words are still buffered
+    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+        flush(&*self.usart)
+    }
+
+    /// Tries to write a byte to the uart
+    /// Fails if the transmit buffer is full
+    fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
+        write(&*self.usart, byte)
     }
 }
 
@@ -394,16 +459,23 @@ where
 {
     /// Splits the UART Peripheral in a Tx and an Rx part
     /// This is required for sending/receiving
-    pub fn split(self) -> (Tx<USART>, Rx<USART>) {
+    pub fn split(self) -> (Tx<USART>, Rx<USART>)
+    where
+        TXPIN: TxPin<USART>,
+        RXPIN: RxPin<USART>,
+    {
         (
             Tx {
-                usart: &self.usart as *const _,
+                usart: &*self.usart,
+                _instance: PhantomData,
             },
             Rx {
-                usart: &self.usart as *const _,
+                usart: &*self.usart,
+                _instance: PhantomData,
             },
         )
     }
+
     pub fn release(self) -> (USART, (TXPIN, RXPIN)) {
         (self.usart, self.pins)
     }
@@ -419,4 +491,66 @@ where
         let _ = s.as_bytes().iter().map(|c| block!(self.write(*c))).last();
         Ok(())
     }
+}
+
+impl<USART, TXPIN, RXPIN> Write for Serial<USART, TXPIN, RXPIN>
+where
+    USART: Deref<Target = SerialRegisterBlock>,
+    TXPIN: TxPin<USART>,
+{
+    fn write_str(&mut self, s: &str) -> Result {
+        use nb::block;
+
+        let _ = s.as_bytes().iter().map(|c| block!(self.write(*c))).last();
+        Ok(())
+    }
+}
+
+/// Ensures that none of the previously written words are still buffered
+fn flush(usart: *const SerialRegisterBlock) -> nb::Result<(), void::Void> {
+    // NOTE(unsafe) atomic read with no side effects
+    let isr = unsafe { (*usart).isr.read() };
+
+    if isr.tc().bit_is_set() {
+        Ok(())
+    } else {
+        Err(nb::Error::WouldBlock)
+    }
+}
+
+/// Tries to write a byte to the UART
+/// Fails if the transmit buffer is full
+fn write(usart: *const SerialRegisterBlock, byte: u8) -> nb::Result<(), void::Void> {
+    // NOTE(unsafe) atomic read with no side effects
+    let isr = unsafe { (*usart).isr.read() };
+
+    if isr.txe().bit_is_set() {
+        // NOTE(unsafe) atomic write to stateless register
+        // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
+        unsafe { ptr::write_volatile(&(*usart).tdr as *const _ as *mut _, byte) }
+        Ok(())
+    } else {
+        Err(nb::Error::WouldBlock)
+    }
+}
+
+/// Tries to read a byte from the UART
+fn read(usart: *const SerialRegisterBlock) -> nb::Result<u8, Error> {
+    // NOTE(unsafe) atomic read with no side effects
+    let isr = unsafe { (*usart).isr.read() };
+
+    Err(if isr.pe().bit_is_set() {
+        nb::Error::Other(Error::Parity)
+    } else if isr.fe().bit_is_set() {
+        nb::Error::Other(Error::Framing)
+    } else if isr.nf().bit_is_set() {
+        nb::Error::Other(Error::Noise)
+    } else if isr.ore().bit_is_set() {
+        nb::Error::Other(Error::Overrun)
+    } else if isr.rxne().bit_is_set() {
+        // NOTE(read_volatile) see `write_volatile` below
+        return Ok(unsafe { ptr::read_volatile(&(*usart).rdr as *const _ as *const _) });
+    } else {
+        nb::Error::WouldBlock
+    })
 }

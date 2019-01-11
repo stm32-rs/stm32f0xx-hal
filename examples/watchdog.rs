@@ -36,12 +36,10 @@ fn main() -> ! {
             let mut delay = Delay::new(cp.SYST, &rcc);
 
             let tx = gpioa.pa9.into_alternate_af1(cs);
-            let rx = gpioa.pa10.into_alternate_af1(cs);
 
-            let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
+            let mut serial = Serial::usart1tx(p.USART1, tx, 115_200.bps(), &mut rcc);
 
-            let (mut tx, _rx) = serial.split();
-            tx.write_str("RESET \r\n").ok();
+            serial.write_str("RESET \r\n").ok();
 
             watchdog.start(Hertz(1));
             delay.delay_ms(500_u16);
@@ -49,12 +47,12 @@ fn main() -> ! {
             delay.delay_ms(500_u16);
             watchdog.feed();
             delay.delay_ms(500_u16);
-            tx.write_str("This will get printed \r\n").ok();
+            serial.write_str("This will get printed \r\n").ok();
             watchdog.feed();
 
             // Now a reset happens while delaying
             delay.delay_ms(1500_u16);
-            tx.write_str("This won't\r\n").ok();
+            serial.write_str("This won't\r\n").ok();
         });
     }
 

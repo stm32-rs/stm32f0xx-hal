@@ -26,13 +26,11 @@ fn main() -> ! {
             let tx = gpioa.pa9.into_alternate_af1(cs);
             let rx = gpioa.pa10.into_alternate_af1(cs);
 
-            let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
-
-            let (mut tx, mut rx) = serial.split();
+            let mut serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
 
             loop {
-                let received = block!(rx.read()).unwrap();
-                block!(tx.write(received)).ok();
+                let received = block!(serial.read()).unwrap();
+                block!(serial.write(received)).ok();
             }
         });
     }

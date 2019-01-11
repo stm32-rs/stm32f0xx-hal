@@ -208,6 +208,7 @@ adc_pins!(
     feature = "stm32f030",
     feature = "stm32f051",
     feature = "stm32f070",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091"
 ))]
@@ -355,6 +356,7 @@ impl VRef {
     feature = "stm32f031",
     feature = "stm32f042",
     feature = "stm32f051",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]
@@ -366,6 +368,7 @@ pub struct VBat;
     feature = "stm32f031",
     feature = "stm32f042",
     feature = "stm32f051",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]
@@ -377,6 +380,7 @@ adc_pins!(
     feature = "stm32f031",
     feature = "stm32f042",
     feature = "stm32f051",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]

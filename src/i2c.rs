@@ -33,11 +33,20 @@ macro_rules! i2c_pins {
     }
 }
 
-#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f031",
+    feature = "stm32f042",
+    feature = "stm32f051",
+    feature = "stm32f070",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f091",
+))]
 i2c_pins! {
     I2C1 => {
-        scl => [gpioa::PA11<Alternate<AF5>>, gpiob::PB6<Alternate<AF1>>, gpiob::PB8<Alternate<AF1>>],
-        sda => [gpioa::PA12<Alternate<AF5>>, gpiob::PB7<Alternate<AF1>>, gpiob::PB9<Alternate<AF1>>],
+        scl => [gpiob::PB6<Alternate<AF1>>, gpiob::PB8<Alternate<AF1>>],
+        sda => [gpiob::PB7<Alternate<AF1>>, gpiob::PB9<Alternate<AF1>>],
     }
 }
 #[cfg(any(
@@ -53,6 +62,13 @@ i2c_pins! {
         sda => [gpioa::PA10<Alternate<AF4>>],
     }
 }
+#[cfg(any(feature = "stm32f030", feature = "stm32f042"))]
+i2c_pins! {
+    I2C1 => {
+        scl => [gpioa::PA11<Alternate<AF5>>],
+        sda => [gpioa::PA12<Alternate<AF5>>],
+    }
+}
 #[cfg(any(feature = "stm32f031", feature = "stm32f042", feature = "stm32f030x6"))]
 i2c_pins! {
     I2C1 => {
@@ -65,19 +81,6 @@ i2c_pins! {
     I2C1 => {
         scl => [gpiob::PB13<Alternate<AF5>>, gpiof::PF1<Alternate<AF1>>],
         sda => [gpiob::PB14<Alternate<AF5>>, gpiof::PF0<Alternate<AF1>>],
-    }
-}
-#[cfg(any(
-    feature = "stm32f031",
-    feature = "stm32f051",
-    feature = "stm32f070",
-    feature = "stm32f072",
-    feature = "stm32f091",
-))]
-i2c_pins! {
-    I2C1 => {
-        scl => [gpiob::PB6<Alternate<AF1>>, gpiob::PB8<Alternate<AF1>>],
-        sda => [gpiob::PB7<Alternate<AF1>>, gpiob::PB9<Alternate<AF1>>],
     }
 }
 #[cfg(feature = "stm32f070x6")]
@@ -105,6 +108,7 @@ i2c_pins! {
 #[cfg(any(
     feature = "stm32f030xc",
     feature = "stm32f070xb",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]
@@ -159,6 +163,7 @@ i2c! {
     feature = "stm32f030xc",
     feature = "stm32f051",
     feature = "stm32f070xb",
+    feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f091",
 ))]

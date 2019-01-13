@@ -4,18 +4,16 @@
 #[allow(unused)]
 use panic_halt;
 
-use core::fmt::Write;
 use stm32f0xx_hal as hal;
 
-use crate::hal::delay::Delay;
-use crate::hal::prelude::*;
-use crate::hal::serial::Serial;
-use crate::hal::stm32;
-use crate::hal::time::Hertz;
-use crate::hal::watchdog::Watchdog;
+use crate::hal::{
+    delay::Delay, prelude::*, serial::Serial, stm32, time::Hertz, watchdog::Watchdog,
+};
 
 use cortex_m::peripheral::Peripherals;
 use cortex_m_rt::entry;
+
+use core::fmt::Write;
 
 #[entry]
 fn main() -> ! {
@@ -35,8 +33,10 @@ fn main() -> ! {
             // Get delay provider
             let mut delay = Delay::new(cp.SYST, &rcc);
 
+            // Configure serial TX pin
             let tx = gpioa.pa9.into_alternate_af1(cs);
 
+            // Obtain a serial peripheral with for unidirectional communication
             let mut serial = Serial::usart1tx(p.USART1, tx, 115_200.bps(), &mut rcc);
 
             serial.write_str("RESET \r\n").ok();

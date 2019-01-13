@@ -6,15 +6,12 @@ use panic_halt;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::prelude::*;
-use crate::hal::stm32;
+use crate::hal::{prelude::*, stm32};
 
 use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core};
 use cortex_m_rt::{entry, exception};
 
-use core::fmt::Write;
-
-use core::cell::RefCell;
+use core::{cell::RefCell, fmt::Write};
 
 struct Shared {
     adc: hal::adc::Adc,

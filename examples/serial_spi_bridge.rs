@@ -6,11 +6,13 @@ use panic_halt;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::prelude::*;
-use crate::hal::serial::Serial;
-use crate::hal::spi::Spi;
-use crate::hal::spi::{Mode, Phase, Polarity};
-use crate::hal::stm32;
+use crate::hal::{
+    prelude::*,
+    serial::Serial,
+    spi::Spi,
+    spi::{Mode, Phase, Polarity},
+    stm32,
+};
 
 use nb::block;
 

@@ -6,18 +6,17 @@ use panic_halt;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::delay::Delay;
-use crate::hal::gpio::*;
-use crate::hal::prelude::*;
+use crate::hal::{
+    delay::Delay,
+    gpio::*,
+    prelude::*,
+    stm32::{interrupt, Interrupt, Peripherals, EXTI},
+};
 
-use cortex_m::interrupt::Mutex;
-use cortex_m::peripheral::Peripherals as c_m_Peripherals;
+use cortex_m::{interrupt::Mutex, peripheral::Peripherals as c_m_Peripherals};
 use cortex_m_rt::entry;
 
-use crate::hal::stm32::{interrupt, Interrupt, Peripherals, EXTI};
-
-use core::cell::RefCell;
-use core::ops::DerefMut;
+use core::{cell::RefCell, ops::DerefMut};
 
 // Make our LED globally available
 static LED: Mutex<RefCell<Option<gpioa::PA1<Output<PushPull>>>>> = Mutex::new(RefCell::new(None));

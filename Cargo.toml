@@ -1,6 +1,9 @@
 [package]
 edition = "2018"
-authors = ["Daniel Egger <daniel@eggers-club.de>"]
+authors = [
+    "Daniel Egger <daniel@eggers-club.de>",
+    "Thomas Bytheway <github@harkonen.net>",
+]
 categories = [
     "embedded",
     "hardware-support",

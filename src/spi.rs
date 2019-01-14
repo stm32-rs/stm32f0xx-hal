@@ -112,7 +112,7 @@ spi_pins! {
         mosi => [gpioa::PA7<Alternate<AF0>>, gpiob::PB5<Alternate<AF0>>],
     }
 }
-#[cfg(feature = "stm32f030x6")]
+#[cfg(any(feature = "stm32f030x6", feature = "stm32f038"))]
 spi_pins! {
     SPI1 => {
         sck => [gpiob::PB13<Alternate<AF0>>],

@@ -224,6 +224,7 @@ timers! {
 
 #[cfg(any(
     feature = "stm32f031",
+    feature = "stm32f038",
     feature = "stm32f042",
     feature = "stm32f051",
     feature = "stm32f071",

@@ -126,7 +126,7 @@ usart_pins! {
         rx => [gpioa::PA10<Alternate<AF1>>, gpiob::PB6<Alternate<AF0>>],
     }
 }
-#[cfg(any(feature = "stm32f031", feature = "stm32f030x6"))]
+#[cfg(any(feature = "stm32f030x6", feature = "stm32f031", feature = "stm32f038"))]
 usart_pins! {
     USART1 => {
         tx => [gpioa::PA2<Alternate<AF1>>, gpioa::PA14<Alternate<AF1>>],
@@ -135,6 +135,7 @@ usart_pins! {
 }
 #[cfg(any(
     feature = "stm32f031",
+    feature = "stm32f038",
     feature = "stm32f070",
     feature = "stm32f072",
     feature = "stm32f091",

@@ -121,6 +121,7 @@ macro_rules! usart_pins {
     feature = "stm32f051",
     feature = "stm32f058",
     feature = "stm32f071",
+    feature = "stm32f078",
 ))]
 usart_pins! {
     USART1 =>  {
@@ -159,6 +160,7 @@ usart_pins! {
     feature = "stm32f070",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 usart_pins! {
@@ -167,7 +169,12 @@ usart_pins! {
         rx => [gpioa::PA3<Alternate<AF1>>, gpioa::PA15<Alternate<AF1>>],
     }
 }
-#[cfg(any(feature = "stm32f072", feature = "stm32f071", feature = "stm32f091"))]
+#[cfg(any(
+    feature = "stm32f072",
+    feature = "stm32f071",
+    feature = "stm32f078",
+    feature = "stm32f091"
+))]
 usart_pins! {
     USART2 => {
         tx => [gpiod::PD5<Alternate<AF0>>],
@@ -180,6 +187,7 @@ usart_pins! {
     feature = "stm32f070xb",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 usart_pins! {
@@ -193,7 +201,12 @@ usart_pins! {
         rx => [gpioa::PA1<Alternate<AF4>>, gpioc::PC11<Alternate<AF0>>],
     }
 }
-#[cfg(any(feature = "stm32f071", feature = "stm32f072", feature = "stm32f091"))]
+#[cfg(any(
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+))]
 usart_pins! {
     USART3 => {
         tx => [gpiod::PD8<Alternate<AF0>>],
@@ -376,6 +389,7 @@ usart! {
     feature = "stm32f070",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 usart! {
@@ -386,6 +400,7 @@ usart! {
     feature = "stm32f070xb",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 usart! {

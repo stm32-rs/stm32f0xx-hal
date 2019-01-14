@@ -17,7 +17,12 @@ pub use stm32f0::stm32f0x1 as stm32;
 #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
 pub use stm32f0::stm32f0x2 as stm32;
 
-#[cfg(any(feature = "stm32f038", feature = "stm32f048", feature = "stm32f058"))]
+#[cfg(any(
+    feature = "stm32f038",
+    feature = "stm32f048",
+    feature = "stm32f058",
+    feature = "stm32f078"
+))]
 pub use stm32f0::stm32f0x8 as stm32;
 
 #[cfg(feature = "device-selected")]

@@ -211,7 +211,8 @@ adc_pins!(
     feature = "stm32f070",
     feature = "stm32f071",
     feature = "stm32f072",
-    feature = "stm32f091"
+    feature = "stm32f078",
+    feature = "stm32f091",
 ))]
 adc_pins!(
     gpioc::PC0<Analog> => 10_u8,
@@ -362,6 +363,7 @@ impl VRef {
     feature = "stm32f058",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 #[derive(Debug, Default)]
@@ -377,6 +379,7 @@ pub struct VBat;
     feature = "stm32f058",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 adc_pins!(
@@ -392,6 +395,7 @@ adc_pins!(
     feature = "stm32f058",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 impl VBat {

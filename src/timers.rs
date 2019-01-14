@@ -231,6 +231,7 @@ timers! {
     feature = "stm32f058",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 timers! {
@@ -245,6 +246,7 @@ timers! {
     feature = "stm32f070xb",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 timers! {
@@ -256,6 +258,7 @@ timers! {
     feature = "stm32f030xc",
     feature = "stm32f070xb",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 timers! {

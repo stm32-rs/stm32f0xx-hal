@@ -44,6 +44,7 @@ macro_rules! i2c_pins {
     feature = "stm32f070",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 i2c_pins! {
@@ -127,6 +128,7 @@ i2c_pins! {
     feature = "stm32f070xb",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 i2c_pins! {
@@ -183,6 +185,7 @@ i2c! {
     feature = "stm32f070xb",
     feature = "stm32f071",
     feature = "stm32f072",
+    feature = "stm32f078",
     feature = "stm32f091",
 ))]
 i2c! {

@@ -119,6 +119,7 @@ macro_rules! usart_pins {
     feature = "stm32f042",
     feature = "stm32f048",
     feature = "stm32f051",
+    feature = "stm32f058",
     feature = "stm32f071",
 ))]
 usart_pins! {
@@ -154,6 +155,7 @@ usart_pins! {
     feature = "stm32f042",
     feature = "stm32f048",
     feature = "stm32f051",
+    feature = "stm32f058",
     feature = "stm32f070",
     feature = "stm32f071",
     feature = "stm32f072",
@@ -370,6 +372,7 @@ usart! {
     feature = "stm32f042",
     feature = "stm32f048",
     feature = "stm32f051",
+    feature = "stm32f058",
     feature = "stm32f070",
     feature = "stm32f071",
     feature = "stm32f072",

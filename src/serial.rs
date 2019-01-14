@@ -135,7 +135,12 @@ usart_pins! {
         rx => [gpioa::PA10<Alternate<AF1>>, gpiob::PB7<Alternate<AF0>>],
     }
 }
-#[cfg(any(feature = "stm32f030x6", feature = "stm32f031", feature = "stm32f038"))]
+#[cfg(any(
+    feature = "stm32f030x4",
+    feature = "stm32f030x6",
+    feature = "stm32f031",
+    feature = "stm32f038",
+))]
 usart_pins! {
     USART1 => {
         tx => [gpioa::PA2<Alternate<AF1>>, gpioa::PA14<Alternate<AF1>>],
@@ -164,8 +169,8 @@ usart_pins! {
     }
 }
 #[cfg(any(
-    feature = "stm32f072",
     feature = "stm32f071",
+    feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
     feature = "stm32f098",
@@ -210,10 +215,9 @@ usart_pins! {
         rx => [gpiod::PD9<Alternate<AF0>>],
     }
 }
-
 // TODO: The ST SVD files are missing the entire PE enable register.
 //       Re-enable as soon as this gets fixed.
-// #[cfg(feature = "stm32f091")]
+// #[cfg(any(feature = "stm32f091", feature = "stm32f098"))]
 // usart_pins! {
 //     USART4 => {
 //         tx => [gpioe::PE8<Alternate<AF1>>],
@@ -224,12 +228,19 @@ usart_pins! {
 #[cfg(any(feature = "stm32f030xc", feature = "stm32f091", feature = "stm32f098"))]
 usart_pins! {
     USART5 => {
-        tx => [gpiob::PB3<Alternate<AF4>>, gpioc::PC12<Alternate<AF2>>],
-        rx => [gpiob::PB4<Alternate<AF4>>, gpiod::PD2<Alternate<AF2>>],
+        tx => [gpioc::PC12<Alternate<AF2>>],
+        rx => [gpiod::PD2<Alternate<AF2>>],
     }
     USART6 => {
         tx => [gpioa::PA4<Alternate<AF5>>, gpioc::PC0<Alternate<AF2>>],
         rx => [gpioa::PA5<Alternate<AF5>>, gpioc::PC1<Alternate<AF2>>],
+    }
+}
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f091"))]
+usart_pins! {
+    USART5 => {
+        tx => [gpiob::PB3<Alternate<AF4>>],
+        rx => [gpiob::PB4<Alternate<AF4>>],
     }
 }
 // TODO: The ST SVD files are missing the entire PE enable register.

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Support for stm32f0x8 line - @jessebraham
+
 ## [v0.12.0] - 2019-01-13
 
 ### Added

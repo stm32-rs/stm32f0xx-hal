@@ -7,7 +7,7 @@ stm32f0xx-hal
 
 [_stm32f0xx-hal_](https://github.com/stm32-rs/stm32f0xx-hal) contains a hardware abstraction on top of the peripheral access API for the STMicro STM32F0xx family of microcontrollers.
 
-This crate replaces the [stm32f042-hal](https://github.com/therealprof/stm32f042-hal) by a more ubiqitous version suitable for additional families. The idea behind this crate is to gloss over the slight differences in the various peripherals available on those MCUs so a HAL can be written for all chips in that same family without having to cut and paste crates for every single model.
+This crate replaces the [stm32f042-hal](https://github.com/therealprof/stm32f042-hal) by a more ubiquitous version suitable for additional families. The idea behind this crate is to gloss over the slight differences in the various peripherals available on those MCUs so a HAL can be written for all chips in that same family without having to cut and paste crates for every single model.
 
 This crate relies on Adam Greig's fantastic [stm32f0](https://crates.io/crates/stm32f0) crate to provide appropriate register definitions, and implements a partial set of the [embedded-hal](https://github.com/rust-embedded/embedded-hal) traits. Some of the implementation was shamelessly adapted from the [stm32f103xx-hal](https://github.com/japaric/stm32f103xx-hal) crate by Jorge Aparicio.
 
@@ -19,12 +19,17 @@ Supported Configurations
 
 * __stm32f030__ (stm32f030x4, stm32f030x6, stm32f030x8, stm32f030xc)  
 * __stm32f031__  
+* __stm32f038__  
 * __stm32f042__  
+* __stm32f048__  
 * __stm32f051__  
+* __stm32f058__  
 * __stm32f070__ (stm32f070x6, stm32f070xb)  
 * __stm32f071__  
 * __stm32f072__  
+* __stm32f078__  
 * __stm32f091__  
+* __stm32f098__  
 
 
 Getting Started

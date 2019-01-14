@@ -1,4 +1,4 @@
-use crate::stm32::rcc::cfgr::SWW;
+use crate::stm32::RCC;
 use crate::time::Hertz;
 
 /// Extension trait that sets up the `RCC` peripheral
@@ -7,7 +7,7 @@ pub trait RccExt {
     fn configure(self) -> CFGR;
 }
 
-impl RccExt for crate::stm32::RCC {
+impl RccExt for RCC {
     fn configure(self) -> CFGR {
         CFGR {
             hclk: None,
@@ -22,24 +22,169 @@ impl RccExt for crate::stm32::RCC {
 /// Constrained RCC peripheral
 pub struct Rcc {
     pub clocks: Clocks,
-    pub(crate) regs: crate::stm32::RCC,
+    pub(crate) regs: RCC,
 }
 
-const HSI: u32 = 8_000_000; // Hz
-const HSI48: u32 = 48_000_000; // Hz - (available on STM32F04x, STM32F07x and STM32F09x devices only)
+#[cfg(any(feature = "stm32f030",
+          feature = "stm32f070",
+))]
+mod inner {
+    use crate::stm32::{
+        RCC,
+        rcc::{
+            cfgr::SWW
+        }
+    };
 
-enum SysClkSource {
-    HSI,
-    HSE(u32),
-    HSI48,
+    pub(super) const HSI: u32 = 8_000_000; // Hz
+
+    pub(super) enum SysClkSource {
+        HSI,
+        HSE(u32),
+    }
+
+    pub(super) fn get_freq(c_src: &SysClkSource) -> u32 {
+        // Select clock source based on user input and capability
+        // Highest selected frequency source available takes precedent.
+        match c_src {
+            SysClkSource::HSE(freq) => *freq,
+            _ => HSI,
+        }
+    }
+
+    pub(super) fn enable_clock(rcc: &mut RCC, c_src: &SysClkSource) {
+        // Enable the requested clock
+        match c_src {
+            SysClkSource::HSE(_) => {
+                rcc.cr.modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
+
+                while !rcc.cr.read().hserdy().bit_is_set() {}
+            }
+            SysClkSource::HSI => {
+                rcc.cr.write(|w| w.hsion().set_bit());
+                while rcc.cr.read().hsirdy().bit_is_clear() {}
+            }
+        }
+    }
+
+    pub(super) fn enable_pll(rcc: &mut RCC, c_src: &SysClkSource, pllmul_bits: u8, ppre_bits: u8, hpre_bits: u8) {
+        let pllsrc_bit: bool = match c_src {
+            SysClkSource::HSI => false,
+            SysClkSource::HSE(_) => true,
+        };
+
+        // Set PLL source and multiplier
+        rcc.cfgr.modify(|_, w| unsafe { w.pllsrc().bit(pllsrc_bit).pllmul().bits(pllmul_bits) });
+
+        rcc.cr.write(|w| w.pllon().set_bit());
+        while rcc.cr.read().pllrdy().bit_is_clear() {}
+
+        rcc.cfgr.modify(|_, w| unsafe {
+            w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll()
+        });
+    }
+
+    pub(super) fn get_sww(c_src: &SysClkSource) -> SWW {
+        match c_src {
+            SysClkSource::HSI => SWW::HSI,
+            SysClkSource::HSE(_) => SWW::HSE,
+        }
+    }
 }
+
+#[cfg(any(feature = "stm32f031", // TODO: May be an SVD bug
+          feature = "stm32f038",
+          feature = "stm32f042",
+          feature = "stm32f048",
+          feature = "stm32f051",
+          feature = "stm32f058",
+          feature = "stm32f071",
+          feature = "stm32f072",
+          feature = "stm32f078",
+          feature = "stm32f091",
+          feature = "stm32f098",
+))]
+mod inner {
+    use crate::stm32::{
+        RCC,
+        rcc::{
+            cfgr::SWW
+        }
+    };
+
+    pub(super) const HSI: u32 = 8_000_000; // Hz
+    pub(super) const HSI48: u32 = 48_000_000; // Hz
+
+    pub(super) enum SysClkSource {
+        HSI,
+        HSE(u32),
+        HSI48,
+    }
+
+    pub(super) fn get_freq(c_src: &SysClkSource) -> u32 {
+        // Select clock source based on user input and capability
+        // Highest selected frequency source available takes precedent.
+        match c_src {
+            SysClkSource::HSE(freq) => *freq,
+            SysClkSource::HSI48 => HSI48,
+            _ => HSI,
+        }
+    }
+
+    pub(super) fn enable_clock(rcc: &mut RCC, c_src: &SysClkSource) {
+        // Enable the requested clock
+        match c_src {
+            SysClkSource::HSE(_) => {
+                rcc.cr.modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
+
+                while !rcc.cr.read().hserdy().bit_is_set() {}
+            }
+            SysClkSource::HSI48 => {
+                rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
+                while rcc.cr2.read().hsi48rdy().bit_is_clear() {}
+            }
+            SysClkSource::HSI => {
+                rcc.cr.write(|w| w.hsion().set_bit());
+                while rcc.cr.read().hsirdy().bit_is_clear() {}
+            }
+        }
+    }
+
+    pub(super) fn enable_pll(rcc: &mut RCC, c_src: &SysClkSource, pllmul_bits: u8, ppre_bits: u8, hpre_bits: u8) {
+        let pllsrc_bit: u8 = match c_src {
+            SysClkSource::HSI => 0b00,
+            SysClkSource::HSI48 => 0b11,
+            SysClkSource::HSE(_) => 0b01,
+        };
+
+        // Set PLL source and multiplier
+        rcc.cfgr.modify(|_, w| unsafe { w.pllsrc().bits(pllsrc_bit).pllmul().bits(pllmul_bits) });
+
+        rcc.cr.write(|w| w.pllon().set_bit());
+        while rcc.cr.read().pllrdy().bit_is_clear() {}
+
+        rcc.cfgr.modify(|_, w| unsafe {
+            w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll()
+        });
+    }
+
+    pub(super) fn get_sww(c_src: &SysClkSource) -> SWW {
+        match c_src {
+            SysClkSource::HSI => SWW::HSI,
+            SysClkSource::HSI48 => SWW::HSI48,
+            SysClkSource::HSE(_) => SWW::HSE,
+        }
+    }
+}
+
+use self::inner::SysClkSource;
 
 pub struct CFGR {
     hclk: Option<u32>,
     pclk: Option<u32>,
     sysclk: Option<u32>,
     clock_src: SysClkSource,
-    rcc: crate::stm32::RCC,
+    rcc: RCC,
 }
 
 impl CFGR {
@@ -48,6 +193,23 @@ impl CFGR {
         F: Into<Hertz>,
     {
         self.clock_src = SysClkSource::HSE(freq.into().0);
+        self
+    }
+
+    #[cfg(any(feature = "stm32f031", // TODO: May be an SVD bug
+              feature = "stm32f038",
+              feature = "stm32f042",
+              feature = "stm32f048",
+              feature = "stm32f051",
+              feature = "stm32f058",
+              feature = "stm32f071",
+              feature = "stm32f072",
+              feature = "stm32f078",
+              feature = "stm32f091",
+              feature = "stm32f098",
+    ))]
+    pub fn hsi48(mut self) -> Self {
+        self.clock_src = SysClkSource::HSI48;
         self
     }
 
@@ -75,9 +237,9 @@ impl CFGR {
         self
     }
 
-    pub fn freeze(self, flash: &mut crate::stm32::FLASH) -> Rcc {
+    pub fn freeze(mut self, flash: &mut crate::stm32::FLASH) -> Rcc {
         // Default to lowest frequency clock on all systems.
-        let sysclk = self.sysclk.unwrap_or(HSI);
+        let sysclk = self.sysclk.unwrap_or(self::inner::HSI);
 
         let r_sysclk; // The "real" sysclock value, calculated below
         let pllmul_bits;
@@ -85,11 +247,7 @@ impl CFGR {
         // Select clock source based on user input and capability
         // Highest selected frequency source available takes precedent.
         // For F04x, F07x, F09x parts, use HSI48 if requested.
-        let src_clk_freq = match self.clock_src {
-            SysClkSource::HSE(freq) => freq,
-            SysClkSource::HSI48 => HSI48,
-            _ => HSI,
-        };
+        let src_clk_freq = self::inner::get_freq(&self.clock_src);
 
         // Pll check
         if sysclk == src_clk_freq {
@@ -158,51 +316,15 @@ impl CFGR {
         }
 
         // Enable the requested clock
-        match self.clock_src {
-            SysClkSource::HSE(_) => {
-                self.rcc
-                    .cr
-                    .modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
-
-                while !self.rcc.cr.read().hserdy().bit_is_set() {}
-            }
-            SysClkSource::HSI48 => {
-                self.rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
-                while self.rcc.cr2.read().hsi48rdy().bit_is_clear() {}
-            }
-            SysClkSource::HSI => {
-                self.rcc.cr.write(|w| w.hsion().set_bit());
-                while self.rcc.cr.read().hsirdy().bit_is_clear() {}
-            }
-        };
+        self::inner::enable_clock(&mut self.rcc, &self.clock_src);
 
         // Set up rcc based on above calculated configuration.
 
         // Enable PLL
         if let Some(pllmul_bits) = pllmul_bits {
-            let pllsrc_bit: u8 = match self.clock_src {
-                SysClkSource::HSI => 0b00,
-                SysClkSource::HSI48 => 0b11,
-                SysClkSource::HSE(_) => 0b01,
-            };
-
-            // Set PLL source and multiplier
-            self.rcc
-                .cfgr
-                .write(|w| unsafe { w.pllsrc().bits(pllsrc_bit).pllmul().bits(pllmul_bits) });
-
-            self.rcc.cr.write(|w| w.pllon().set_bit());
-            while self.rcc.cr.read().pllrdy().bit_is_clear() {}
-
-            self.rcc.cfgr.modify(|_, w| unsafe {
-                w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll()
-            });
+            self::inner::enable_pll(&mut self.rcc, &self.clock_src, pllmul_bits, ppre_bits, hpre_bits);
         } else {
-            let sw_var = match self.clock_src {
-                SysClkSource::HSI => SWW::HSI,
-                SysClkSource::HSI48 => SWW::HSI48,
-                SysClkSource::HSE(_) => SWW::HSE,
-            };
+            let sw_var = self::inner::get_sww(&self.clock_src);
 
             // use HSI as source
             self.rcc.cfgr.write(|w| unsafe {

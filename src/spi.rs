@@ -49,11 +49,13 @@ use crate::stm32::SPI1;
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f042",
     feature = "stm32f048",
     feature = "stm32f051",
     feature = "stm32f058",
     feature = "stm32f070xb",
     feature = "stm32f071",
+    feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
     feature = "stm32f098",
@@ -116,7 +118,12 @@ spi_pins! {
         mosi => [gpioa::PA7<Alternate<AF0>>, gpiob::PB5<Alternate<AF0>>],
     }
 }
-#[cfg(any(feature = "stm32f030x6", feature = "stm32f038"))]
+#[cfg(any(
+    feature = "stm32f030x4",
+    feature = "stm32f030x6",
+    feature = "stm32f031",
+    feature = "stm32f038",
+))]
 spi_pins! {
     SPI1 => {
         sck => [gpiob::PB13<Alternate<AF0>>],
@@ -145,6 +152,7 @@ spi_pins! {
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f042",
     feature = "stm32f048",
     feature = "stm32f051",
     feature = "stm32f058",
@@ -231,11 +239,13 @@ spi! {
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
+    feature = "stm32f042",
     feature = "stm32f048",
     feature = "stm32f051",
     feature = "stm32f058",
     feature = "stm32f070xb",
     feature = "stm32f071",
+    feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
     feature = "stm32f098",

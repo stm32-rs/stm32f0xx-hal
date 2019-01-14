@@ -40,7 +40,7 @@ fn main() -> ! {
 
             let gpioa = p.GPIOA.split(&mut rcc);
             let gpiob = p.GPIOB.split(&mut rcc);
-            let syscfg = p.SYSCFG_COMP;
+            let syscfg = p.SYSCFG;
             let exti = p.EXTI;
 
             // Configure PB1 as input (button)
@@ -57,7 +57,7 @@ fn main() -> ! {
 
             // Enable external interrupt for PB1
             syscfg
-                .syscfg_exticr1
+                .exticr1
                 .modify(|_, w| unsafe { w.exti1().bits(1) });
 
             // Set interrupt request mask for line 1

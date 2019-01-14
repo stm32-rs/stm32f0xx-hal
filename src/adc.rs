@@ -84,20 +84,18 @@ pub enum AdcSampleTime {
 
 impl AdcSampleTime {
     fn write_bits(self, adc: &mut stm32::ADC) {
-        unsafe {
-            adc.smpr.write(|w| {
-                w.smpr().bits(match self {
-                    AdcSampleTime::T_1 => 0b000_u8,
-                    AdcSampleTime::T_7 => 0b001_u8,
-                    AdcSampleTime::T_13 => 0b010_u8,
-                    AdcSampleTime::T_28 => 0b011_u8,
-                    AdcSampleTime::T_41 => 0b100_u8,
-                    AdcSampleTime::T_55 => 0b101_u8,
-                    AdcSampleTime::T_71 => 0b110_u8,
-                    AdcSampleTime::T_239 => 0b111_u8,
-                })
-            });
-        }
+        adc.smpr.write(|w| {
+            w.smp().bits(match self {
+                AdcSampleTime::T_1 => 0b000_u8,
+                AdcSampleTime::T_7 => 0b001_u8,
+                AdcSampleTime::T_13 => 0b010_u8,
+                AdcSampleTime::T_28 => 0b011_u8,
+                AdcSampleTime::T_41 => 0b100_u8,
+                AdcSampleTime::T_55 => 0b101_u8,
+                AdcSampleTime::T_71 => 0b110_u8,
+                AdcSampleTime::T_239 => 0b111_u8,
+            })
+        });
     }
 
     /// Get the default sample time (currently 239.5 cycles)
@@ -161,16 +159,14 @@ pub enum AdcPrecision {
 
 impl AdcPrecision {
     fn write_bits(self, adc: &mut stm32::ADC) {
-        unsafe {
-            adc.cfgr1.write(|w| {
-                w.res().bits(match self {
-                    AdcPrecision::B_12 => 0b00_u8,
-                    AdcPrecision::B_10 => 0b01_u8,
-                    AdcPrecision::B_8 => 0b10_u8,
-                    AdcPrecision::B_6 => 0b11_u8,
-                })
-            });
-        }
+        adc.cfgr1.write(|w| {
+            w.res().bits(match self {
+                AdcPrecision::B_12 => 0b00_u8,
+                AdcPrecision::B_10 => 0b01_u8,
+                AdcPrecision::B_8 => 0b10_u8,
+                AdcPrecision::B_6 => 0b11_u8,
+            })
+        });
     }
 
     /// Get the default precision (currently 12 bit precision)

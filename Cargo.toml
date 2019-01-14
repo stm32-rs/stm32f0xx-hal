@@ -3,6 +3,7 @@ edition = "2018"
 authors = [
     "Daniel Egger <daniel@eggers-club.de>",
     "Thomas Bytheway <github@harkonen.net>",
+    "Jesse Braham <jesse@beta7.io>",
 ]
 categories = [
     "embedded",

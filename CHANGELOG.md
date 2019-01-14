@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Support for stm32f0x8 line - @jessebraham
 
+### Changed
+
+- Updated to stm32-rs v0.6.0 - @HarkonenBade
+
 ## [v0.12.0] - 2019-01-13
 
 ### Added

@@ -298,7 +298,7 @@ where
         // dff: 8 bit frames
         // bidimode: 2-line unidirectional
         // spe: enable the SPI bus
-        self.spi.cr1.write(|w| unsafe {
+        self.spi.cr1.write(|w| {
             w.cpha()
                 .bit(mode.phase == Phase::CaptureOnSecondTransition)
                 .cpol()

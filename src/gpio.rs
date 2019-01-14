@@ -561,7 +561,7 @@ gpio!(GPIOB, gpiob, iopben, PB, [
     PB15: (pb15, 15, Input<Floating>),
 ]);
 
-#[cfg(any(feature = "stm32f038", feature = "stm32f042"))]
+#[cfg(any(feature = "stm32f038", feature = "stm32f042", feature = "stm32f048"))]
 gpio!(GPIOC, gpioc, iopcen, PC, [
     PC13: (pc13, 13, Input<Floating>),
     PC14: (pc14, 14, Input<Floating>),
@@ -667,7 +667,7 @@ gpio!(GPIOF, gpiof, iopfen, PF, [
     PF7: (pf7, 7, Input<Floating>),
 ]);
 
-#[cfg(feature = "stm32f042")]
+#[cfg(any(feature = "stm32f042", feature = "stm32f048"))]
 gpio!(GPIOF, gpiof, iopfen, PF, [
     PF0: (pf0, 0, Input<Floating>),
     PF1: (pf1, 1, Input<Floating>),

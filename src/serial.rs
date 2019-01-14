@@ -117,6 +117,7 @@ macro_rules! usart_pins {
 #[cfg(any(
     feature = "stm32f030",
     feature = "stm32f042",
+    feature = "stm32f048",
     feature = "stm32f051",
     feature = "stm32f071",
 ))]
@@ -151,6 +152,7 @@ usart_pins! {
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f042",
+    feature = "stm32f048",
     feature = "stm32f051",
     feature = "stm32f070",
     feature = "stm32f071",
@@ -366,6 +368,7 @@ usart! {
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f042",
+    feature = "stm32f048",
     feature = "stm32f051",
     feature = "stm32f070",
     feature = "stm32f071",

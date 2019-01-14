@@ -576,6 +576,7 @@ gpio!(GPIOC, gpioc, iopcen, PC, [
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 gpio!(GPIOC, gpioc, iopcen, PC, [
     PC0: (pc0, 0, Input<Floating>),
@@ -609,7 +610,8 @@ gpio!(GPIOD, gpiod, iopden, PD, [
     feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f078",
-    feature = "stm32f091"
+    feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 gpio!(GPIOD, gpiod, iopden, PD, [
     PD0: (pd0, 0, Input<Floating>),
@@ -638,6 +640,7 @@ gpio!(GPIOD, gpiod, iopden, PD, [
 //     feature = "stm32f072",
 //     feature = "stm32f078",
 //     feature = "stm32f091",
+//     feature = "stm32f098",
 // ))]
 // gpio!(GPIOE, gpioe, iopeen, PE, [
 //     PE0: (pe0, 0, Input<Floating>),
@@ -700,6 +703,7 @@ gpio!(GPIOF, gpiof, iopfen, PF, [
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 gpio!(GPIOF, gpiof, iopfen, PF, [
     PF0: (pf0, 0, Input<Floating>),

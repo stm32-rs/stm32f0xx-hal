@@ -56,6 +56,7 @@ use crate::stm32::SPI1;
     feature = "stm32f071",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 use crate::stm32::SPI2;
 
@@ -130,7 +131,8 @@ spi_pins! {
 //     feature = "stm32f071",
 //     feature = "stm32f072",
 //     feature = "stm32f078",
-//     feature = "stm32f091"
+//     feature = "stm32f091",
+//     feature = "stm32f098",
 // ))]
 // spi_pins! {
 //     SPI1 => {
@@ -151,6 +153,7 @@ spi_pins! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 spi_pins! {
     SPI2 => {
@@ -166,6 +169,7 @@ spi_pins! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 spi_pins! {
     SPI2 => {
@@ -179,6 +183,7 @@ spi_pins! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 spi_pins! {
     SPI2 => {
@@ -233,6 +238,7 @@ spi! {
     feature = "stm32f071",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 spi! {
     SPI2: (spi2, spi2en, spi2rst, apb1enr, apb1rstr),

@@ -50,7 +50,7 @@ panic-halt = "0.2.0"
 device-selected = []
 rt = ["stm32f0/rt"]
 stm32f030 = ["stm32f0/stm32f0x0", "device-selected"]
-stm32f030x4 = ["stm32f030x6"]
+stm32f030x4 = ["stm32f030"]
 stm32f030x6 = ["stm32f030"]
 stm32f030x8 = ["stm32f030"]
 stm32f030xc = ["stm32f030"]
@@ -67,6 +67,7 @@ stm32f071 = ["stm32f0/stm32f0x1", "device-selected"]
 stm32f072 = ["stm32f0/stm32f0x2", "device-selected"]
 stm32f078 = ["stm32f0/stm32f0x8", "device-selected"]
 stm32f091 = ["stm32f0/stm32f0x1", "device-selected"]
+stm32f098 = ["stm32f0/stm32f0x8", "device-selected"]
 
 [profile.dev]
 debug = true

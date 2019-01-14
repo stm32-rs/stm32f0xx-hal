@@ -122,6 +122,7 @@ macro_rules! usart_pins {
     feature = "stm32f058",
     feature = "stm32f071",
     feature = "stm32f078",
+    feature = "stm32f098",
 ))]
 usart_pins! {
     USART1 =>  {
@@ -162,6 +163,7 @@ usart_pins! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 usart_pins! {
     USART2 => {
@@ -173,7 +175,8 @@ usart_pins! {
     feature = "stm32f072",
     feature = "stm32f071",
     feature = "stm32f078",
-    feature = "stm32f091"
+    feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 usart_pins! {
     USART2 => {
@@ -189,6 +192,7 @@ usart_pins! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 usart_pins! {
     USART3 => {
@@ -206,6 +210,7 @@ usart_pins! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 usart_pins! {
     USART3 => {
@@ -224,7 +229,7 @@ usart_pins! {
 //     }
 // }
 
-#[cfg(any(feature = "stm32f030xc", feature = "stm32f091"))]
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f091", feature = "stm32f098"))]
 usart_pins! {
     USART5 => {
         tx => [gpiob::PB3<Alternate<AF4>>, gpioc::PC12<Alternate<AF2>>],
@@ -237,7 +242,7 @@ usart_pins! {
 }
 // TODO: The ST SVD files are missing the entire PE enable register.
 //       Re-enable as soon as this gets fixed.
-#[cfg(feature = "stm32f091")]
+#[cfg(any(feature = "stm32f091", feature = "stm32f098"))]
 usart_pins! {
     // USART5 => {
     //     tx => [gpioe::PE10<Alternate<AF1>>],
@@ -391,6 +396,7 @@ usart! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 usart! {
     USART2: (usart2, usart2tx, usart2rx,usart2en, apb1enr),
@@ -402,12 +408,13 @@ usart! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 usart! {
     USART3: (usart3, usart3tx, usart3rx,usart3en, apb1enr),
     USART4: (usart4, usart4tx, usart4rx,usart4en, apb1enr),
 }
-#[cfg(any(feature = "stm32f030xc", feature = "stm32f091"))]
+#[cfg(any(feature = "stm32f030xc", feature = "stm32f091", feature = "stm32f098"))]
 usart! {
     USART5: (usart5, usart5tx, usart5rx,usart5en, apb1enr),
     USART6: (usart6, usart6tx, usart6rx,usart6en, apb2enr),

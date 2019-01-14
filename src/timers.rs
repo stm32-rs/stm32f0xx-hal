@@ -233,6 +233,7 @@ timers! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 timers! {
     TIM2: (tim2, tim2en, tim2rst, apb1enr, apb1rstr),
@@ -248,6 +249,7 @@ timers! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 timers! {
     TIM6: (tim6, tim6en, tim6rst, apb1enr, apb1rstr),
@@ -260,6 +262,7 @@ timers! {
     feature = "stm32f072",
     feature = "stm32f078",
     feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 timers! {
     TIM7: (tim7, tim7en, tim7rst, apb1enr, apb1rstr),

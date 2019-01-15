@@ -49,11 +49,22 @@ use embedded_hal::{
     blocking::delay::DelayUs,
 };
 
-use crate::{delay::Delay, gpio::*, rcc::Rcc, stm32};
+use crate::{
+    delay::Delay,
+    gpio::*,
+    rcc::Rcc,
+    stm32::{
+        adc::{
+            cfgr1::{ALIGNW, RESW},
+            smpr::SMPW,
+        },
+        ADC,
+    },
+};
 
 /// Analog to Digital converter interface
 pub struct Adc {
-    rb: stm32::ADC,
+    rb: ADC,
     sample_time: AdcSampleTime,
     align: AdcAlign,
     precision: AdcPrecision,
@@ -83,24 +94,24 @@ pub enum AdcSampleTime {
 }
 
 impl AdcSampleTime {
-    fn write_bits(self, adc: &mut stm32::ADC) {
-        adc.smpr.write(|w| {
-            w.smp().bits(match self {
-                AdcSampleTime::T_1 => 0b000_u8,
-                AdcSampleTime::T_7 => 0b001_u8,
-                AdcSampleTime::T_13 => 0b010_u8,
-                AdcSampleTime::T_28 => 0b011_u8,
-                AdcSampleTime::T_41 => 0b100_u8,
-                AdcSampleTime::T_55 => 0b101_u8,
-                AdcSampleTime::T_71 => 0b110_u8,
-                AdcSampleTime::T_239 => 0b111_u8,
-            })
-        });
-    }
-
     /// Get the default sample time (currently 239.5 cycles)
     pub fn default() -> Self {
         AdcSampleTime::T_239
+    }
+}
+
+impl From<AdcSampleTime> for SMPW {
+    fn from(val: AdcSampleTime) -> Self {
+        match val {
+            AdcSampleTime::T_1 => SMPW::CYCLES1_5,
+            AdcSampleTime::T_7 => SMPW::CYCLES7_5,
+            AdcSampleTime::T_13 => SMPW::CYCLES13_5,
+            AdcSampleTime::T_28 => SMPW::CYCLES28_5,
+            AdcSampleTime::T_41 => SMPW::CYCLES41_5,
+            AdcSampleTime::T_55 => SMPW::CYCLES55_5,
+            AdcSampleTime::T_71 => SMPW::CYCLES71_5,
+            AdcSampleTime::T_239 => SMPW::CYCLES239_5,
+        }
     }
 }
 
@@ -128,19 +139,19 @@ pub enum AdcAlign {
 }
 
 impl AdcAlign {
-    fn write_bits(self, adc: &mut stm32::ADC) {
-        adc.cfgr1.write(|w| {
-            w.align().bit(match self {
-                AdcAlign::Left => true,
-                AdcAlign::Right => false,
-                AdcAlign::LeftAsRM => true,
-            })
-        });
-    }
-
     /// Get the default alignment (currently right aligned)
     pub fn default() -> Self {
         AdcAlign::Right
+    }
+}
+
+impl From<AdcAlign> for ALIGNW {
+    fn from(val: AdcAlign) -> Self {
+        match val {
+            AdcAlign::Left => ALIGNW::LEFT,
+            AdcAlign::Right => ALIGNW::RIGHT,
+            AdcAlign::LeftAsRM => ALIGNW::LEFT,
+        }
     }
 }
 
@@ -158,20 +169,20 @@ pub enum AdcPrecision {
 }
 
 impl AdcPrecision {
-    fn write_bits(self, adc: &mut stm32::ADC) {
-        adc.cfgr1.write(|w| {
-            w.res().bits(match self {
-                AdcPrecision::B_12 => 0b00_u8,
-                AdcPrecision::B_10 => 0b01_u8,
-                AdcPrecision::B_8 => 0b10_u8,
-                AdcPrecision::B_6 => 0b11_u8,
-            })
-        });
-    }
-
     /// Get the default precision (currently 12 bit precision)
     pub fn default() -> Self {
         AdcPrecision::B_12
+    }
+}
+
+impl From<AdcPrecision> for RESW {
+    fn from(val: AdcPrecision) -> Self {
+        match val {
+            AdcPrecision::B_12 => RESW::TWELVEBIT,
+            AdcPrecision::B_10 => RESW::TENBIT,
+            AdcPrecision::B_8 => RESW::EIGHTBIT,
+            AdcPrecision::B_6 => RESW::SIXBIT,
+        }
     }
 }
 
@@ -449,7 +460,7 @@ impl Adc {
     /// Sets all configurable parameters to defaults, enables the HSI14 clock
     /// for the ADC if it is not already enabled and performs a boot time
     /// calibration. As such this method may take an appreciable time to run.
-    pub fn new(adc: stm32::ADC, rcc: &mut Rcc) -> Self {
+    pub fn new(adc: ADC, rcc: &mut Rcc) -> Self {
         let mut s = Self {
             rb: adc,
             sample_time: AdcSampleTime::default(),
@@ -532,52 +543,58 @@ impl Adc {
 
     fn calibrate(&mut self) {
         /* Ensure that ADEN = 0 */
-        if self.rb.cr.read().aden().bit_is_set() {
+        if self.rb.cr.read().aden().is_enabled() {
             /* Clear ADEN by setting ADDIS */
-            self.rb.cr.modify(|_, w| w.addis().set_bit());
+            self.rb.cr.modify(|_, w| w.addis().disable());
         }
-        while self.rb.cr.read().aden().bit_is_set() {}
+        while self.rb.cr.read().aden().is_enabled() {}
 
         /* Clear DMAEN */
-        self.rb.cfgr1.modify(|_, w| w.dmaen().clear_bit());
+        self.rb.cfgr1.modify(|_, w| w.dmaen().disabled());
 
         /* Start calibration by setting ADCAL */
-        self.rb.cr.modify(|_, w| w.adcal().set_bit());
+        self.rb.cr.modify(|_, w| w.adcal().start_calibration());
 
         /* Wait until calibration is finished and ADCAL = 0 */
-        while self.rb.cr.read().adcal().bit_is_set() {}
+        while self.rb.cr.read().adcal().is_calibrating() {}
     }
 
     fn select_clock(&mut self, rcc: &mut Rcc) {
-        rcc.regs.apb2enr.modify(|_, w| w.adcen().set_bit());
-        rcc.regs.cr2.write(|w| w.hsi14on().set_bit());
-        while rcc.regs.cr2.read().hsi14rdy().bit_is_clear() {}
+        rcc.regs.apb2enr.modify(|_, w| w.adcen().enabled());
+        rcc.regs.cr2.write(|w| w.hsi14on().on());
+        while rcc.regs.cr2.read().hsi14rdy().is_not_ready() {}
     }
 
     fn power_up(&mut self) {
-        if self.rb.isr.read().adrdy().bit_is_set() {
-            self.rb.isr.modify(|_, w| w.adrdy().clear_bit());
+        if self.rb.isr.read().adrdy().is_ready() {
+            self.rb.isr.modify(|_, w| w.adrdy().clear());
         }
-        self.rb.cr.modify(|_, w| w.aden().set_bit());
-        while self.rb.isr.read().adrdy().bit_is_clear() {}
+        self.rb.cr.modify(|_, w| w.aden().enabled());
+        while self.rb.isr.read().adrdy().is_not_ready() {}
     }
 
     fn power_down(&mut self) {
-        self.rb.cr.modify(|_, w| w.adstp().set_bit());
-        while self.rb.cr.read().adstp().bit_is_set() {}
-        self.rb.cr.modify(|_, w| w.addis().set_bit());
-        while self.rb.cr.read().aden().bit_is_set() {}
+        self.rb.cr.modify(|_, w| w.adstp().stop_conversion());
+        while self.rb.cr.read().adstp().is_stopping() {}
+        self.rb.cr.modify(|_, w| w.addis().disable());
+        while self.rb.cr.read().aden().is_enabled() {}
     }
 
     fn convert(&mut self, chan: u8) -> u16 {
         self.rb.chselr.write(|w| unsafe { w.bits(1_u32 << chan) });
 
-        self.sample_time.write_bits(&mut self.rb);
-        self.align.write_bits(&mut self.rb);
-        self.precision.write_bits(&mut self.rb);
+        self.rb
+            .smpr
+            .write(|w| w.smp().variant(self.sample_time.into()));
+        self.rb.cfgr1.modify(|_, w| {
+            w.res()
+                .variant(self.precision.into())
+                .align()
+                .variant(self.align.into())
+        });
 
-        self.rb.cr.modify(|_, w| w.adstart().set_bit());
-        while self.rb.isr.read().eoc().bit_is_clear() {}
+        self.rb.cr.modify(|_, w| w.adstart().start_conversion());
+        while self.rb.isr.read().eoc().is_not_complete() {}
 
         let res = self.rb.dr.read().bits() as u16;
         if self.align == AdcAlign::Left && self.precision == AdcPrecision::B_6 {

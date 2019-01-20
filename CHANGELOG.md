@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Updated to stm32-rs v0.6.0 - @HarkonenBade
 - Updated the ADC code to use variants added in stm32-rs v0.6.0 - @HarkonenBade
+- Improved serial `write_str` implementation
 
 ## [v0.12.0] - 2019-01-13
 

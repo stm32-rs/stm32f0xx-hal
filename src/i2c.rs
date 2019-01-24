@@ -151,10 +151,44 @@ pub enum Error {
     NACK,
 }
 
+/// Filler for a SDA Pin
+///
+/// Usefull if you don't want to utilize the sda pin,
+/// but a pin parameter is required
+pub struct NoSda {
+    _1: (),
+}
+
+impl NoSda {
+    /// Create a new unused pin
+    pub unsafe fn new() -> Self {
+        Self { _1: () }
+    }
+}
+
+/// Filler for a SCL Pin
+///
+/// Usefull if you don't want to utilize the scl pin,
+/// but a pin parameter is required
+pub struct NoScl {
+    _1: (),
+}
+
+impl NoScl {
+    /// Create a new unused pin
+    pub unsafe fn new() -> Self {
+        Self { _1: () }
+    }
+}
+
 macro_rules! i2c {
     ($($I2C:ident: ($i2c:ident, $i2cXen:ident, $i2cXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
             use crate::stm32::$I2C;
+
+            impl SclPin<$I2C> for NoScl {}
+            impl SdaPin<$I2C> for NoSda {}
+
             impl<SCLPIN, SDAPIN> I2c<$I2C, SCLPIN, SDAPIN> {
                 pub fn $i2c(i2c: $I2C, pins: (SCLPIN, SDAPIN), speed: KiloHertz, rcc: &mut Rcc) -> Self
                 where

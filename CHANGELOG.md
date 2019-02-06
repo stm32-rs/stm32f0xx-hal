@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Support for stm32f0x8 line - @jessebraham
+- Support for capacitive touch sensing (TSC)
 
 ### Changed
 

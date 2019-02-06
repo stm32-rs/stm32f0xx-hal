@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated the ADC code to use variants added in stm32-rs v0.6.0 - @HarkonenBade
 - Improved serial `write_str` implementation
 
+### Fixed
+
+- Fixed ADC use trampling over the HSI48 clock settings
+
 ## [v0.12.0] - 2019-01-13
 
 ### Added

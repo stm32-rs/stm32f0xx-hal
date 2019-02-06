@@ -561,7 +561,7 @@ impl Adc {
 
     fn select_clock(&mut self, rcc: &mut Rcc) {
         rcc.regs.apb2enr.modify(|_, w| w.adcen().enabled());
-        rcc.regs.cr2.write(|w| w.hsi14on().on());
+        rcc.regs.cr2.modify(|_, w| w.hsi14on().on());
         while rcc.regs.cr2.read().hsi14rdy().is_not_ready() {}
     }
 

@@ -69,7 +69,6 @@ debug = true
 
 [profile.release]
 debug = true
-lto = true
 opt-level = "s"
 
 [[example]]

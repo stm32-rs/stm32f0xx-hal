@@ -22,7 +22,7 @@
 //!     // Configure pins for SPI
 //!     let sck = gpioa.pa5.into_alternate_af0(cs);
 //!     let miso = gpioa.pa6.into_alternate_af0(cs);
-//!     let mosi = gpioa.pa7.into_alternate_af0()cs;
+//!     let mosi = gpioa.pa7.into_alternate_af0(cs);
 //!
 //!     // Configure SPI with 1MHz rate
 //!     let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), Mode {

@@ -60,25 +60,25 @@ fn main() -> ! {
 #[exception]
 fn SysTick() -> ! {
     // Exception handler state variable
-    static mut state: u8 = 1;
+    static mut STATE: u8 = 1;
 
     // Enter critical section
     cortex_m::interrupt::free(|cs| {
         // Borrow access to our GPIO pin from the shared structure
         if let Some(ref mut led) = *GPIO.borrow(cs).borrow_mut().deref_mut() {
             // Check state variable, keep LED off most of the time and turn it on every 10th tick
-            if *state < 10 {
+            if *STATE < 10 {
                 // Turn off the LED
                 led.set_low();
 
                 // And now increment state variable
-                *state += 1;
+                *STATE += 1;
             } else {
                 // Turn on the LED
                 led.set_high();
 
                 // And set new state variable back to 0
-                *state = 0;
+                *STATE = 0;
             }
         }
     });

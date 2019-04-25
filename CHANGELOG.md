@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-- Updated stm32f0 dependency to v0.7.0 - @jessebraham
+## [v0.14.0] - 2019-04-25
+
+### Changed
+
+- Updated stm32f0 dependency to v0.7.0 (breaking change) - @jessebraham
+- Bumped cortex-m dependency to ">=0.5.8,<0.7.0" to let user decide version
+- Bumped cortex-m-rt dependency to v0.6.8
 
 ## [v0.13.0] - 2019-02-06
 
@@ -121,7 +127,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated stm32f0 dependency to v0.5.0.
 - Interrupt handler to new #[interrupt] attribute
 
-[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.14.0...HEAD
+[v0.14.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.12.0...v0.13.0
 [v0.12.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.11.1...v0.12.0
 [v0.11.1]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.11.0...v0.11.1

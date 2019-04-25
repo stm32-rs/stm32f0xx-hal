@@ -23,7 +23,7 @@ license = "0BSD"
 name = "stm32f0xx-hal"
 readme = "README.md"
 repository = "https://github.com/stm32-rs/stm32f0xx-hal"
-version = "0.13.0"
+version = "0.14.0"
 
 [package.metadata.docs.rs]
 features = ["stm32f042", "rt"]
@@ -31,11 +31,11 @@ features = ["stm32f042", "rt"]
 [dependencies]
 bare-metal = { version = "0.2.4", features = ["const-fn"] }
 cast = { version = "0.2.2", default-features = false }
-cortex-m = "0.5.8"
-cortex-m-rt = "0.6.7"
+cortex-m = ">=0.5.8,<0.7.0"
+cortex-m-rt = "0.6.8"
 embedded-hal = { version = "0.2.2", features = ["unproven"] }
 stm32f0 = "0.7.0"
-nb = "0.1.1"
+nb = "0.1.2"
 void = { version = "1.0.2", default-features = false }
 
 [dev-dependencies]

@@ -34,7 +34,7 @@ cast = { version = "0.2.2", default-features = false }
 cortex-m = "0.5.8"
 cortex-m-rt = "0.6.7"
 embedded-hal = { version = "0.2.2", features = ["unproven"] }
-stm32f0 = "0.6.0"
+stm32f0 = "0.7.0"
 nb = "0.1.1"
 void = { version = "1.0.2", default-features = false }
 

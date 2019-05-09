@@ -72,7 +72,7 @@ i2c_pins! {
         sda => [gpioa::PA10<Alternate<AF4>>],
     }
 }
-#[cfg(any(feature = "stm32f030", feature = "stm32f042", feature = "stm32f048"))]
+#[cfg(any(feature = "stm32f042", feature = "stm32f048"))]
 i2c_pins! {
     I2C1 => {
         scl => [gpioa::PA11<Alternate<AF5>>],

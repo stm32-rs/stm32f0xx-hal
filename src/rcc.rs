@@ -14,6 +14,18 @@ impl RccExt for RCC {
             pclk: None,
             sysclk: None,
             clock_src: SysClkSource::HSI,
+            /// CRS is only available on devices with USB and HSI48
+            #[cfg(any(
+		feature = "stm32f031", // TODO: May be an SVD bug
+		feature = "stm32f038", // TODO: May be an SVD bug
+                feature = "stm32f042",
+                feature = "stm32f048",
+		feature = "stm32f051", // TODO: May be an SVD bug
+		feature = "stm32f058", // TODO: May be an SVD bug
+                feature = "stm32f072",
+                feature = "stm32f078",
+            ))]
+            crs: None,
             rcc: self,
         }
     }
@@ -25,16 +37,12 @@ pub struct Rcc {
     pub(crate) regs: RCC,
 }
 
-#[cfg(any(feature = "stm32f030",
-          feature = "stm32f070",
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f070",
 ))]
 mod inner {
-    use crate::stm32::{
-        RCC,
-        rcc::{
-            cfgr::SWW
-        }
-    };
+    use crate::stm32::{rcc::cfgr::SWW, RCC};
 
     pub(super) const HSI: u32 = 8_000_000; // Hz
 
@@ -56,7 +64,8 @@ mod inner {
         // Enable the requested clock
         match c_src {
             SysClkSource::HSE(_) => {
-                rcc.cr.modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
+                rcc.cr
+                    .modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
 
                 while !rcc.cr.read().hserdy().bit_is_set() {}
             }
@@ -67,21 +76,27 @@ mod inner {
         }
     }
 
-    pub(super) fn enable_pll(rcc: &mut RCC, c_src: &SysClkSource, pllmul_bits: u8, ppre_bits: u8, hpre_bits: u8) {
+    pub(super) fn enable_pll(
+        rcc: &mut RCC,
+        c_src: &SysClkSource,
+        pllmul_bits: u8,
+        ppre_bits: u8,
+        hpre_bits: u8,
+    ) {
         let pllsrc_bit: bool = match c_src {
             SysClkSource::HSI => false,
             SysClkSource::HSE(_) => true,
         };
 
         // Set PLL source and multiplier
-        rcc.cfgr.modify(|_, w| unsafe { w.pllsrc().bit(pllsrc_bit).pllmul().bits(pllmul_bits) });
+        rcc.cfgr
+            .modify(|_, w| unsafe { w.pllsrc().bit(pllsrc_bit).pllmul().bits(pllmul_bits) });
 
         rcc.cr.write(|w| w.pllon().set_bit());
         while rcc.cr.read().pllrdy().bit_is_clear() {}
 
-        rcc.cfgr.modify(|_, w| unsafe {
-            w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll()
-        });
+        rcc.cfgr
+            .modify(|_, w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll() });
     }
 
     pub(super) fn get_sww(c_src: &SysClkSource) -> SWW {
@@ -92,25 +107,21 @@ mod inner {
     }
 }
 
-#[cfg(any(feature = "stm32f031", // TODO: May be an SVD bug
-          feature = "stm32f038",
-          feature = "stm32f042",
-          feature = "stm32f048",
-          feature = "stm32f051",
-          feature = "stm32f058",
-          feature = "stm32f071",
-          feature = "stm32f072",
-          feature = "stm32f078",
-          feature = "stm32f091",
-          feature = "stm32f098",
+#[cfg(any(
+    feature = "stm32f031", // TODO: May be an SVD bug
+    feature = "stm32f038", // TODO: May be an SVD bug
+    feature = "stm32f042",
+    feature = "stm32f048",
+    feature = "stm32f051", // TODO: May be an SVD bug
+    feature = "stm32f058", // TODO: May be an SVD bug
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
 ))]
 mod inner {
-    use crate::stm32::{
-        RCC,
-        rcc::{
-            cfgr::SWW
-        }
-    };
+    use crate::stm32::{rcc::cfgr::SWW, RCC};
 
     pub(super) const HSI: u32 = 8_000_000; // Hz
     pub(super) const HSI48: u32 = 48_000_000; // Hz
@@ -135,7 +146,8 @@ mod inner {
         // Enable the requested clock
         match c_src {
             SysClkSource::HSE(_) => {
-                rcc.cr.modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
+                rcc.cr
+                    .modify(|_, w| w.csson().on().hseon().on().hsebyp().not_bypassed());
 
                 while !rcc.cr.read().hserdy().bit_is_set() {}
             }
@@ -150,7 +162,13 @@ mod inner {
         }
     }
 
-    pub(super) fn enable_pll(rcc: &mut RCC, c_src: &SysClkSource, pllmul_bits: u8, ppre_bits: u8, hpre_bits: u8) {
+    pub(super) fn enable_pll(
+        rcc: &mut RCC,
+        c_src: &SysClkSource,
+        pllmul_bits: u8,
+        ppre_bits: u8,
+        hpre_bits: u8,
+    ) {
         let pllsrc_bit: u8 = match c_src {
             SysClkSource::HSI => 0b00,
             SysClkSource::HSI48 => 0b11,
@@ -158,14 +176,14 @@ mod inner {
         };
 
         // Set PLL source and multiplier
-        rcc.cfgr.modify(|_, w| unsafe { w.pllsrc().bits(pllsrc_bit).pllmul().bits(pllmul_bits) });
+        rcc.cfgr
+            .modify(|_, w| unsafe { w.pllsrc().bits(pllsrc_bit).pllmul().bits(pllmul_bits) });
 
         rcc.cr.write(|w| w.pllon().set_bit());
         while rcc.cr.read().pllrdy().bit_is_clear() {}
 
-        rcc.cfgr.modify(|_, w| unsafe {
-            w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll()
-        });
+        rcc.cfgr
+            .modify(|_, w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll() });
     }
 
     pub(super) fn get_sww(c_src: &SysClkSource) -> SWW {
@@ -184,6 +202,18 @@ pub struct CFGR {
     pclk: Option<u32>,
     sysclk: Option<u32>,
     clock_src: SysClkSource,
+    /// CRS is only available on devices with USB and HSI48
+    #[cfg(any(
+	feature = "stm32f031", // TODO: May be an SVD bug
+	feature = "stm32f038", // TODO: May be an SVD bug
+        feature = "stm32f042",
+        feature = "stm32f048",
+	feature = "stm32f051", // TODO: May be an SVD bug
+	feature = "stm32f058", // TODO: May be an SVD bug
+        feature = "stm32f072",
+        feature = "stm32f078",
+    ))]
+    crs: Option<crate::stm32::CRS>,
     rcc: RCC,
 }
 
@@ -196,17 +226,14 @@ impl CFGR {
         self
     }
 
-    #[cfg(any(feature = "stm32f031", // TODO: May be an SVD bug
-              feature = "stm32f038",
-              feature = "stm32f042",
-              feature = "stm32f048",
-              feature = "stm32f051",
-              feature = "stm32f058",
-              feature = "stm32f071",
-              feature = "stm32f072",
-              feature = "stm32f078",
-              feature = "stm32f091",
-              feature = "stm32f098",
+    #[cfg(any(
+        feature = "stm32f042",
+        feature = "stm32f048",
+        feature = "stm32f071",
+        feature = "stm32f072",
+        feature = "stm32f078",
+        feature = "stm32f091",
+        feature = "stm32f098",
     ))]
     pub fn hsi48(mut self) -> Self {
         self.clock_src = SysClkSource::HSI48;
@@ -234,6 +261,17 @@ impl CFGR {
         F: Into<Hertz>,
     {
         self.sysclk = Some(freq.into().0);
+        self
+    }
+
+    #[cfg(any(
+        feature = "stm32f042",
+        feature = "stm32f048",
+        feature = "stm32f072",
+        feature = "stm32f078",
+    ))]
+    pub fn enable_crs(mut self, crs: crate::stm32::CRS) -> Self {
+        self.crs = Some(crs);
         self
     }
 
@@ -322,9 +360,35 @@ impl CFGR {
 
         // Enable PLL
         if let Some(pllmul_bits) = pllmul_bits {
-            self::inner::enable_pll(&mut self.rcc, &self.clock_src, pllmul_bits, ppre_bits, hpre_bits);
+            self::inner::enable_pll(
+                &mut self.rcc,
+                &self.clock_src,
+                pllmul_bits,
+                ppre_bits,
+                hpre_bits,
+            );
         } else {
             let sw_var = self::inner::get_sww(&self.clock_src);
+
+            // CRS is only available on devices with USB and HSI48
+            #[cfg(any(
+                feature = "stm32f042",
+                feature = "stm32f048",
+                feature = "stm32f072",
+                feature = "stm32f078",
+            ))]
+            match self.crs {
+                Some(crs) => {
+                    self.rcc.apb1enr.modify(|_, w| w.crsen().set_bit());
+
+                    // Initialize clock recovery
+                    // Set autotrim enabled.
+                    crs.cr.modify(|_, w| w.autotrimen().set_bit());
+                    // Enable CR
+                    crs.cr.modify(|_, w| w.cen().set_bit());
+                }
+                _ => {}
+            }
 
             // use HSI as source
             self.rcc.cfgr.write(|w| unsafe {

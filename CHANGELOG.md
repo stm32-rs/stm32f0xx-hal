@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Support for CRS for devices with USB and HSI48
+
+### Changed
+
+- Revised feature flags for HSI48 clock support
+
 ## [v0.14.0] - 2019-04-25
 
 ### Changed

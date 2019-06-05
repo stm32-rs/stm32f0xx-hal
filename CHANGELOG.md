@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.14.1] - 2019-06-06
+
 ### Added
 
 - Support for CRS for devices with USB and HSI48
@@ -135,7 +137,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated stm32f0 dependency to v0.5.0.
 - Interrupt handler to new #[interrupt] attribute
 
-[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.14.1...HEAD
+[v0.14.1]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.14.0...v0.14.1
 [v0.14.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.12.0...v0.13.0
 [v0.12.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.11.1...v0.12.0

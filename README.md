@@ -34,6 +34,18 @@ Supported Configurations
 
 Getting Started
 ---------------
+The `examples` folder contains several example programs. To compile them, one must specify the target device as cargo feature:
+```
+$ cargo build --features=stm32f030xc
+```
+
+To use stm32f0xx-hal as a dependency in a standalone project the target device feature must be specified in the `Cargo.toml` file:
+```
+[dependencies]
+cortex-m = "0.6.0"
+cortex-m-rt = "0.6.8"
+stm32f0xx-hal = {version = "0.14.1", features = ["stm32f030xc"]}
+```
 
 If you are unfamiliar with embedded development using Rust, there are a number of fantastic resources available to help.
 
@@ -41,7 +53,6 @@ If you are unfamiliar with embedded development using Rust, there are a number o
 - [The Embedded Rust Book](https://docs.rust-embedded.org/book/)  
 - [Rust Embedded FAQ](https://docs.rust-embedded.org/faq.html)  
 - [rust-embedded/awesome-embedded-rust](https://github.com/rust-embedded/awesome-embedded-rust)
-
 
 Changelog
 ---------

@@ -77,20 +77,24 @@ unsafe impl<MODE> Sync for Pin<MODE> {}
 unsafe impl<MODE> Send for Pin<MODE> {}
 
 impl<MODE> StatefulOutputPin for Pin<Output<MODE>> {
+    #[inline(always)]
     fn is_set_high(&self) -> bool {
         !self.is_set_low()
     }
 
+    #[inline(always)]
     fn is_set_low(&self) -> bool {
         unsafe { (*self.port).is_set_low(self.i) }
     }
 }
 
 impl<MODE> OutputPin for Pin<Output<MODE>> {
+    #[inline(always)]
     fn set_high(&mut self) {
         unsafe { (*self.port).set_high(self.i) }
     }
 
+    #[inline(always)]
     fn set_low(&mut self) {
         unsafe { (*self.port).set_low(self.i) }
     }
@@ -99,20 +103,24 @@ impl<MODE> OutputPin for Pin<Output<MODE>> {
 impl<MODE> toggleable::Default for Pin<Output<MODE>> {}
 
 impl InputPin for Pin<Output<OpenDrain>> {
+    #[inline(always)]
     fn is_high(&self) -> bool {
         !self.is_low()
     }
 
+    #[inline(always)]
     fn is_low(&self) -> bool {
         unsafe { (*self.port).is_low(self.i) }
     }
 }
 
 impl<MODE> InputPin for Pin<Input<MODE>> {
+    #[inline(always)]
     fn is_high(&self) -> bool {
         !self.is_low()
     }
 
+    #[inline(always)]
     fn is_low(&self) -> bool {
         unsafe { (*self.port).is_low(self.i) }
     }

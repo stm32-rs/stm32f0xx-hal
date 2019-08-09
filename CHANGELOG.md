@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.15.0] - 2019-08-09
+
 ### Changed
 
 - Updated stm32f0 dependency to v0.8.0 (breaking change)

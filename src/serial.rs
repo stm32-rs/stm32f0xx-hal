@@ -571,7 +571,7 @@ fn read(usart: *const SerialRegisterBlock) -> nb::Result<u8, Error> {
     // NOTE(unsafe) atomic read with no side effects
     let isr = unsafe { (*usart).isr.read() };
 
-    Err(if isr.pe().bit_is_set() {
+    let err = if isr.pe().bit_is_set() {
         nb::Error::Other(Error::Parity)
     } else if isr.fe().bit_is_set() {
         nb::Error::Other(Error::Framing)
@@ -583,6 +583,22 @@ fn read(usart: *const SerialRegisterBlock) -> nb::Result<u8, Error> {
         // NOTE(read_volatile) see `write_volatile` below
         return Ok(unsafe { ptr::read_volatile(&(*usart).rdr as *const _ as *const _) });
     } else {
-        nb::Error::WouldBlock
-    })
+        return Err(nb::Error::WouldBlock);
+    };
+
+    // NOTE(unsafe) atomic write with no side effects other than clearing the errors we've just handled
+    unsafe {
+        (*usart).icr.write(|w| {
+            w.pecf()
+                .set_bit()
+                .fecf()
+                .set_bit()
+                .ncf()
+                .set_bit()
+                .orecf()
+                .set_bit()
+        })
+    };
+
+    return Err(err);
 }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Clear UART errors in hardware after handling them
+
 ## [v0.15.0] - 2019-08-09
 
 ### Changed

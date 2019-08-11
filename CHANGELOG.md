@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.15.1] - 2019-08-11
+
 ### Fixed
 
 - Clear UART errors in hardware after handling them
@@ -152,7 +154,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated stm32f0 dependency to v0.5.0.
 - Interrupt handler to new #[interrupt] attribute
 
-[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.15.1...HEAD
+[v0.15.1]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.15.0...v0.15.1
 [v0.15.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.14.1...v0.15.0
 [v0.14.1]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.14.0...v0.14.1
 [v0.14.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.13.0...v0.14.0

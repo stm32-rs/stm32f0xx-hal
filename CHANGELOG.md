@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Extract register block address only once
+
 ## [v0.15.1] - 2019-08-11
 
 ### Fixed

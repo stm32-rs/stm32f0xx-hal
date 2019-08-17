@@ -204,17 +204,18 @@ macro_rules! gpio {
                 let offset = 2 * index;
                 let offset2 = 4 * index;
                 unsafe {
+                    let reg = &(*$GPIOX::ptr());
                     if offset2 < 32 {
-                        &(*$GPIOX::ptr()).afrl.modify(|r, w| {
+                        reg.afrl.modify(|r, w| {
                             w.bits((r.bits() & !(0b1111 << offset2)) | (mode << offset2))
                         });
                     } else {
                         let offset2 = offset2 - 32;
-                        &(*$GPIOX::ptr()).afrh.modify(|r, w| {
+                        reg.afrh.modify(|r, w| {
                             w.bits((r.bits() & !(0b1111 << offset2)) | (mode << offset2))
                         });
                     }
-                    &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                    reg.moder.modify(|r, w| {
                         w.bits((r.bits() & !(0b11 << offset)) | (0b10 << offset))
                     });
                 }
@@ -297,10 +298,11 @@ macro_rules! gpio {
                     ) -> $PXi<Input<Floating>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                             });
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                            reg.moder.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                             });
                         }
@@ -313,10 +315,11 @@ macro_rules! gpio {
                         ) -> $PXi<Input<PullDown>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b10 << offset))
                             });
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                            reg.moder.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                             });
                         }
@@ -329,10 +332,11 @@ macro_rules! gpio {
                     ) -> $PXi<Input<PullUp>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
                             });
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                            reg.moder.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                             });
                         }
@@ -345,10 +349,11 @@ macro_rules! gpio {
                     ) -> $PXi<Analog> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                             });
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                            reg.moder.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b11 << offset))
                             });
                         }
@@ -361,13 +366,14 @@ macro_rules! gpio {
                     ) -> $PXi<Output<OpenDrain>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                             });
-                            &(*$GPIOX::ptr()).otyper.modify(|r, w| {
+                            reg.otyper.modify(|r, w| {
                                 w.bits(r.bits() | (0b1 << $i))
                             });
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                            reg.moder.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
                             });
                         }
@@ -380,13 +386,14 @@ macro_rules! gpio {
                     ) -> $PXi<Output<PushPull>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                             });
-                            &(*$GPIOX::ptr()).otyper.modify(|r, w| {
+                            reg.otyper.modify(|r, w| {
                                 w.bits(r.bits() & !(0b1 << $i))
                             });
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                            reg.moder.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
                             });
                         }
@@ -400,16 +407,17 @@ macro_rules! gpio {
                     ) -> $PXi<Output<PushPull>> {
                         let offset = 2 * $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b00 << offset))
                             });
-                            &(*$GPIOX::ptr()).otyper.modify(|r, w| {
+                            reg.otyper.modify(|r, w| {
                                 w.bits(r.bits() & !(0b1 << $i))
                             });
-                            &(*$GPIOX::ptr()).ospeedr.modify(|r, w| {
+                            reg.ospeedr.modify(|r, w| {
                                 w.bits(r.bits() & !(0b1 << $i))
                             });
-                            &(*$GPIOX::ptr()).moder.modify(|r, w| {
+                            reg.moder.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
                             });
                         }
@@ -423,7 +431,8 @@ macro_rules! gpio {
                         let offset = 2 * $i;
                         let value = if on { 0b01 } else { 0b00 };
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (value << offset))
                             });
                         }
@@ -436,7 +445,8 @@ macro_rules! gpio {
                         let offset = 2 * $i;
                         let value = if on { 0b01 } else { 0b00 };
                         unsafe {
-                            &(*$GPIOX::ptr()).pupdr.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.pupdr.modify(|r, w| {
                                 w.bits((r.bits() & !(0b11 << offset)) | (value << offset))
                             });
                         }
@@ -449,7 +459,8 @@ macro_rules! gpio {
                     pub fn set_open_drain(self, _cs: &CriticalSection) -> Self {
                         let offset = $i;
                         unsafe {
-                            &(*$GPIOX::ptr()).otyper.modify(|r, w| {
+                            let reg = &(*$GPIOX::ptr());
+                            reg.otyper.modify(|r, w| {
                                 w.bits(r.bits() | (1 << offset))
                             });
                         }

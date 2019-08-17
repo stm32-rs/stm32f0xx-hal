@@ -656,33 +656,31 @@ gpio!(GPIOD, gpiod, iopden, PD, [
     PD15: (pd15, 15, Input<Floating>),
 ]);
 
-// TODO: The ST SVD files are missing the entire PE enable register.
-//       Re-enable as soon as this gets fixed.
-// #[cfg(any(
-//     feature = "stm32f071",
-//     feature = "stm32f072",
-//     feature = "stm32f078",
-//     feature = "stm32f091",
-//     feature = "stm32f098",
-// ))]
-// gpio!(GPIOE, gpioe, iopeen, PE, [
-//     PE0: (pe0, 0, Input<Floating>),
-//     PE1: (pe1, 1, Input<Floating>),
-//     PE2: (pe2, 2, Input<Floating>),
-//     PE3: (pe3, 3, Input<Floating>),
-//     PE4: (pe4, 4, Input<Floating>),
-//     PE5: (pe5, 5, Input<Floating>),
-//     PE6: (pe6, 6, Input<Floating>),
-//     PE7: (pe7, 7, Input<Floating>),
-//     PE8: (pe8, 8, Input<Floating>),
-//     PE9: (pe9, 9, Input<Floating>),
-//     PE10: (pe10, 10, Input<Floating>),
-//     PE11: (pe11, 11, Input<Floating>),
-//     PE12: (pe12, 12, Input<Floating>),
-//     PE13: (pe13, 13, Input<Floating>),
-//     PE14: (pe14, 14, Input<Floating>),
-//     PE15: (pe15, 15, Input<Floating>),
-// ]);
+#[cfg(any(
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
+gpio!(GPIOE, gpioe, iopeen, PE, [
+    PE0: (pe0, 0, Input<Floating>),
+    PE1: (pe1, 1, Input<Floating>),
+    PE2: (pe2, 2, Input<Floating>),
+    PE3: (pe3, 3, Input<Floating>),
+    PE4: (pe4, 4, Input<Floating>),
+    PE5: (pe5, 5, Input<Floating>),
+    PE6: (pe6, 6, Input<Floating>),
+    PE7: (pe7, 7, Input<Floating>),
+    PE8: (pe8, 8, Input<Floating>),
+    PE9: (pe9, 9, Input<Floating>),
+    PE10: (pe10, 10, Input<Floating>),
+    PE11: (pe11, 11, Input<Floating>),
+    PE12: (pe12, 12, Input<Floating>),
+    PE13: (pe13, 13, Input<Floating>),
+    PE14: (pe14, 14, Input<Floating>),
+    PE15: (pe15, 15, Input<Floating>),
+]);
 
 #[cfg(any(
     feature = "stm32f030x4",

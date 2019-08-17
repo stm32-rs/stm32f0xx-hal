@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- Enabled commented out and now available GPIOE support for 07x and 09x families
 - Extract register block address only once
 
 ## [v0.15.1] - 2019-08-11

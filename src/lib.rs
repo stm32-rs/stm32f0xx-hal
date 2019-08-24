@@ -29,6 +29,8 @@ pub use stm32f0::stm32f0x8 as stm32;
 #[cfg(feature = "device-selected")]
 pub mod adc;
 #[cfg(feature = "device-selected")]
+pub mod dac;
+#[cfg(feature = "device-selected")]
 pub mod delay;
 #[cfg(feature = "device-selected")]
 pub mod gpio;

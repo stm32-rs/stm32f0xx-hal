@@ -66,7 +66,7 @@ use embedded_hal::digital::{toggleable, InputPin, OutputPin, StatefulOutputPin};
 /// Fully erased pin
 pub struct Pin<MODE> {
     i: u8,
-    port: *const GpioRegExt,
+    port: *const dyn GpioRegExt,
     _mode: PhantomData<MODE>,
 }
 
@@ -476,7 +476,7 @@ macro_rules! gpio {
                     pub fn downgrade(self) -> Pin<Output<MODE>> {
                         Pin {
                             i: $i,
-                            port: $GPIOX::ptr() as *const GpioRegExt,
+                            port: $GPIOX::ptr() as *const dyn GpioRegExt,
                             _mode: self._mode,
                         }
                     }
@@ -522,7 +522,7 @@ macro_rules! gpio {
                     pub fn downgrade(self) -> Pin<Input<MODE>> {
                         Pin {
                             i: $i,
-                            port: $GPIOX::ptr() as *const GpioRegExt,
+                            port: $GPIOX::ptr() as *const dyn GpioRegExt,
                             _mode: self._mode,
                         }
                     }

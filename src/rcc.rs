@@ -37,10 +37,7 @@ pub struct Rcc {
     pub(crate) regs: RCC,
 }
 
-#[cfg(any(
-    feature = "stm32f030",
-    feature = "stm32f070",
-))]
+#[cfg(any(feature = "stm32f030", feature = "stm32f070",))]
 mod inner {
     use crate::stm32::{rcc::cfgr::SWW, RCC};
 
@@ -177,7 +174,7 @@ mod inner {
 
         // Set PLL source and multiplier
         rcc.cfgr
-            .modify(|_, w| unsafe { w.pllsrc().bits(pllsrc_bit).pllmul().bits(pllmul_bits) });
+            .modify(|_, w| w.pllsrc().bits(pllsrc_bit).pllmul().bits(pllmul_bits));
 
         rcc.cr.write(|w| w.pllon().set_bit());
         while rcc.cr.read().pllrdy().bit_is_clear() {}
@@ -313,12 +310,12 @@ impl CFGR {
                 0 => unreachable!(),
                 1 => 0b0111,
                 2 => 0b1000,
-                3...5 => 0b1001,
-                6...11 => 0b1010,
-                12...39 => 0b1011,
-                40...95 => 0b1100,
-                96...191 => 0b1101,
-                192...383 => 0b1110,
+                3..=5 => 0b1001,
+                6..=11 => 0b1010,
+                12..=39 => 0b1011,
+                40..=95 => 0b1100,
+                96..=191 => 0b1101,
+                192..=383 => 0b1110,
                 _ => 0b1111,
             })
             .unwrap_or(0b0111);
@@ -331,8 +328,8 @@ impl CFGR {
                 0 => unreachable!(),
                 1 => 0b011,
                 2 => 0b100,
-                3...5 => 0b101,
-                6...11 => 0b110,
+                3..=5 => 0b101,
+                6..=11 => 0b110,
                 _ => 0b111,
             })
             .unwrap_or(0b011);

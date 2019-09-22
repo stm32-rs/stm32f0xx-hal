@@ -188,7 +188,7 @@ macro_rules! timers {
                     let ticks = self.clocks.pclk().0 / frequency;
 
                     let psc = cast::u16((ticks - 1) / (1 << 16)).unwrap();
-                    self.tim.psc.write(|w| unsafe { w.psc().bits(psc) });
+                    self.tim.psc.write(|w| w.psc().bits(psc));
 
                     let arr = cast::u16(ticks / cast::u32(psc + 1)).unwrap();
                     self.tim.arr.write(|w| unsafe { w.bits(cast::u32(arr)) });

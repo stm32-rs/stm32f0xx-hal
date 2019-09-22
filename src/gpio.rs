@@ -1,6 +1,7 @@
 //! General Purpose Input / Output
 
 use core::marker::PhantomData;
+use core::convert::Infallible;
 
 use crate::rcc::Rcc;
 
@@ -61,7 +62,7 @@ pub struct Output<MODE> {
 /// Push pull output (type state)
 pub struct PushPull;
 
-use embedded_hal::digital::{toggleable, InputPin, OutputPin, StatefulOutputPin};
+use embedded_hal::digital::v2::{toggleable, InputPin, OutputPin, StatefulOutputPin};
 
 /// Fully erased pin
 pub struct Pin<MODE> {
@@ -78,51 +79,57 @@ unsafe impl<MODE> Send for Pin<MODE> {}
 
 impl<MODE> StatefulOutputPin for Pin<Output<MODE>> {
     #[inline(always)]
-    fn is_set_high(&self) -> bool {
-        !self.is_set_low()
+    fn is_set_high(&self) -> Result<bool, Self::Error> {
+        self.is_set_low().map(|v| !v)
     }
 
     #[inline(always)]
-    fn is_set_low(&self) -> bool {
-        unsafe { (*self.port).is_set_low(self.i) }
+    fn is_set_low(&self) -> Result<bool, Self::Error> {
+        Ok(unsafe { (*self.port).is_set_low(self.i) })
     }
 }
 
 impl<MODE> OutputPin for Pin<Output<MODE>> {
+    type Error = Infallible;
+
     #[inline(always)]
-    fn set_high(&mut self) {
-        unsafe { (*self.port).set_high(self.i) }
+    fn set_high(&mut self) -> Result<(), Self::Error> {
+        Ok(unsafe { (*self.port).set_high(self.i) })
     }
 
     #[inline(always)]
-    fn set_low(&mut self) {
-        unsafe { (*self.port).set_low(self.i) }
+    fn set_low(&mut self) -> Result<(), Self::Error>{
+        Ok(unsafe { (*self.port).set_low(self.i) })
     }
 }
 
 impl<MODE> toggleable::Default for Pin<Output<MODE>> {}
 
 impl InputPin for Pin<Output<OpenDrain>> {
+    type Error = Infallible;
+
     #[inline(always)]
-    fn is_high(&self) -> bool {
-        !self.is_low()
+    fn is_high(&self) -> Result<bool, Self::Error> {
+        self.is_low().map(|v| !v)
     }
 
     #[inline(always)]
-    fn is_low(&self) -> bool {
-        unsafe { (*self.port).is_low(self.i) }
+    fn is_low(&self) -> Result<bool, Self::Error> {
+        Ok(unsafe { (*self.port).is_low(self.i) })
     }
 }
 
 impl<MODE> InputPin for Pin<Input<MODE>> {
+    type Error = Infallible;
+
     #[inline(always)]
-    fn is_high(&self) -> bool {
-        !self.is_low()
+    fn is_high(&self) -> Result<bool, Self::Error> {
+        self.is_low().map(|v| !v)
     }
 
     #[inline(always)]
-    fn is_low(&self) -> bool {
-        unsafe { (*self.port).is_low(self.i) }
+    fn is_low(&self) -> Result<bool, Self::Error> {
+        Ok(unsafe { (*self.port).is_low(self.i) })
     }
 }
 
@@ -162,8 +169,9 @@ macro_rules! gpio {
         /// GPIO
         pub mod $gpiox {
             use core::marker::PhantomData;
+            use core::convert::Infallible;
 
-            use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin, toggleable};
+            use embedded_hal::digital::v2::{InputPin, OutputPin, StatefulOutputPin, toggleable};
             use crate::{
                 rcc::Rcc,
                 stm32::$GPIOX
@@ -483,34 +491,38 @@ macro_rules! gpio {
                 }
 
                 impl<MODE> StatefulOutputPin for $PXi<Output<MODE>> {
-                    fn is_set_high(&self) -> bool {
-                        !self.is_set_low()
+                    fn is_set_high(&self) -> Result<bool, Self::Error> {
+                        self.is_set_low().map(|v| !v)
                     }
 
-                    fn is_set_low(&self) -> bool {
-                        unsafe { (*$GPIOX::ptr()).is_set_low($i) }
+                    fn is_set_low(&self) -> Result<bool, Self::Error> {
+                        Ok(unsafe { (*$GPIOX::ptr()).is_set_low($i) })
                     }
                 }
 
                 impl<MODE> OutputPin for $PXi<Output<MODE>> {
-                    fn set_high(&mut self) {
-                        unsafe { (*$GPIOX::ptr()).set_high($i) }
+                    type Error = Infallible;
+
+                    fn set_high(&mut self) -> Result<(), Self::Error> {
+                        Ok(unsafe { (*$GPIOX::ptr()).set_high($i) })
                     }
 
-                    fn set_low(&mut self) {
-                        unsafe { (*$GPIOX::ptr()).set_low($i) }
+                    fn set_low(&mut self) -> Result<(), Self::Error> {
+                        Ok(unsafe { (*$GPIOX::ptr()).set_low($i) })
                     }
                 }
 
                 impl<MODE> toggleable::Default for $PXi<Output<MODE>> {}
 
                 impl InputPin for $PXi<Output<OpenDrain>> {
-                    fn is_high(&self) -> bool {
-                        !self.is_low()
+                    type Error = Infallible;
+
+                    fn is_high(&self) -> Result<bool, Self::Error> {
+                        self.is_low().map(|v| !v)
                     }
 
-                    fn is_low(&self) -> bool {
-                        unsafe { (*$GPIOX::ptr()).is_low($i) }
+                    fn is_low(&self) -> Result<bool, Self::Error> {
+                        Ok(unsafe { (*$GPIOX::ptr()).is_low($i) })
                     }
                 }
 
@@ -529,12 +541,14 @@ macro_rules! gpio {
                 }
 
                 impl<MODE> InputPin for $PXi<Input<MODE>> {
-                    fn is_high(&self) -> bool {
-                        !self.is_low()
+                    type Error = Infallible;
+
+                    fn is_high(&self) -> Result<bool, Self::Error> {
+                        self.is_low().map(|v| !v)
                     }
 
-                    fn is_low(&self) -> bool {
-                        unsafe { (*$GPIOX::ptr()).is_low($i) }
+                    fn is_low(&self) -> Result<bool, Self::Error> {
+                        Ok(unsafe { (*$GPIOX::ptr()).is_low($i) })
                     }
                 }
             )+

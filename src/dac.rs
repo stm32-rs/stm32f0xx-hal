@@ -5,7 +5,6 @@ use crate::delay::Delay;
 use crate::gpio::gpioa::{PA4, PA5};
 use crate::prelude::*;
 use crate::rcc::Rcc;
-#[cfg(any(feature = "stm32f072"))]
 use crate::stm32::DAC;
 use crate::gpio::Analog;
 

@@ -18,7 +18,6 @@ pub trait DacOut<V> {
 
 pub trait DacPin {
     fn enable(&mut self);
-//    fn calibrate(&mut self, delay: &mut Delay);
 }
 
 pub trait Pins<DAC> {

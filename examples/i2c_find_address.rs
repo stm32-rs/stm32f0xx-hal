@@ -33,7 +33,11 @@ fn main() -> ! {
             let mut i2c = I2c::i2c1(p.I2C1, (scl, sda), 100.khz(), &mut rcc);
 
             let mut _devices = 0;
-            for add in 0..127 {
+            // I2C addresses are 7-bit wide, covering the 0-127 range
+            for add in 0..=127 {
+                // The write method sends the specified address and checks for acknowledgement;
+                // if no ack is given by the slave device the result is Err(), otherwise Ok()
+                // Since we only care for an acknowledgement the data sent can be empty
                 match i2c.write(add, &[]) {
                     Ok(_) => {
                         _devices += 1;

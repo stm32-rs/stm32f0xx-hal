@@ -88,6 +88,14 @@ impl DacExt for DAC {
     }
 }
 
+#[cfg(any(
+feature = "stm32f051",
+feature = "stm32f071",
+feature = "stm32f072",
+feature = "stm32f078",
+feature = "stm32f091",
+feature = "stm32f098",
+))]
 dac!(
     C1,
     en1,
@@ -100,6 +108,13 @@ dac!(
     dacc1dhr
 );
 
+#[cfg(any(
+feature = "stm32f071",
+feature = "stm32f072",
+feature = "stm32f078",
+feature = "stm32f091",
+feature = "stm32f098",
+))]
 dac!(
     C2,
     en2,

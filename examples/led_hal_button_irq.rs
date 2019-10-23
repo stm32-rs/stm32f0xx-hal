@@ -105,7 +105,7 @@ fn EXTI0_1() {
             // Turn off LED
             led.set_low();
 
-            // Clear interrupt
+            // Clear event triggering the interrupt
             exti.pr.write(|w| w.pif1().set_bit());
         }
     });

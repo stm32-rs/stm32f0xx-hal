@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- Changed digital pin functionality to implement v2 versions
+- Fixed a few deprecation warning and lints
 - Enabled commented out and now available GPIOE support for 07x and 09x families
 - Extract register block address only once
 - Add DAC driver

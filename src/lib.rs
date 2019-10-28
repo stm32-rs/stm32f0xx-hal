@@ -28,6 +28,15 @@ pub use stm32f0::stm32f0x8 as stm32;
 
 #[cfg(feature = "device-selected")]
 pub mod adc;
+#[cfg(any(
+    feature = "stm32f051",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
+pub mod dac;
 #[cfg(feature = "device-selected")]
 pub mod delay;
 #[cfg(feature = "device-selected")]

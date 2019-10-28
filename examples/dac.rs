@@ -1,11 +1,13 @@
+#![deny(unused_imports)]
 #![no_main]
 #![no_std]
 
-extern crate cortex_m;
-extern crate cortex_m_rt as rt;
-extern crate panic_halt;
+use cortex_m;
+use cortex_m_rt as rt;
+#[allow(unused_imports)]
+use panic_halt;
 
-extern crate stm32f0xx_hal as hal;
+use stm32f0xx_hal as hal;
 
 use crate::hal::stm32;
 use crate::hal::prelude::*;

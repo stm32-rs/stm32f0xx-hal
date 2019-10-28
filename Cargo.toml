@@ -74,3 +74,7 @@ opt-level = "s"
 [[example]]
 name = "led_hal_button_irq"
 required-features = ["stm32f042", "rt"]
+
+[[example]]
+name = "dac"
+required-features = ["stm32f072"]

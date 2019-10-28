@@ -5,14 +5,15 @@
 //!
 //! ## Example
 //! ``` no_run
+//!#![deny(unused_imports)]
 //!#![no_main]
 //!#![no_std]
 //!
-//!extern crate cortex_m;
-//!extern crate cortex_m_rt as rt;
-//!extern crate panic_halt;
+//!use cortex_m;
+//!use cortex_m_rt as rt;
+//!use panic_halt;
 //!
-//!extern crate stm32f0xx_hal as hal;
+//!use stm32f0xx_hal as hal;
 //!
 //!use crate::hal::stm32;
 //!use crate::hal::prelude::*;
@@ -66,11 +67,10 @@
 //!    }
 //!}
 //! ```
+#![deny(unused_imports)]
 use core::mem;
 
-use crate::delay::Delay;
 use crate::gpio::gpioa::{PA4, PA5};
-use crate::prelude::*;
 use crate::rcc::Rcc;
 use crate::stm32::DAC;
 use crate::gpio::Analog;

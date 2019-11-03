@@ -29,17 +29,17 @@ version = "0.15.1"
 features = ["stm32f042", "rt"]
 
 [dependencies]
-bare-metal = { version = "0.2.4", features = ["const-fn"] }
-cast = { version = "0.2.2", default-features = false }
-cortex-m = "0.6.0"
-cortex-m-rt = "0.6.10"
-embedded-hal = { version = "0.2.3", features = ["unproven"] }
-stm32f0 = "0.8.0"
-nb = "0.1.2"
-void = { version = "1.0.2", default-features = false }
+bare-metal = { version = "0.2", features = ["const-fn"] }
+cast = { version = "0.2", default-features = false }
+cortex-m = "0.6"
+cortex-m-rt = "0.6"
+embedded-hal = { version = "0.2", features = ["unproven"] }
+stm32f0 = "0.8"
+nb = "0.1"
+void = { version = "1.0", default-features = false }
 
 [dev-dependencies]
-panic-halt = "0.2.0"
+panic-halt = "0.2"
 
 [features]
 device-selected = []
@@ -66,8 +66,10 @@ stm32f098 = ["stm32f0/stm32f0x8", "device-selected"]
 
 [profile.dev]
 debug = true
+lto = true
 
 [profile.release]
+lto = true
 debug = true
 opt-level = "s"
 

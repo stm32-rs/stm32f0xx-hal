@@ -1,8 +1,7 @@
 #![no_main]
 #![no_std]
 
-#[allow(unused)]
-use panic_halt;
+use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 

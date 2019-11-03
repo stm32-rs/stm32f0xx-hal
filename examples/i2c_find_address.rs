@@ -1,16 +1,11 @@
 #![no_main]
 #![no_std]
 
-#[allow(unused)]
-use panic_halt;
+use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::{
-    prelude::*,
-    i2c::I2c,
-    stm32,
-};
+use crate::hal::{i2c::I2c, prelude::*, stm32};
 
 use cortex_m_rt::entry;
 
@@ -38,16 +33,13 @@ fn main() -> ! {
                 // The write method sends the specified address and checks for acknowledgement;
                 // if no ack is given by the slave device the result is Err(), otherwise Ok()
                 // Since we only care for an acknowledgement the data sent can be empty
-                match i2c.write(add, &[]) {
-                    Ok(_) => {
-                        _devices += 1;
-                    },
-                    Err(_) => (),
+                if i2c.write(add, &[]).is_ok() {
+                    _devices += 1;
                 }
             }
 
             // Here the variable "_devices" counts how many i2c addresses were a hit
-       });
+        });
     }
 
     loop {

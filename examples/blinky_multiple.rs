@@ -1,8 +1,7 @@
 #![no_main]
 #![no_std]
 
-#[allow(unused)]
-use panic_halt;
+use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
@@ -33,12 +32,12 @@ fn main() -> ! {
             let mut leds = [led1.downgrade(), led2.downgrade()];
             loop {
                 for l in &mut leds {
-                    l.set_high();
+                    l.set_high().ok();
                 }
                 delay.delay_ms(1_000_u16);
 
                 for l in &mut leds {
-                    l.set_low();
+                    l.set_low().ok();
                 }
                 delay.delay_ms(1_000_u16);
             }

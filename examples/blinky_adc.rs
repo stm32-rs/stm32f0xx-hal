@@ -1,8 +1,7 @@
 #![no_main]
 #![no_std]
 
-#[allow(unused_imports)]
-use panic_halt;
+use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
@@ -32,7 +31,7 @@ fn main() -> ! {
             let mut adc = Adc::new(p.ADC, &mut rcc);
 
             loop {
-                led.toggle();
+                led.toggle().ok();
 
                 let val: u16 = adc.read(&mut an_in).unwrap();
 

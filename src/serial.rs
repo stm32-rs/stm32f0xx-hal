@@ -600,5 +600,5 @@ fn read(usart: *const SerialRegisterBlock) -> nb::Result<u8, Error> {
         })
     };
 
-    return Err(err);
+    Err(err)
 }

@@ -1,8 +1,7 @@
 #![no_main]
 #![no_std]
 
-#[allow(unused)]
-use panic_halt;
+use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
@@ -50,15 +49,13 @@ fn main() -> ! {
             let mut led = gpioa.pa1.into_push_pull_output(cs);
 
             // Turn off LED
-            led.set_low();
+            led.set_low().ok();
 
             // Initialise delay provider
             let delay = Delay::new(cp.SYST, &rcc);
 
             // Enable external interrupt for PB1
-            syscfg
-                .exticr1
-                .modify(|_, w| unsafe { w.exti1().bits(1) });
+            syscfg.exticr1.modify(|_, w| unsafe { w.exti1().bits(1) });
 
             // Set interrupt request mask for line 1
             exti.imr.modify(|_, w| w.mr1().set_bit());
@@ -73,8 +70,10 @@ fn main() -> ! {
 
             // Enable EXTI IRQ, set prio 1 and clear any pending IRQs
             let mut nvic = cp.NVIC;
-            nvic.enable(Interrupt::EXTI0_1);
-            unsafe { nvic.set_priority(Interrupt::EXTI0_1, 1) };
+            unsafe {
+                nvic.set_priority(Interrupt::EXTI0_1, 1);
+                cortex_m::peripheral::NVIC::unmask(Interrupt::EXTI0_1);
+            }
             cortex_m::peripheral::NVIC::unpend(Interrupt::EXTI0_1);
         });
     }
@@ -97,13 +96,13 @@ fn EXTI0_1() {
             INT.borrow(cs).borrow_mut().deref_mut(),
         ) {
             // Turn on LED
-            led.set_high();
+            led.set_high().ok();
 
             // Wait a second
             delay.delay_ms(1_000_u16);
 
             // Turn off LED
-            led.set_low();
+            led.set_low().ok();
 
             // Clear event triggering the interrupt
             exti.pr.write(|w| w.pif1().set_bit());

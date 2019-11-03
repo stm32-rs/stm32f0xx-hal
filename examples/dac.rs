@@ -4,14 +4,13 @@
 
 use cortex_m;
 use cortex_m_rt as rt;
-#[allow(unused_imports)]
-use panic_halt;
+use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::stm32;
-use crate::hal::prelude::*;
 use crate::hal::dac::*;
+use crate::hal::prelude::*;
+use crate::hal::stm32;
 
 use rt::entry;
 

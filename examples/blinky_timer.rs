@@ -1,8 +1,7 @@
 #![no_main]
 #![no_std]
 
-#[allow(unused)]
-use panic_halt;
+use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
@@ -25,7 +24,7 @@ fn main() -> ! {
             let mut timer = Timer::tim1(p.TIM1, Hertz(1), &mut rcc);
 
             loop {
-                led.toggle();
+                led.toggle().ok();
 
                 // Wait for the timer to expire
                 nb::block!(timer.wait()).ok();

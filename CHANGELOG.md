@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- Clear error flags in serial read() before returning
 - Revised feature flags for HSI48 clock support
 
 ## [v0.14.0] - 2019-04-25

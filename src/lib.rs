@@ -76,6 +76,8 @@ pub mod tsc;
         feature = "stm32f048",
         feature = "stm32f072",
         feature = "stm32f078",
+        feature = "stm32f070x6",
+        feature = "stm32f070xb",
     )
 ))]
 pub mod usb;

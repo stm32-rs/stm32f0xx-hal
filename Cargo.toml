@@ -41,6 +41,8 @@ stm32-usbd = { version = "0.5.0", features = ["ram_access_2x16"], optional = tru
 
 [dev-dependencies]
 panic-halt = "0.2"
+usb-device = "0.2.3"
+usbd-serial = "0.1.0"
 
 [features]
 device-selected = []
@@ -81,3 +83,7 @@ required-features = ["stm32f042", "rt"]
 [[example]]
 name = "dac"
 required-features = ["stm32f072"]
+
+[[example]]
+name = "usb_serial"
+required-features = ["rt", "stm32f042", "stm32-usbd"]

@@ -37,9 +37,12 @@ embedded-hal = { version = "0.2", features = ["unproven"] }
 stm32f0 = "0.8"
 nb = "0.1"
 void = { version = "1.0", default-features = false }
+stm32-usbd = { version = "0.5.0", features = ["ram_access_2x16"], optional = true }
 
 [dev-dependencies]
 panic-halt = "0.2"
+usb-device = "0.2.3"
+usbd-serial = "0.1.0"
 
 [features]
 device-selected = []
@@ -80,3 +83,7 @@ required-features = ["stm32f042", "rt"]
 [[example]]
 name = "dac"
 required-features = ["stm32f072"]
+
+[[example]]
+name = "usb_serial"
+required-features = ["rt", "stm32f042", "stm32-usbd"]

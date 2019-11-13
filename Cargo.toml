@@ -26,7 +26,7 @@ repository = "https://github.com/stm32-rs/stm32f0xx-hal"
 version = "0.15.2"
 
 [package.metadata.docs.rs]
-features = ["stm32f042", "rt"]
+features = ["stm32f042", "rt", "stm32-usbd"]
 
 [dependencies]
 bare-metal = { version = "0.2", features = ["const-fn"] }

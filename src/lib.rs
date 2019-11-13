@@ -69,5 +69,15 @@ pub mod timers;
     feature = "stm32f098",
 ))]
 pub mod tsc;
+#[cfg(all(
+    feature = "stm32-usbd",
+    any(
+        feature = "stm32f042",
+        feature = "stm32f048",
+        feature = "stm32f072",
+        feature = "stm32f078",
+    )
+))]
+pub mod usb;
 #[cfg(feature = "device-selected")]
 pub mod watchdog;

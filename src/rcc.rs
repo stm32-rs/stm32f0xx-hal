@@ -292,12 +292,21 @@ impl CFGR {
             pllmul_bits = None;
             r_sysclk = src_clk_freq;
         } else {
-            let pllmul =
-                (4 * self.sysclk.unwrap_or(src_clk_freq) + src_clk_freq) / src_clk_freq / 2;
-            let pllmul = core::cmp::min(core::cmp::max(pllmul, 2), 16);
-            r_sysclk = pllmul * src_clk_freq / 2;
+            // Select source frequency according to clock tree diagram in datasheet
+            let src_clk_freq = match self.clock_src {
+                // HSI frequency divide by two before PLL
+                SysClkSource::HSI => src_clk_freq / 2,
+                // HSE frequency divide by PREDIV before PLL
+                // Until we don't change PREDIV value in CFGR2 it equals to one
+                SysClkSource::HSE(_) => src_clk_freq,
+            };
 
-            pllmul_bits = if pllmul == 2 {
+            let pllmul =
+                (2 * self.sysclk.unwrap_or(src_clk_freq) + src_clk_freq) / src_clk_freq / 2;
+            let pllmul = core::cmp::min(core::cmp::max(pllmul, 1), 16);
+            r_sysclk = pllmul * src_clk_freq;
+
+            pllmul_bits = if pllmul == 1 {
                 None
             } else {
                 Some(pllmul as u8 - 2)

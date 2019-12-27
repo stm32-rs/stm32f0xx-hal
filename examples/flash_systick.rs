@@ -57,7 +57,7 @@ fn main() -> ! {
 // Define an exception handler, i.e. function to call when exception occurs. Here, if our SysTick
 // timer generates an exception the following handler will be called
 #[exception]
-fn SysTick() -> ! {
+fn SysTick() {
     // Exception handler state variable
     static mut STATE: u8 = 1;
 

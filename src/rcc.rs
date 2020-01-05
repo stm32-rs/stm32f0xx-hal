@@ -133,7 +133,7 @@ mod inner {
     feature = "stm32f098",
 ))]
 mod inner {
-    use crate::stm32::{rcc::cfgr::SWW, RCC};
+    use crate::stm32::{rcc::cfgr::SW_A, RCC};
 
     pub(super) const HSI: u32 = 8_000_000; // Hz
     pub(super) const HSI48: u32 = 48_000_000; // Hz
@@ -207,11 +207,11 @@ mod inner {
             .modify(|_, w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll() });
     }
 
-    pub(super) fn get_sww(c_src: &SysClkSource) -> SWW {
+    pub(super) fn get_sww(c_src: &SysClkSource) -> SW_A {
         match c_src {
-            SysClkSource::HSI => SWW::HSI,
-            SysClkSource::HSI48 => SWW::HSI48,
-            SysClkSource::HSE(_, _) => SWW::HSE,
+            SysClkSource::HSI => SW_A::HSI,
+            SysClkSource::HSI48 => SW_A::HSI48,
+            SysClkSource::HSE(_, _) => SW_A::HSE,
         }
     }
 }

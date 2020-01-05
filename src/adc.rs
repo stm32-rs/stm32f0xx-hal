@@ -55,8 +55,8 @@ use crate::{
     rcc::Rcc,
     stm32::{
         adc::{
-            cfgr1::{ALIGNW, RESW},
-            smpr::SMPW,
+            cfgr1::{ALIGN_A, RES_A},
+            smpr::SMP_A,
         },
         ADC,
     },
@@ -100,17 +100,17 @@ impl AdcSampleTime {
     }
 }
 
-impl From<AdcSampleTime> for SMPW {
+impl From<AdcSampleTime> for SMP_A {
     fn from(val: AdcSampleTime) -> Self {
         match val {
-            AdcSampleTime::T_1 => SMPW::CYCLES1_5,
-            AdcSampleTime::T_7 => SMPW::CYCLES7_5,
-            AdcSampleTime::T_13 => SMPW::CYCLES13_5,
-            AdcSampleTime::T_28 => SMPW::CYCLES28_5,
-            AdcSampleTime::T_41 => SMPW::CYCLES41_5,
-            AdcSampleTime::T_55 => SMPW::CYCLES55_5,
-            AdcSampleTime::T_71 => SMPW::CYCLES71_5,
-            AdcSampleTime::T_239 => SMPW::CYCLES239_5,
+            AdcSampleTime::T_1 => SMP_A::CYCLES1_5,
+            AdcSampleTime::T_7 => SMP_A::CYCLES7_5,
+            AdcSampleTime::T_13 => SMP_A::CYCLES13_5,
+            AdcSampleTime::T_28 => SMP_A::CYCLES28_5,
+            AdcSampleTime::T_41 => SMP_A::CYCLES41_5,
+            AdcSampleTime::T_55 => SMP_A::CYCLES55_5,
+            AdcSampleTime::T_71 => SMP_A::CYCLES71_5,
+            AdcSampleTime::T_239 => SMP_A::CYCLES239_5,
         }
     }
 }
@@ -145,12 +145,12 @@ impl AdcAlign {
     }
 }
 
-impl From<AdcAlign> for ALIGNW {
+impl From<AdcAlign> for ALIGN_A {
     fn from(val: AdcAlign) -> Self {
         match val {
-            AdcAlign::Left => ALIGNW::LEFT,
-            AdcAlign::Right => ALIGNW::RIGHT,
-            AdcAlign::LeftAsRM => ALIGNW::LEFT,
+            AdcAlign::Left => ALIGN_A::LEFT,
+            AdcAlign::Right => ALIGN_A::RIGHT,
+            AdcAlign::LeftAsRM => ALIGN_A::LEFT,
         }
     }
 }
@@ -175,13 +175,13 @@ impl AdcPrecision {
     }
 }
 
-impl From<AdcPrecision> for RESW {
+impl From<AdcPrecision> for RES_A {
     fn from(val: AdcPrecision) -> Self {
         match val {
-            AdcPrecision::B_12 => RESW::TWELVEBIT,
-            AdcPrecision::B_10 => RESW::TENBIT,
-            AdcPrecision::B_8 => RESW::EIGHTBIT,
-            AdcPrecision::B_6 => RESW::SIXBIT,
+            AdcPrecision::B_12 => RES_A::TWELVEBIT,
+            AdcPrecision::B_10 => RES_A::TENBIT,
+            AdcPrecision::B_8 => RES_A::EIGHTBIT,
+            AdcPrecision::B_6 => RES_A::SIXBIT,
         }
     }
 }

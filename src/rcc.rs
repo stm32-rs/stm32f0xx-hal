@@ -46,7 +46,7 @@ pub enum HSEBypassMode {
 
 #[cfg(any(feature = "stm32f030", feature = "stm32f070",))]
 mod inner {
-    use crate::stm32::{rcc::cfgr::SWW, RCC};
+    use crate::stm32::{rcc::cfgr::SW_A, RCC};
 
     pub(super) const HSI: u32 = 8_000_000; // Hz
 
@@ -111,10 +111,10 @@ mod inner {
             .modify(|_, w| unsafe { w.ppre().bits(ppre_bits).hpre().bits(hpre_bits).sw().pll() });
     }
 
-    pub(super) fn get_sww(c_src: &SysClkSource) -> SWW {
+    pub(super) fn get_sww(c_src: &SysClkSource) -> SW_A {
         match c_src {
-            SysClkSource::HSI => SWW::HSI,
-            SysClkSource::HSE(_, _) => SWW::HSE,
+            SysClkSource::HSI => SW_A::HSI,
+            SysClkSource::HSE(_, _) => SW_A::HSE,
         }
     }
 }

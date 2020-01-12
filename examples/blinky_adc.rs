@@ -33,11 +33,13 @@ fn main() -> ! {
             loop {
                 led.toggle().ok();
 
-                let val: u16 = adc.read(&mut an_in).unwrap();
-
-                /* shift the value right by 3, same as divide by 8, reduces
-                the 0-4095 range into something approximating 1-512 */
-                let time: u16 = (val >> 3) + 1;
+                let time: u16 = if let Ok(val) = adc.read(&mut an_in) as Result<u16, _> {
+                    /* shift the value right by 3, same as divide by 8, reduces
+                    the 0-4095 range into something approximating 1-512 */
+                    (val >> 3) + 1
+                } else {
+                    1000
+                };
 
                 delay.delay_ms(time);
             }

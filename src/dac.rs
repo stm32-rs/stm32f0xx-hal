@@ -71,9 +71,9 @@
 use core::mem;
 
 use crate::gpio::gpioa::{PA4, PA5};
+use crate::gpio::Analog;
 use crate::rcc::Rcc;
 use crate::stm32::DAC;
-use crate::gpio::Analog;
 
 pub struct C1;
 pub struct C2;
@@ -156,40 +156,20 @@ impl DacExt for DAC {
 }
 
 #[cfg(any(
-feature = "stm32f051",
-feature = "stm32f071",
-feature = "stm32f072",
-feature = "stm32f078",
-feature = "stm32f091",
-feature = "stm32f098",
+    feature = "stm32f051",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
 ))]
-dac!(
-    C1,
-    en1,
-    cen1,
-    cal_flag1,
-    otrim1,
-    mode1,
-    dhr12r1,
-    dor1,
-    dacc1dhr
-);
+dac!(C1, en1, cen1, cal_flag1, otrim1, mode1, dhr12r1, dor1, dacc1dhr);
 
 #[cfg(any(
-feature = "stm32f071",
-feature = "stm32f072",
-feature = "stm32f078",
-feature = "stm32f091",
-feature = "stm32f098",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
 ))]
-dac!(
-    C2,
-    en2,
-    cen2,
-    cal_flag2,
-    otrim2,
-    mode2,
-    dhr12r2,
-    dor2,
-    dacc2dhr
-);
+dac!(C2, en2, cen2, cal_flag2, otrim2, mode2, dhr12r2, dor2, dacc2dhr);

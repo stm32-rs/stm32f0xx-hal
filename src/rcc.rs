@@ -14,16 +14,15 @@ impl RccExt for RCC {
             pclk: None,
             sysclk: None,
             clock_src: SysClkSource::HSI,
-            /// CRS is only available on devices with USB and HSI48
+            /// CRS is only available on devices with HSI48
             #[cfg(any(
-		feature = "stm32f031", // TODO: May be an SVD bug
-		feature = "stm32f038", // TODO: May be an SVD bug
                 feature = "stm32f042",
                 feature = "stm32f048",
-		feature = "stm32f051", // TODO: May be an SVD bug
-		feature = "stm32f058", // TODO: May be an SVD bug
+                feature = "stm32f071",
                 feature = "stm32f072",
                 feature = "stm32f078",
+                feature = "stm32f091",
+                feature = "stm32f098",
             ))]
             crs: None,
             rcc: self,
@@ -43,7 +42,7 @@ pub enum HSEBypassMode {
     /// Bypassed: for external clock sources
     Bypassed,
 }
-
+/// RCC for F0x0 devices
 #[cfg(any(feature = "stm32f030", feature = "stm32f070",))]
 mod inner {
     use crate::stm32::{rcc::cfgr::SW_A, RCC};
@@ -118,14 +117,14 @@ mod inner {
         }
     }
 }
-
+/// RCC for F0x1, F0x2, F0x8 devices
 #[cfg(any(
-    feature = "stm32f031", // TODO: May be an SVD bug
-    feature = "stm32f038", // TODO: May be an SVD bug
+    feature = "stm32f031",
+    feature = "stm32f038",
     feature = "stm32f042",
     feature = "stm32f048",
-    feature = "stm32f051", // TODO: May be an SVD bug
-    feature = "stm32f058", // TODO: May be an SVD bug
+    feature = "stm32f051",
+    feature = "stm32f058",
     feature = "stm32f071",
     feature = "stm32f072",
     feature = "stm32f078",
@@ -136,12 +135,30 @@ mod inner {
     use crate::stm32::{rcc::cfgr::SW_A, RCC};
 
     pub(super) const HSI: u32 = 8_000_000; // Hz
+    #[cfg(any(
+        feature = "stm32f042",
+        feature = "stm32f048",
+        feature = "stm32f071",
+        feature = "stm32f072",
+        feature = "stm32f078",
+        feature = "stm32f091",
+        feature = "stm32f098",
+    ))]
     pub(super) const HSI48: u32 = 48_000_000; // Hz
 
     pub(super) enum SysClkSource {
         HSI,
         /// High-speed external clock(freq,bypassed)
         HSE(u32, super::HSEBypassMode),
+        #[cfg(any(
+            feature = "stm32f042",
+            feature = "stm32f048",
+            feature = "stm32f071",
+            feature = "stm32f072",
+            feature = "stm32f078",
+            feature = "stm32f091",
+            feature = "stm32f098",
+        ))]
         HSI48,
     }
 
@@ -150,6 +167,15 @@ mod inner {
         // Highest selected frequency source available takes precedent.
         match c_src {
             SysClkSource::HSE(freq, _) => *freq,
+            #[cfg(any(
+                feature = "stm32f042",
+                feature = "stm32f048",
+                feature = "stm32f071",
+                feature = "stm32f072",
+                feature = "stm32f078",
+                feature = "stm32f091",
+                feature = "stm32f098",
+            ))]
             SysClkSource::HSI48 => HSI48,
             _ => HSI,
         }
@@ -172,6 +198,15 @@ mod inner {
 
                 while !rcc.cr.read().hserdy().bit_is_set() {}
             }
+            #[cfg(any(
+                feature = "stm32f042",
+                feature = "stm32f048",
+                feature = "stm32f071",
+                feature = "stm32f072",
+                feature = "stm32f078",
+                feature = "stm32f091",
+                feature = "stm32f098",
+            ))]
             SysClkSource::HSI48 => {
                 rcc.cr2.modify(|_, w| w.hsi48on().set_bit());
                 while rcc.cr2.read().hsi48rdy().bit_is_clear() {}
@@ -192,6 +227,15 @@ mod inner {
     ) {
         let pllsrc_bit: u8 = match c_src {
             SysClkSource::HSI => 0b00,
+            #[cfg(any(
+                feature = "stm32f042",
+                feature = "stm32f048",
+                feature = "stm32f071",
+                feature = "stm32f072",
+                feature = "stm32f078",
+                feature = "stm32f091",
+                feature = "stm32f098",
+            ))]
             SysClkSource::HSI48 => 0b11,
             SysClkSource::HSE(_, _) => 0b01,
         };
@@ -210,6 +254,15 @@ mod inner {
     pub(super) fn get_sww(c_src: &SysClkSource) -> SW_A {
         match c_src {
             SysClkSource::HSI => SW_A::HSI,
+            #[cfg(any(
+                feature = "stm32f042",
+                feature = "stm32f048",
+                feature = "stm32f071",
+                feature = "stm32f072",
+                feature = "stm32f078",
+                feature = "stm32f091",
+                feature = "stm32f098",
+            ))]
             SysClkSource::HSI48 => SW_A::HSI48,
             SysClkSource::HSE(_, _) => SW_A::HSE,
         }
@@ -223,16 +276,15 @@ pub struct CFGR {
     pclk: Option<u32>,
     sysclk: Option<u32>,
     clock_src: SysClkSource,
-    /// CRS is only available on devices with USB and HSI48
+    /// CRS is only available on devices with HSI48
     #[cfg(any(
-	feature = "stm32f031", // TODO: May be an SVD bug
-	feature = "stm32f038", // TODO: May be an SVD bug
         feature = "stm32f042",
         feature = "stm32f048",
-	feature = "stm32f051", // TODO: May be an SVD bug
-	feature = "stm32f058", // TODO: May be an SVD bug
+        feature = "stm32f071",
         feature = "stm32f072",
         feature = "stm32f078",
+        feature = "stm32f091",
+        feature = "stm32f098",
     ))]
     crs: Option<crate::stm32::CRS>,
     rcc: RCC,
@@ -288,8 +340,11 @@ impl CFGR {
     #[cfg(any(
         feature = "stm32f042",
         feature = "stm32f048",
+        feature = "stm32f071",
         feature = "stm32f072",
         feature = "stm32f078",
+        feature = "stm32f091",
+        feature = "stm32f098",
     ))]
     pub fn enable_crs(mut self, crs: crate::stm32::CRS) -> Self {
         self.crs = Some(crs);
@@ -391,12 +446,15 @@ impl CFGR {
         } else {
             let sw_var = self::inner::get_sww(&self.clock_src);
 
-            // CRS is only available on devices with USB and HSI48
+            // CRS is only available on devices with HSI48
             #[cfg(any(
                 feature = "stm32f042",
                 feature = "stm32f048",
+                feature = "stm32f071",
                 feature = "stm32f072",
                 feature = "stm32f078",
+                feature = "stm32f091",
+                feature = "stm32f098",
             ))]
             match self.crs {
                 Some(crs) => {

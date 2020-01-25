@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Added "bypass" parameter to Rcc HSE configuration (breaking change)
+- Add "usbsrc" function to Rcc configuration, used for selecting USB clock source
 
 ### Fixed
 - RCC: Correct code to enable PLL.

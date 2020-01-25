@@ -25,6 +25,15 @@ impl RccExt for RCC {
                 feature = "stm32f098",
             ))]
             crs: None,
+            #[cfg(any(
+                feature = "stm32f042",
+                feature = "stm32f048",
+                feature = "stm32f072",
+                feature = "stm32f078",
+            ))]
+            usb_src: USBClockSource::HSI48,
+            #[cfg(feature = "stm32f070")]
+            usb_src: USBClockSource::Disabled,
             rcc: self,
         }
     }
@@ -41,6 +50,23 @@ pub enum HSEBypassMode {
     NotBypassed,
     /// Bypassed: for external clock sources
     Bypassed,
+}
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f048",
+    feature = "stm32f070", // Doesn't have HSI48
+    feature = "stm32f072",
+    feature = "stm32f078",
+))]
+pub enum USBClockSource {
+    #[cfg(feature = "stm32f070")]
+    /// USB peripheral's tranceiver is disabled
+    Disabled,
+    #[cfg(not(feature = "stm32f070"))]
+    /// HSI48 is used as USB peripheral tranceiver clock
+    HSI48,
+    /// PLL output is used as USB peripheral tranceiver clock
+    PLL,
 }
 /// RCC for F0x0 devices
 #[cfg(any(feature = "stm32f030", feature = "stm32f070",))]
@@ -276,6 +302,14 @@ pub struct CFGR {
     pclk: Option<u32>,
     sysclk: Option<u32>,
     clock_src: SysClkSource,
+    #[cfg(any(
+        feature = "stm32f042",
+        feature = "stm32f048",
+        feature = "stm32f070",
+        feature = "stm32f072",
+        feature = "stm32f078",
+    ))]
+    usb_src: USBClockSource,
     /// CRS is only available on devices with HSI48
     #[cfg(any(
         feature = "stm32f042",
@@ -334,6 +368,18 @@ impl CFGR {
         F: Into<Hertz>,
     {
         self.sysclk = Some(freq.into().0);
+        self
+    }
+    #[cfg(any(
+        feature = "stm32f042",
+        feature = "stm32f048",
+        feature = "stm32f070",
+        feature = "stm32f072",
+        feature = "stm32f078",
+    ))]
+    /// Set the USB clock source (only valid for STM32F0xx with USB)
+    pub fn usbsrc(mut self, src: USBClockSource) -> Self {
+        self.usb_src = src;
         self
     }
 
@@ -432,6 +478,24 @@ impl CFGR {
         // Enable the requested clock
         self::inner::enable_clock(&mut self.rcc, &self.clock_src);
 
+        // Only need to set USBSW if MCU has USB HW
+        #[cfg(feature = "stm32f070")]
+        {
+            match self.usb_src {
+                USBClockSource::Disabled => self.rcc.cfgr3.modify(|_, w| w.usbsw().clear_bit()),
+                USBClockSource::PLL => self.rcc.cfgr3.modify(|_, w| w.usbsw().set_bit()),
+            }
+        }
+        #[cfg(any(
+            feature = "stm32f042",
+            feature = "stm32f048",
+            feature = "stm32f072",
+            feature = "stm32f078",
+        ))]
+        match self.usb_src {
+            USBClockSource::HSI48 => self.rcc.cfgr3.modify(|_, w| w.usbsw().clear_bit()),
+            USBClockSource::PLL => self.rcc.cfgr3.modify(|_, w| w.usbsw().set_bit()),
+        }
         // Set up rcc based on above calculated configuration.
 
         // Enable PLL

@@ -30,7 +30,7 @@ def main():
 
     features = [""] + ["{} rt".format(x)
                        for x in crate_info["features"].keys()
-                       if x != "device-selected" and x != "rt"]
+                       if x != "device-selected" and x != "rt" and x != "stm32f030"]
 
     if 'size_check' in sys.argv:
         cargo_cmd = ['cargo', 'build', '--release']

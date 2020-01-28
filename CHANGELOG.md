@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Added "bypass" parameter to Rcc HSE configuration (breaking change)
 - Add "usbsrc" function to Rcc configuration, used for selecting USB clock source
+- For STM32F030, require use more specific feature flag, e.g. "stm32f030xc"
 
 ### Fixed
 - RCC: Correct code to enable PLL.

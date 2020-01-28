@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - RCC: Correct code to enable PLL.
+- RCC: Correct calculation of PLL multiplier.
 
 ## [v0.15.2] - 2019-11-04
 

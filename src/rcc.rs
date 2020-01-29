@@ -75,6 +75,20 @@ mod inner {
 
     pub(super) const HSI: u32 = 8_000_000; // Hz
 
+    // Does PLLSRC have two bits?
+    #[cfg(any(
+        feature = "stm32f030x4",
+        feature = "stm32f030x6",
+        feature = "stm32f030x8",
+        // Reference Manual states HSI_PREDIV is not available on stm32f070/, but it actually
+        // seems to work, and also is referenced in its CMSIS header files stm32f070x6.h and stm32f070xb.h
+        // But, for now be conservative and mark it as not available.
+        feature = "stm32f070",
+        // It's also listed in the CMSIS headers for the f030xc,
+        feature = "stm32f030xc"
+    ))]
+    pub(super) const RCC_PLLSRC_PREDIV1_SUPPORT: bool = false;
+
     pub(super) enum SysClkSource {
         HSI,
         /// High-speed external clock(freq,bypassed)
@@ -172,6 +186,25 @@ mod inner {
     ))]
     pub(super) const HSI48: u32 = 48_000_000; // Hz
 
+    // Does PLLSRC have two bits?
+    #[cfg(any(
+        feature = "stm32f042",
+        feature = "stm32f048",
+        feature = "stm32f071",
+        feature = "stm32f072",
+        feature = "stm32f078",
+        feature = "stm32f091",
+        feature = "stm32f098",
+    ))]
+    pub(super) const RCC_PLLSRC_PREDIV1_SUPPORT: bool = true;
+    #[cfg(any(
+        feature = "stm32f031",
+        feature = "stm32f038",
+        feature = "stm32f051",
+        feature = "stm32f058"
+    ))]
+    pub(super) const RCC_PLLSRC_PREDIV1_SUPPORT: bool = false;
+
     pub(super) enum SysClkSource {
         HSI,
         /// High-speed external clock(freq,bypassed)
@@ -251,8 +284,9 @@ mod inner {
         ppre_bits: u8,
         hpre_bits: u8,
     ) {
-        let pllsrc_bit: u8 = match c_src {
-            SysClkSource::HSI => 0b00,
+        let pllsrc_bit: u8 = match (c_src, RCC_PLLSRC_PREDIV1_SUPPORT) {
+            (SysClkSource::HSI, false) => 0b00, // HSI/2
+            (SysClkSource::HSI, true) => 0b01,  // HSI/PREDIV
             #[cfg(any(
                 feature = "stm32f042",
                 feature = "stm32f048",
@@ -262,8 +296,8 @@ mod inner {
                 feature = "stm32f091",
                 feature = "stm32f098",
             ))]
-            SysClkSource::HSI48 => 0b11,
-            SysClkSource::HSE(_, _) => 0b01,
+            (SysClkSource::HSI48, _) => 0b11,
+            (SysClkSource::HSE(_, _), _) => 0b01,
         };
 
         // Set PLL source and multiplier
@@ -417,16 +451,21 @@ impl CFGR {
             pllmul_bits = None;
             r_sysclk = src_clk_freq;
         } else {
-            let pllmul =
-                (4 * self.sysclk.unwrap_or(src_clk_freq) + src_clk_freq) / src_clk_freq / 2;
-            let pllmul = core::cmp::min(core::cmp::max(pllmul, 2), 16);
-            r_sysclk = pllmul * src_clk_freq / 2;
-
-            pllmul_bits = if pllmul == 2 {
-                None
-            } else {
-                Some(pllmul as u8 - 2)
+            // FIXME: This assumes reset value of prediv (/1).
+            //        There is no logic to set plldiv to any value other than 1.
+            // Note that for some models, HSI is fixed by hardware to divide by two.
+            let pllprediv = match (&self.clock_src, self::inner::RCC_PLLSRC_PREDIV1_SUPPORT) {
+                (self::inner::SysClkSource::HSI, false) => 2,
+                (_, _) => 1,
             };
+            // Find PLL multiplier that creates freq closest to target
+            let pllmul = (2 * pllprediv * self.sysclk.unwrap_or(src_clk_freq) + src_clk_freq)
+                / src_clk_freq
+                / 2;
+            let pllmul = core::cmp::min(core::cmp::max(pllmul, 2), 16);
+            r_sysclk = pllmul * src_clk_freq / pllprediv;
+
+            pllmul_bits = Some(pllmul as u8 - 2)
         }
 
         let hpre_bits = self
@@ -445,7 +484,7 @@ impl CFGR {
             })
             .unwrap_or(0b0111);
 
-        let hclk = sysclk / (1 << (hpre_bits - 0b0111));
+        let hclk = r_sysclk / (1 << (hpre_bits - 0b0111));
 
         let ppre_bits = self
             .pclk
@@ -465,9 +504,9 @@ impl CFGR {
         // adjust flash wait states
         unsafe {
             flash.acr.write(|w| {
-                w.latency().bits(if sysclk <= 24_000_000 {
+                w.latency().bits(if r_sysclk <= 24_000_000 {
                     0b000
-                } else if sysclk <= 48_000_000 {
+                } else if r_sysclk <= 48_000_000 {
                     0b001
                 } else {
                     0b010
@@ -534,7 +573,7 @@ impl CFGR {
             }
 
             // use HSI as source
-            self.rcc.cfgr.write(|w| unsafe {
+            self.rcc.cfgr.modify(|_, w| unsafe {
                 w.ppre()
                     .bits(ppre_bits)
                     .hpre()

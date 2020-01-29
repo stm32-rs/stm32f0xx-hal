@@ -1,6 +1,6 @@
 use core::ops::Deref;
 
-use embedded_hal::blocking::i2c::{Write, WriteRead};
+use embedded_hal::blocking::i2c::{Write, WriteRead, Read};
 
 use crate::{
     gpio::*,
@@ -348,6 +348,41 @@ where
         });
 
         // Send another START condition
+        self.i2c.cr2.modify(|_, w| w.start().set_bit());
+
+        // Send the autoend after setting the start to get a restart
+        self.i2c.cr2.modify(|_, w| w.autoend().set_bit());
+
+        // Now read in all bytes
+        for c in buffer.iter_mut() {
+            *c = self.recv_byte()?;
+        }
+
+        // Check and clear flags if they somehow ended up set
+        self.check_and_clear_error_flags(&self.i2c.isr.read())?;
+
+        Ok(())
+    }
+}
+
+impl<I2C, SCLPIN, SDAPIN> Read for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    type Error = Error;
+
+    fn read(&mut self, addr: u8, buffer: &mut [u8]) -> Result<(), Error> {
+        // Set up current address for reading
+        self.i2c.cr2.modify(|_, w| {
+            w.sadd()
+                .bits(u16::from(addr) << 1)
+                .nbytes()
+                .bits(buffer.len() as u8)
+                .rd_wrn()
+                .set_bit()
+        });
+
+        // Send a START condition
         self.i2c.cr2.modify(|_, w| w.start().set_bit());
 
         // Send the autoend after setting the start to get a restart

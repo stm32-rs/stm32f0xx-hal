@@ -13,8 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add "usbsrc" function to Rcc configuration, used for selecting USB clock source
 - For STM32F030, require use more specific feature flag, e.g. "stm32f030xc"
 - Add `embedded-hal` `blocking::i2c::Read` implementation for I2C
+- Added USB driver
 
 ### Fixed
+
 - RCC: Correct code to enable PLL.
 - RCC: Correct calculation of PLL multiplier.
 
@@ -28,7 +30,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Enabled commented out and now available GPIOE support for 07x and 09x families
 - Extract register block address only once
 - Add DAC driver
-- Added USB driver
 
 ## [v0.15.1] - 2019-08-11
 

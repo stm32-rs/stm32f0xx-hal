@@ -77,12 +77,16 @@ debug = true
 opt-level = "s"
 
 [[example]]
-name = "led_hal_button_irq"
-required-features = ["stm32f042", "rt"]
+name = "blinky_timer_irq"
+required-features = ["stm32f072", "rt"]
 
 [[example]]
 name = "dac"
 required-features = ["stm32f072"]
+
+[[example]]
+name = "led_hal_button_irq"
+required-features = ["stm32f042", "rt"]
 
 [[example]]
 name = "usb_serial"

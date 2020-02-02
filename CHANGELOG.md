@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Another blinky example using a timer interrupt
+
 ### Changed
 
 - Added "bypass" parameter to Rcc HSE configuration (breaking change)

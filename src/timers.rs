@@ -185,7 +185,13 @@ macro_rules! timers {
                     self.tim.cnt.reset();
 
                     let frequency = timeout.into().0;
-                    let ticks = self.clocks.pclk().0 / frequency;
+                    // If pclk is prescaled from hclk, the frequency fed into the timers is doubled
+                    let tclk = if self.clocks.hclk().0 == self.clocks.pclk().0 {
+                        self.clocks.pclk().0
+                    } else {
+                        self.clocks.pclk().0 * 2
+                    };
+                    let ticks = tclk / frequency;
 
                     let psc = cast::u16((ticks - 1) / (1 << 16)).unwrap();
                     self.tim.psc.write(|w| w.psc().bits(psc));

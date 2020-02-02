@@ -44,7 +44,7 @@ To use stm32f0xx-hal as a dependency in a standalone project the target device f
 [dependencies]
 cortex-m = "0.6.0"
 cortex-m-rt = "0.6.8"
-stm32f0xx-hal = {version = "0.14.1", features = ["stm32f030xc"]}
+stm32f0xx-hal = {version = "0.15", features = ["stm32f030xc"]}
 ```
 
 If you are unfamiliar with embedded development using Rust, there are a number of fantastic resources available to help.
@@ -53,6 +53,14 @@ If you are unfamiliar with embedded development using Rust, there are a number o
 - [The Embedded Rust Book](https://docs.rust-embedded.org/book/)  
 - [Rust Embedded FAQ](https://docs.rust-embedded.org/faq.html)  
 - [rust-embedded/awesome-embedded-rust](https://github.com/rust-embedded/awesome-embedded-rust)
+
+
+Minimum supported Rust version
+------------------------------
+
+The minimum supported Rust version at the moment is **1.39.0**. Older versions
+**may** compile, especially when some features are not used in your
+application.
 
 Changelog
 ---------

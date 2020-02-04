@@ -1,6 +1,6 @@
 use core::ops::Deref;
 
-use embedded_hal::blocking::i2c::{Write, WriteRead, Read};
+use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
 
 use crate::{
     gpio::*,
@@ -149,6 +149,7 @@ i2c_pins! {
 pub enum Error {
     OVERRUN,
     NACK,
+    BUS,
 }
 
 macro_rules! i2c {
@@ -258,7 +259,21 @@ where
     }
 
     fn check_and_clear_error_flags(&self, isr: &crate::stm32::i2c1::isr::R) -> Result<(), Error> {
-        // If we received a NACK, then this is an error
+        // If we have a set overrun flag, clear it and return an OVERRUN error
+        if isr.ovr().bit_is_set() {
+            self.i2c.icr.write(|w| w.ovrcf().set_bit());
+            return Err(Error::OVERRUN);
+        }
+
+        // If we have a set arbitration error or bus error flag, clear it and return an BUS error
+        if isr.arlo().bit_is_set() | isr.berr().bit_is_set() {
+            self.i2c
+                .icr
+                .write(|w| w.arlocf().set_bit().berrcf().set_bit());
+            return Err(Error::BUS);
+        }
+
+        // If we received a NACK, then signal as a NACK error
         if isr.nackf().bit_is_set() {
             self.i2c
                 .icr
@@ -271,11 +286,13 @@ where
 
     fn send_byte(&self, byte: u8) -> Result<(), Error> {
         // Wait until we're ready for sending
-        while {
+        loop {
             let isr = self.i2c.isr.read();
             self.check_and_clear_error_flags(&isr)?;
-            isr.txis().bit_is_clear()
-        } {}
+            if isr.txis().bit_is_set() {
+                break;
+            }
+        }
 
         // Push out a byte of data
         self.i2c.txdr.write(|w| unsafe { w.bits(u32::from(byte)) });
@@ -285,11 +302,13 @@ where
     }
 
     fn recv_byte(&self) -> Result<u8, Error> {
-        while {
+        loop {
             let isr = self.i2c.isr.read();
             self.check_and_clear_error_flags(&isr)?;
-            isr.rxne().bit_is_clear()
-        } {}
+            if isr.rxne().bit_is_set() {
+                break;
+            }
+        }
 
         let value = self.i2c.rxdr.read().bits() as u8;
         Ok(value)
@@ -319,11 +338,13 @@ where
         self.i2c.cr2.modify(|_, w| w.start().set_bit());
 
         // Wait until the transmit buffer is empty and there hasn't been any error condition
-        while {
+        loop {
             let isr = self.i2c.isr.read();
             self.check_and_clear_error_flags(&isr)?;
-            isr.txis().bit_is_clear() && isr.tc().bit_is_clear()
-        } {}
+            if isr.txis().bit_is_set() || isr.tc().bit_is_set() {
+                break;
+            }
+        }
 
         // Send out all individual bytes
         for c in bytes {
@@ -331,11 +352,13 @@ where
         }
 
         // Wait until data was sent
-        while {
+        loop {
             let isr = self.i2c.isr.read();
             self.check_and_clear_error_flags(&isr)?;
-            isr.tc().bit_is_clear()
-        } {}
+            if isr.tc().bit_is_set() {
+                break;
+            }
+        }
 
         // Set up current address for reading
         self.i2c.cr2.modify(|_, w| {

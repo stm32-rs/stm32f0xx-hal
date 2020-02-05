@@ -297,7 +297,7 @@ mod inner {
                 feature = "stm32f098",
             ))]
             (SysClkSource::HSI48, _) => 0b11,
-            (SysClkSource::HSE(_, _), _) => 0b01,
+            (SysClkSource::HSE(_, _), _) => 0b10,
         };
 
         // Set PLL source and multiplier

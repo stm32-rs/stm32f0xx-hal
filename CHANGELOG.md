@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Incorrect PLLSRC bits when using HSE
+
 ## [v0.16.0] - 2020-02-02
 
 ### Added

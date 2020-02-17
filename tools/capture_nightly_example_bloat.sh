@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version="stable"
+version="nightly"
 
 filename="bloat_log_"$version"_"`date -Iminutes`".txt"
 filenamenoopt="bloat_noopt_log_"$version"_"`date -Iminutes`".txt"

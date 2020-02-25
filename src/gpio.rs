@@ -21,17 +21,26 @@ trait GpioRegExt {
     fn set_low(&self, pos: u8);
 }
 
+/// Alternate function 0
 pub struct AF0;
+/// Alternate function 1
 pub struct AF1;
+/// Alternate function 2
 pub struct AF2;
+/// Alternate function 3
 pub struct AF3;
+/// Alternate function 4
 pub struct AF4;
+/// Alternate function 5
 pub struct AF5;
+/// Alternate function 6
 pub struct AF6;
+/// Alternate function 7
 pub struct AF7;
 
-pub struct Alternate<MODE> {
-    _mode: PhantomData<MODE>,
+/// Alternate function mode (type state)
+pub struct Alternate<AF> {
+    _mode: PhantomData<AF>,
 }
 
 /// Input mode (type state)
@@ -449,7 +458,7 @@ macro_rules! gpio {
                         }
                     }
 
-                    impl<MODE> $PXi<Alternate<MODE>> {
+                    impl<AF> $PXi<Alternate<AF>> {
                         /// Enables / disables the internal pull up
                         pub fn internal_pull_up(self, _cs: &CriticalSection, on: bool) -> Self {
                             let offset = 2 * $i;
@@ -464,7 +473,7 @@ macro_rules! gpio {
                         }
                     }
 
-                    impl<MODE> $PXi<Alternate<MODE>> {
+                    impl<AF> $PXi<Alternate<AF>> {
                         /// Turns pin alternate configuration pin into open drain
                         pub fn set_open_drain(self, _cs: &CriticalSection) -> Self {
                             let offset = $i;

@@ -61,7 +61,6 @@
 use core::{
     fmt::{Result, Write},
     ops::Deref,
-    ptr,
 };
 
 use embedded_hal::prelude::*;
@@ -558,8 +557,7 @@ fn write(usart: *const SerialRegisterBlock, byte: u8) -> nb::Result<(), void::Vo
 
     if isr.txe().bit_is_set() {
         // NOTE(unsafe) atomic write to stateless register
-        // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
-        unsafe { ptr::write_volatile(&(*usart).tdr as *const _ as *mut _, byte) }
+        unsafe { (*usart).tdr.write(|w| w.tdr().bits(byte as u16)) }
         Ok(())
     } else {
         Err(nb::Error::WouldBlock)
@@ -587,7 +585,7 @@ fn read(usart: *const SerialRegisterBlock) -> nb::Result<u8, Error> {
         icr.write(|w| w.orecf().set_bit());
         nb::Error::Other(Error::Overrun)
     } else if isr.rxne().bit_is_set() {
-        return Ok(unsafe { ptr::read_volatile(&(*usart).rdr as *const _ as *const _) });
+        return Ok(unsafe { (*usart).rdr.read().rdr().bits() as u8 });
     } else {
         return Err(nb::Error::WouldBlock);
     };

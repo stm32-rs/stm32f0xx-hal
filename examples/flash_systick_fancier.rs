@@ -11,6 +11,7 @@ use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core, Peripher
 use cortex_m_rt::{entry, exception};
 
 use core::cell::RefCell;
+use core::mem::swap;
 
 // A type definition for the GPIO pin to be used for our LED
 type LEDPIN = gpiob::PB3<Output<PushPull>>;
@@ -31,7 +32,7 @@ fn main() -> ! {
             let led = gpioa.pb3.into_push_pull_output(cs);
 
             // Transfer GPIO into a shared structure
-            *GPIO.borrow(cs).borrow_mut() = Some(led);
+            swap(&mut Some(led), &mut GPIO.borrow(cs).borrow_mut());
 
             let mut syst = cp.SYST;
 
@@ -88,8 +89,8 @@ fn SysTick() {
     else {
         // Enter critical section
         cortex_m::interrupt::free(|cs| {
-            // Move LED pin here, leaving a None in its place
-            LED.replace(GPIO.borrow(cs).replace(None).unwrap());
+            // Swap globally stored data with SysTick private data
+            swap(LED, &mut GPIO.borrow(cs).borrow_mut());
         });
     }
 }

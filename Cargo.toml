@@ -81,6 +81,10 @@ name = "blinky_timer_irq"
 required-features = ["stm32f072", "rt"]
 
 [[example]]
+name = "serial_stopwatch"
+required-features = ["stm32f072", "rt"]
+
+[[example]]
 name = "dac"
 required-features = ["stm32f072"]
 

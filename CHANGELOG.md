@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Another example resembling a stop watch controlled via serial interface
+
 ### Fixed
 
 - Incorrect PLLSRC bits when using HSE

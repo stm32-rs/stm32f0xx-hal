@@ -9,7 +9,7 @@ use crate::hal::{
     prelude::*,
     spi::Spi,
     spi::{Mode, Phase, Polarity},
-    stm32,
+    pac,
 };
 
 use cortex_m_rt::entry;
@@ -21,7 +21,7 @@ fn main() -> ! {
         phase: Phase::CaptureOnSecondTransition,
     };
 
-    if let Some(p) = stm32::Peripherals::take() {
+    if let Some(p) = pac::Peripherals::take() {
         cortex_m::interrupt::free(move |cs| {
             let mut flash = p.FLASH;
             let mut rcc = p.RCC.configure().freeze(&mut flash);

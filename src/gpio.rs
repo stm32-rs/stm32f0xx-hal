@@ -144,7 +144,7 @@ impl<MODE> InputPin for Pin<Input<MODE>> {
 
 macro_rules! gpio_trait {
     ($gpiox:ident) => {
-        impl GpioRegExt for crate::stm32::$gpiox::RegisterBlock {
+        impl GpioRegExt for crate::pac::$gpiox::RegisterBlock {
             fn is_low(&self, pos: u8) -> bool {
                 // NOTE(unsafe) atomic read with no side effects
                 self.idr.read().bits() & (1 << pos) == 0
@@ -185,7 +185,7 @@ macro_rules! gpio {
                 use embedded_hal::digital::v2::{InputPin, OutputPin, StatefulOutputPin, toggleable};
                 use crate::{
                     rcc::Rcc,
-                    stm32::$GPIOX
+                    pac::$GPIOX
                 };
 
                 use cortex_m::interrupt::CriticalSection;

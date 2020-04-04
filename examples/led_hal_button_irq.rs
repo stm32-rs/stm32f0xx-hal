@@ -8,8 +8,8 @@ use stm32f0xx_hal as hal;
 use crate::hal::{
     delay::Delay,
     gpio::*,
+    pac::{interrupt, Interrupt, Peripherals, EXTI},
     prelude::*,
-    stm32::{interrupt, Interrupt, Peripherals, EXTI},
 };
 
 use cortex_m::{interrupt::Mutex, peripheral::Peripherals as c_m_Peripherals};

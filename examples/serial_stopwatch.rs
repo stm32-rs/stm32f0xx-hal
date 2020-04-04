@@ -6,9 +6,9 @@ use panic_halt as _;
 use stm32f0xx_hal as hal;
 
 use crate::hal::{
+    pac::{interrupt, Interrupt, Peripherals, TIM7},
     prelude::*,
     serial::Serial,
-    stm32::{interrupt, Interrupt, Peripherals, TIM7},
     timers::{Event, Timer},
 };
 use core::cell::RefCell;

@@ -5,13 +5,13 @@ use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::{prelude::*, stm32};
+use crate::hal::{prelude::*, pac};
 
 use cortex_m_rt::entry;
 
 #[entry]
 fn main() -> ! {
-    if let Some(mut p) = stm32::Peripherals::take() {
+    if let Some(mut p) = pac::Peripherals::take() {
         let mut led = cortex_m::interrupt::free(|cs| {
             let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut p.FLASH);
 

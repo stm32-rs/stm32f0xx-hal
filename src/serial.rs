@@ -61,6 +61,7 @@
 use core::{
     fmt::{Result, Write},
     ops::Deref,
+    convert::Infallible,
 };
 
 use embedded_hal::prelude::*;
@@ -451,7 +452,7 @@ impl<USART> embedded_hal::serial::Write<u8> for Tx<USART>
 where
     USART: Deref<Target = SerialRegisterBlock>,
 {
-    type Error = void::Void;
+    type Error = Infallible;
 
     /// Ensures that none of the previously written words are still buffered
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
@@ -470,7 +471,7 @@ where
     USART: Deref<Target = SerialRegisterBlock>,
     TXPIN: TxPin<USART>,
 {
-    type Error = void::Void;
+    type Error = Infallible;
 
     /// Ensures that none of the previously written words are still buffered
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
@@ -538,7 +539,7 @@ where
 }
 
 /// Ensures that none of the previously written words are still buffered
-fn flush(usart: *const SerialRegisterBlock) -> nb::Result<(), void::Void> {
+fn flush(usart: *const SerialRegisterBlock) -> nb::Result<(), Infallible> {
     // NOTE(unsafe) atomic read with no side effects
     let isr = unsafe { (*usart).isr.read() };
 
@@ -550,8 +551,8 @@ fn flush(usart: *const SerialRegisterBlock) -> nb::Result<(), void::Void> {
 }
 
 /// Tries to write a byte to the UART
-/// Fails if the transmit buffer is full
-fn write(usart: *const SerialRegisterBlock, byte: u8) -> nb::Result<(), void::Void> {
+/// Returns `Err(WouldBlock)` if the transmit buffer is full
+fn write(usart: *const SerialRegisterBlock, byte: u8) -> nb::Result<(), Infallible> {
     // NOTE(unsafe) atomic read with no side effects
     let isr = unsafe { (*usart).isr.read() };
 

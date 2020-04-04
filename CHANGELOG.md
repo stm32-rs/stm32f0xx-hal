@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Use `pac` instead of `stm32` for PAC access and soft-deprecate the former
+- Updated stm32f0 dependency to v0.10 (breaking change)
 
 ### Added
 

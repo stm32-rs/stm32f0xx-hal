@@ -12,7 +12,7 @@
 //!
 //! use crate::hal::prelude::*;
 //! use crate::hal::serial::Serial;
-//! use crate::hal::stm32;
+//! use crate::hal::pac;
 //!
 //! use nb::block;
 //!
@@ -39,7 +39,7 @@
 //!
 //! use crate::hal::prelude::*;
 //! use crate::hal::serial::Serial;
-//! use crate::hal::stm32;
+//! use crate::hal::pac;
 //!
 //! use nb::block;
 //!
@@ -105,10 +105,10 @@ macro_rules! usart_pins {
     })+) => {
         $(
             $(
-                impl TxPin<crate::stm32::$USART> for $tx {}
+                impl TxPin<crate::pac::$USART> for $tx {}
             )+
             $(
-                impl RxPin<crate::stm32::$USART> for $rx {}
+                impl RxPin<crate::pac::$USART> for $rx {}
             )+
         )+
     }
@@ -264,7 +264,7 @@ pub struct Serial<USART, TXPIN, RXPIN> {
 }
 
 // Common register
-type SerialRegisterBlock = crate::stm32::usart1::RegisterBlock;
+type SerialRegisterBlock = crate::pac::usart1::RegisterBlock;
 
 /// Serial receiver
 pub struct Rx<USART> {
@@ -287,7 +287,7 @@ unsafe impl<USART> Send for Tx<USART> {}
 macro_rules! usart {
     ($($USART:ident: ($usart:ident, $usarttx:ident, $usartrx:ident, $usartXen:ident, $apbenr:ident),)+) => {
         $(
-            use crate::stm32::$USART;
+            use crate::pac::$USART;
             impl<TXPIN, RXPIN> Serial<$USART, TXPIN, RXPIN>
             where
                 TXPIN: TxPin<$USART>,

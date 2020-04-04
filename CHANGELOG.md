@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Use `pac` instead of `stm32` for PAC access and soft-deprecate the former
+
 ### Added
 
 - Another example resembling a stop watch controlled via serial interface

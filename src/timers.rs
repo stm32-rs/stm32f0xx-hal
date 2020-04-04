@@ -7,14 +7,14 @@
 //! ``` no_run
 //! use stm32f0xx_hal as hal;
 //!
-//! use crate::hal::stm32;
+//! use crate::hal::pac;
 //! use crate::hal::prelude::*;
 //! use crate::hal::time::*;
 //! use crate::hal::timers::*;
 //! use nb::block;
 //!
 //! cortex_m::interrupt::free(|cs| {
-//!     let mut p = stm32::Peripherals::take().unwrap();
+//!     let mut p = pac::Peripherals::take().unwrap();
 //!     let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);
@@ -116,7 +116,7 @@ impl Periodic for Timer<SYST> {}
 macro_rules! timers {
     ($($TIM:ident: ($tim:ident, $timXen:ident, $timXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
-            use crate::stm32::$TIM;
+            use crate::pac::$TIM;
             impl Timer<$TIM> {
                 // XXX(why not name this `new`?) bummer: constructors need to have different names
                 // even if the `$TIM` are non overlapping (compare to the `free` function below
@@ -162,7 +162,7 @@ macro_rules! timers {
 
                 /// Releases the TIM peripheral
                 pub fn release(self) -> $TIM {
-                    let rcc = unsafe { &(*crate::stm32::RCC::ptr()) };
+                    let rcc = unsafe { &(*crate::pac::RCC::ptr()) };
                     // Pause counter
                     self.tim.cr1.modify(|_, w| w.cen().clear_bit());
                     // Disable timer

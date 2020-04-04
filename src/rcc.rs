@@ -1,4 +1,4 @@
-use crate::stm32::RCC;
+use crate::pac::RCC;
 use crate::time::Hertz;
 
 /// Extension trait that sets up the `RCC` peripheral
@@ -71,7 +71,7 @@ pub enum USBClockSource {
 /// RCC for F0x0 devices
 #[cfg(any(feature = "stm32f030", feature = "stm32f070",))]
 mod inner {
-    use crate::stm32::{rcc::cfgr::SW_A, RCC};
+    use crate::pac::{rcc::cfgr::SW_A, RCC};
 
     pub(super) const HSI: u32 = 8_000_000; // Hz
 
@@ -172,7 +172,7 @@ mod inner {
     feature = "stm32f098",
 ))]
 mod inner {
-    use crate::stm32::{rcc::cfgr::SW_A, RCC};
+    use crate::pac::{rcc::cfgr::SW_A, RCC};
 
     pub(super) const HSI: u32 = 8_000_000; // Hz
     #[cfg(any(
@@ -354,7 +354,7 @@ pub struct CFGR {
         feature = "stm32f091",
         feature = "stm32f098",
     ))]
-    crs: Option<crate::stm32::CRS>,
+    crs: Option<crate::pac::CRS>,
     rcc: RCC,
 }
 
@@ -426,12 +426,12 @@ impl CFGR {
         feature = "stm32f091",
         feature = "stm32f098",
     ))]
-    pub fn enable_crs(mut self, crs: crate::stm32::CRS) -> Self {
+    pub fn enable_crs(mut self, crs: crate::pac::CRS) -> Self {
         self.crs = Some(crs);
         self
     }
 
-    pub fn freeze(mut self, flash: &mut crate::stm32::FLASH) -> Rcc {
+    pub fn freeze(mut self, flash: &mut crate::pac::FLASH) -> Rcc {
         // Default to lowest frequency clock on all systems.
         let sysclk = self.sysclk.unwrap_or(self::inner::HSI);
 

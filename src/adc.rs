@@ -8,12 +8,12 @@
 //! ``` no_run
 //! use stm32f0xx_hal as hal;
 //!
-//! use crate::hal::stm32;
+//! use crate::hal::pac;
 //! use crate::hal::prelude::*;
 //! use crate::hal::adc::Adc;
 //!
 //! cortex_m::interrupt::free(|cs| {
-//!     let mut p = stm32::Peripherals::take().unwrap();
+//!     let mut p = pac::Peripherals::take().unwrap();
 //!     let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);
@@ -52,14 +52,14 @@ use embedded_hal::{
 use crate::{
     delay::Delay,
     gpio::*,
-    rcc::Rcc,
-    stm32::{
+    pac::{
         adc::{
             cfgr1::{ALIGN_A, RES_A},
             smpr::SMP_A,
         },
         ADC,
     },
+    rcc::Rcc,
 };
 
 /// Analog to Digital converter interface

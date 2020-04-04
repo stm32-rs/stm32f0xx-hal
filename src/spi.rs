@@ -9,12 +9,12 @@
 //! ``` no_run
 //! use stm32f0xx_hal as hal;
 //!
-//! use crate::hal::stm32;
+//! use crate::hal::pac;
 //! use crate::hal::prelude::*;
 //! use crate::hal::spi::{Spi, Mode, Phase, Polarity};
 //!
 //! cortex_m::interrupt::free(|cs| {
-//!     let mut p = stm32::Peripherals::take().unwrap();
+//!     let mut p = pac::Peripherals::take().unwrap();
 //!     let mut rcc = p.RCC.constrain().freeze(&mut p.FLASH);
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);
@@ -45,7 +45,7 @@ pub use embedded_hal::spi::{Mode, Phase, Polarity};
 
 // TODO Put this inside the macro
 // Currently that causes a compiler panic
-use crate::stm32::SPI1;
+use crate::pac::SPI1;
 #[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
@@ -60,7 +60,7 @@ use crate::stm32::SPI1;
     feature = "stm32f091",
     feature = "stm32f098",
 ))]
-use crate::stm32::SPI2;
+use crate::pac::SPI2;
 
 use crate::gpio::*;
 
@@ -99,13 +99,13 @@ macro_rules! spi_pins {
     })+) => {
         $(
             $(
-                impl SckPin<crate::stm32::$SPI> for $sck {}
+                impl SckPin<crate::pac::$SPI> for $sck {}
             )+
             $(
-                impl MisoPin<crate::stm32::$SPI> for $miso {}
+                impl MisoPin<crate::pac::$SPI> for $miso {}
             )+
             $(
-                impl MosiPin<crate::stm32::$SPI> for $mosi {}
+                impl MosiPin<crate::pac::$SPI> for $mosi {}
             )+
         )+
     }
@@ -256,7 +256,7 @@ spi! {
 
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
-type SpiRegisterBlock = crate::stm32::spi1::RegisterBlock;
+type SpiRegisterBlock = crate::pac::spi1::RegisterBlock;
 
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
 where

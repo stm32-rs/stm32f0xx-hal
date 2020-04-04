@@ -10,12 +10,12 @@
 //! ``` no_run
 //! use stm32f0xx_hal as hal;
 //!
-//! use crate::hal::stm32;
+//! use crate::hal::pac;
 //! use crate::hal::prelude::*;
 //! use crate::hal::delay::Delay;
 //! use cortex_m::peripheral::Peripherals;
 //!
-//! let mut p = stm32::Peripherals::take().unwrap();
+//! let mut p = pac::Peripherals::take().unwrap();
 //! let mut cp = cortex_m::Peripherals::take().unwrap();
 //!
 //! let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);

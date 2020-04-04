@@ -28,12 +28,12 @@
 //! ``` no_run
 //! use stm32f0xx_hal as hal;
 //!
-//! use crate::hal::stm32;
+//! use crate::hal::pac;
 //! use crate::hal::prelude::*;
 //! use crate::hal:watchdog::Watchdog;
 //! use crate::hal:time::Hertz;
 //!
-//! let mut p = stm32::Peripherals::take().unwrap();
+//! let mut p = pac::Peripherals::take().unwrap();
 //!
 //! let mut iwdg = Watchdog::new(p.iwdg);
 //! iwdg.start(Hertz(100));
@@ -43,7 +43,7 @@
 //! ```
 use embedded_hal::watchdog;
 
-use crate::stm32::IWDG;
+use crate::pac::IWDG;
 use crate::time::Hertz;
 
 /// Watchdog instance

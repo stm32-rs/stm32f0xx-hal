@@ -7,8 +7,8 @@ use stm32f0xx_hal as hal;
 
 use crate::hal::{
     gpio::*,
+    pac::{interrupt, Interrupt, Peripherals, TIM7},
     prelude::*,
-    stm32::{interrupt, Interrupt, Peripherals, TIM7},
     time::Hertz,
     timers::*,
 };

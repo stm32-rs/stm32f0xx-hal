@@ -6,7 +6,7 @@ use panic_halt as _;
 use stm32f0xx_hal as hal;
 
 use crate::hal::{
-    delay::Delay, prelude::*, serial::Serial, stm32, time::Hertz, watchdog::Watchdog,
+    delay::Delay, prelude::*, serial::Serial, pac, time::Hertz, watchdog::Watchdog,
 };
 
 use cortex_m::peripheral::Peripherals;
@@ -16,7 +16,7 @@ use core::fmt::Write;
 
 #[entry]
 fn main() -> ! {
-    if let (Some(p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
+    if let (Some(p), Some(cp)) = (pac::Peripherals::take(), Peripherals::take()) {
         cortex_m::interrupt::free(move |cs| {
             let mut flash = p.FLASH;
             let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut flash);

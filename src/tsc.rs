@@ -8,8 +8,8 @@
 //! electrode fitting a human finger tip size across a few millimeters dielectric panel.
 
 use crate::gpio::{gpioa, gpiob, Alternate, AF3};
+use crate::pac::TSC;
 use crate::rcc::Rcc;
-use crate::stm32::TSC;
 
 #[derive(Debug)]
 pub enum Event {

@@ -27,6 +27,7 @@ version = "0.16.0"
 
 [package.metadata.docs.rs]
 features = ["stm32f042", "rt", "stm32-usbd"]
+targets = ["thumbv6m-none-eabi"]
 
 [dependencies]
 bare-metal = { version = "0.2", features = ["const-fn"] }

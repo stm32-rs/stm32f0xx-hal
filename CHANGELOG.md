@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- Optimize SPI implementation
 - Use `pac` instead of `stm32` for PAC access and soft-deprecate the former
 
 ### Added
 
+- Add 16bit SPI transfers
 - Another example resembling a stop watch controlled via serial interface
 
 ### Fixed

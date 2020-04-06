@@ -30,13 +30,14 @@
 //!         phase: Phase::CaptureOnSecondTransition,
 //!     }, 1.mhz(), &mut rcc);
 //!
-//!     let mut data = [ 0 ];
+//!     let mut data = [0];
 //!     loop {
 //!         spi.transfer(&mut data).unwrap();
 //!     }
 //! });
 //! ```
 
+use core::marker::PhantomData;
 use core::{ops::Deref, ptr};
 
 use nb;
@@ -68,6 +69,12 @@ use crate::rcc::{Clocks, Rcc};
 
 use crate::time::Hertz;
 
+/// Typestate for 8-bit transfer size
+pub struct EightBit;
+
+/// Typestate for 16-bit transfer size
+pub struct SixteenBit;
+
 /// SPI error
 #[derive(Debug)]
 pub enum Error {
@@ -82,9 +89,10 @@ pub enum Error {
 }
 
 /// SPI abstraction
-pub struct Spi<SPI, SCKPIN, MISOPIN, MOSIPIN> {
+pub struct Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, WIDTH> {
     spi: SPI,
     pins: (SCKPIN, MISOPIN, MOSIPIN),
+    _width: PhantomData<WIDTH>,
 }
 
 pub trait SckPin<SPI> {}
@@ -204,7 +212,7 @@ spi_pins! {
 macro_rules! spi {
     ($($SPI:ident: ($spi:ident, $spiXen:ident, $spiXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
-            impl<SCKPIN, MISOPIN, MOSIPIN> Spi<$SPI, SCKPIN, MISOPIN, MOSIPIN> {
+            impl<SCKPIN, MISOPIN, MOSIPIN> Spi<$SPI, SCKPIN, MISOPIN, MOSIPIN, EightBit> {
                 /// Creates a new spi instance
                 pub fn $spi<F>(
                     spi: $SPI,
@@ -226,7 +234,7 @@ macro_rules! spi {
                     rcc.regs.$apbrstr.modify(|_, w| w.$spiXrst().set_bit());
                     rcc.regs.$apbrstr.modify(|_, w| w.$spiXrst().clear_bit());
 
-                    Spi { spi, pins }.spi_init(mode, speed, rcc.clocks)
+                    Spi::<$SPI, SCKPIN, MISOPIN, MOSIPIN, EightBit> { spi, pins, _width: PhantomData }.spi_init(mode, speed, rcc.clocks).into_8bit_width()
                 }
             }
         )+
@@ -258,26 +266,16 @@ spi! {
 #[allow(dead_code)]
 type SpiRegisterBlock = crate::pac::spi1::RegisterBlock;
 
-impl<SPI, SCKPIN, MISOPIN, MOSIPIN> Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN, WIDTH> Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, WIDTH>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
 {
-    fn spi_init<F>(self: Self, mode: Mode, speed: F, clocks: Clocks) -> Self
+    fn spi_init<F>(self, mode: Mode, speed: F, clocks: Clocks) -> Self
     where
         F: Into<Hertz>,
     {
         /* Make sure the SPI unit is disabled so we can configure it */
         self.spi.cr1.modify(|_, w| w.spe().clear_bit());
-
-        // FRXTH: 8-bit threshold on RX FIFO
-        // DS: 8-bit data size
-        // SSOE: cleared to disable SS output
-        //
-        // NOTE(unsafe): DS reserved bit patterns are 0b0000, 0b0001, and 0b0010. 0b0111 is valid
-        // (reference manual, pp 804)
-        self.spi
-            .cr2
-            .write(|w| unsafe { w.frxth().set_bit().ds().bits(0b0111).ssoe().clear_bit() });
 
         let br = match clocks.pclk().0 / speed.into().0 {
             0 => unreachable!(),
@@ -323,19 +321,50 @@ where
 
         self
     }
-    pub fn release(self) -> (SPI, (SCKPIN, MISOPIN, MOSIPIN)) {
-        (self.spi, self.pins)
+
+    pub fn into_8bit_width(self) -> Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, EightBit> {
+        // FRXTH: 8-bit threshold on RX FIFO
+        // DS: 8-bit data size
+        // SSOE: cleared to disable SS output
+        self.spi
+            .cr2
+            .write(|w| w.frxth().set_bit().ds().eight_bit().ssoe().clear_bit());
+
+        Spi {
+            spi: self.spi,
+            pins: self.pins,
+            _width: PhantomData,
+        }
     }
-}
 
-impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::spi::FullDuplex<u8>
-    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
-where
-    SPI: Deref<Target = SpiRegisterBlock>,
-{
-    type Error = Error;
+    pub fn into_16bit_width(self) -> Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, SixteenBit> {
+        // FRXTH: 16-bit threshold on RX FIFO
+        // DS: 8-bit data size
+        // SSOE: cleared to disable SS output
+        self.spi
+            .cr2
+            .write(|w| w.frxth().set_bit().ds().sixteen_bit().ssoe().clear_bit());
 
-    fn read(&mut self) -> nb::Result<u8, Error> {
+        Spi {
+            spi: self.spi,
+            pins: self.pins,
+            _width: PhantomData,
+        }
+    }
+
+    fn set_send_only(&mut self) {
+        self.spi
+            .cr1
+            .modify(|_, w| w.bidimode().set_bit().bidioe().set_bit());
+    }
+
+    fn set_bidi(&mut self) {
+        self.spi
+            .cr1
+            .modify(|_, w| w.bidimode().clear_bit().bidioe().clear_bit());
+    }
+
+    fn check_read(&mut self) -> nb::Result<(), Error> {
         let sr = self.spi.sr.read();
 
         Err(if sr.ovr().bit_is_set() {
@@ -345,15 +374,26 @@ where
         } else if sr.crcerr().bit_is_set() {
             nb::Error::Other(Error::Crc)
         } else if sr.rxne().bit_is_set() {
-            // NOTE(read_volatile) read only 1 byte (the svd2rust API only allows
-            // reading a half-word)
-            return Ok(unsafe { ptr::read_volatile(&self.spi.dr as *const _ as *const u8) });
+            return Ok(());
         } else {
             nb::Error::WouldBlock
         })
     }
 
-    fn send(&mut self, byte: u8) -> nb::Result<(), Error> {
+    fn send_buffer_size(&mut self) -> u8 {
+        match self.spi.sr.read().ftlvl().bits() {
+            // FIFO empty
+            0 => 4,
+            // FIFO 1/4 full
+            1 => 3,
+            // FIFO 1/2 full
+            2 => 2,
+            // FIFO full
+            _ => 0,
+        }
+    }
+
+    fn check_send(&mut self) -> nb::Result<(), Error> {
         let sr = self.spi.sr.read();
 
         Err(if sr.ovr().bit_is_set() {
@@ -363,25 +403,132 @@ where
         } else if sr.crcerr().bit_is_set() {
             nb::Error::Other(Error::Crc)
         } else if sr.txe().bit_is_set() {
-            // NOTE(write_volatile) see note above
-            unsafe { ptr::write_volatile(&self.spi.dr as *const _ as *mut u8, byte) }
             return Ok(());
         } else {
             nb::Error::WouldBlock
         })
     }
+
+    fn read_u8(&mut self) -> u8 {
+        // NOTE(read_volatile) read only 1 byte (the svd2rust API only allows reading a half-word)
+        unsafe { ptr::read_volatile(&self.spi.dr as *const _ as *const u8) }
+    }
+
+    fn send_u8(&mut self, byte: u8) {
+        // NOTE(write_volatile) see note above
+        unsafe { ptr::write_volatile(&self.spi.dr as *const _ as *mut u8, byte) }
+    }
+
+    fn read_u16(&mut self) -> u16 {
+        // NOTE(read_volatile) read only 2 bytes (the svd2rust API only allows reading a half-word)
+        unsafe { ptr::read_volatile(&self.spi.dr as *const _ as *const u16) }
+    }
+
+    fn send_u16(&mut self, byte: u16) {
+        // NOTE(write_volatile) see note above
+        unsafe { ptr::write_volatile(&self.spi.dr as *const _ as *mut u16, byte) }
+    }
+
+    pub fn release(self) -> (SPI, (SCKPIN, MISOPIN, MOSIPIN)) {
+        (self.spi, self.pins)
+    }
 }
 
-impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::transfer::Default<u8>
-    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::Transfer<u8>
+    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, EightBit>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
 {
+    type Error = Error;
+
+    fn transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> {
+        // We want to transfer bidirectionally, make sure we're in the correct mode
+        self.set_bidi();
+
+        for word in words.iter_mut() {
+            nb::block!(self.check_send())?;
+            self.send_u8(word.clone());
+            nb::block!(self.check_read())?;
+            *word = self.read_u8();
+        }
+
+        Ok(words)
+    }
 }
 
-impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::write::Default<u8>
-    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN>
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::Write<u8>
+    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, EightBit>
 where
     SPI: Deref<Target = SpiRegisterBlock>,
 {
+    type Error = Error;
+
+    fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
+        let mut bufcap: u8 = 0;
+
+        // We only want to send, so we don't need to worry about the receive buffer overflowing
+        self.set_send_only();
+
+        // Make sure we don't continue with an error condition
+        nb::block!(self.check_send())?;
+
+        // We have a 32 bit buffer to work with, so let's fill it before checking the status
+        for word in words {
+            // Loop as long as our send buffer is full
+            while bufcap == 0 {
+                bufcap = self.send_buffer_size();
+            }
+
+            self.send_u8(*word);
+            bufcap -= 1;
+        }
+
+        // Do one last status register check before continuing
+        self.check_send().ok();
+        Ok(())
+    }
+}
+
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::Transfer<u16>
+    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, SixteenBit>
+where
+    SPI: Deref<Target = SpiRegisterBlock>,
+{
+    type Error = Error;
+
+    fn transfer<'w>(&mut self, words: &'w mut [u16]) -> Result<&'w [u16], Self::Error> {
+        // We want to transfer bidirectionally, make sure we're in the correct mode
+        self.set_bidi();
+
+        for word in words.iter_mut() {
+            nb::block!(self.check_send())?;
+            self.send_u16(*word);
+            nb::block!(self.check_read())?;
+            *word = self.read_u16();
+        }
+
+        Ok(words)
+    }
+}
+
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::Write<u16>
+    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, SixteenBit>
+where
+    SPI: Deref<Target = SpiRegisterBlock>,
+{
+    type Error = Error;
+
+    fn write(&mut self, words: &[u16]) -> Result<(), Self::Error> {
+        // We only want to send, so we don't need to worry about the receive buffer overflowing
+        self.set_send_only();
+
+        for word in words {
+            nb::block!(self.check_send())?;
+            self.send_u16(word.clone());
+        }
+
+        // Do one last status register check before continuing
+        self.check_send().ok();
+        Ok(())
+    }
 }

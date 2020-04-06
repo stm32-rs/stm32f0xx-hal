@@ -6,11 +6,11 @@ use panic_halt as _;
 use stm32f0xx_hal as hal;
 
 use crate::hal::{
+    pac,
     prelude::*,
     serial::Serial,
     spi::Spi,
     spi::{Mode, Phase, Polarity},
-    pac,
 };
 
 use nb::block;
@@ -52,14 +52,12 @@ fn main() -> ! {
 
             let (mut tx, mut rx) = serial.split();
 
+            let mut data = [0];
             loop {
                 let serial_received = block!(rx.read()).unwrap();
-
-                block!(spi.send(serial_received)).ok();
-
-                let spi_received = block!(spi.read()).unwrap();
-
-                block!(tx.write(spi_received)).ok();
+                spi.write(&[serial_received]).ok();
+                let spi_received = spi.transfer(&mut data).unwrap();
+                block!(tx.write(spi_received[0])).ok();
             }
         });
     }

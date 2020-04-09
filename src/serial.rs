@@ -573,37 +573,21 @@ fn read(usart: *const SerialRegisterBlock) -> nb::Result<u8, Error> {
     // NOTE(unsafe) write accessor for atomic writes with no side effects
     let icr = unsafe { &(*usart).icr };
 
-    let err = if isr.pe().bit_is_set() {
+    if isr.pe().bit_is_set() {
         icr.write(|w| w.pecf().set_bit());
-        nb::Error::Other(Error::Parity)
+        Err(nb::Error::Other(Error::Parity))
     } else if isr.fe().bit_is_set() {
         icr.write(|w| w.fecf().set_bit());
-        nb::Error::Other(Error::Framing)
+        Err(nb::Error::Other(Error::Framing))
     } else if isr.nf().bit_is_set() {
         icr.write(|w| w.ncf().set_bit());
-        nb::Error::Other(Error::Noise)
+        Err(nb::Error::Other(Error::Noise))
     } else if isr.ore().bit_is_set() {
         icr.write(|w| w.orecf().set_bit());
-        nb::Error::Other(Error::Overrun)
+        Err(nb::Error::Other(Error::Overrun))
     } else if isr.rxne().bit_is_set() {
-        return Ok(unsafe { (*usart).rdr.read().rdr().bits() as u8 });
+        Ok(unsafe { (*usart).rdr.read().rdr().bits() as u8 })
     } else {
-        return Err(nb::Error::WouldBlock);
-    };
-
-    // NOTE(unsafe) atomic write with no side effects other than clearing the errors we've just handled
-    unsafe {
-        (*usart).icr.write(|w| {
-            w.pecf()
-                .set_bit()
-                .fecf()
-                .set_bit()
-                .ncf()
-                .set_bit()
-                .orecf()
-                .set_bit()
-        })
-    };
-
-    Err(err)
+        Err(nb::Error::WouldBlock)
+    }
 }

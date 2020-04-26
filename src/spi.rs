@@ -40,8 +40,6 @@
 use core::marker::PhantomData;
 use core::{ops::Deref, ptr};
 
-use nb;
-
 pub use embedded_hal::spi::{Mode, Phase, Polarity};
 
 // TODO Put this inside the macro

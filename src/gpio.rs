@@ -103,12 +103,14 @@ impl<MODE> OutputPin for Pin<Output<MODE>> {
 
     #[inline(always)]
     fn set_high(&mut self) -> Result<(), Self::Error> {
-        Ok(unsafe { (*self.port).set_high(self.i) })
+        unsafe { (*self.port).set_high(self.i) };
+        Ok(())
     }
 
     #[inline(always)]
     fn set_low(&mut self) -> Result<(), Self::Error> {
-        Ok(unsafe { (*self.port).set_low(self.i) })
+        unsafe { (*self.port).set_low(self.i) }
+        Ok(())
     }
 }
 

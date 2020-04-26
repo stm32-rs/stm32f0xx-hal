@@ -35,7 +35,6 @@ use crate::rcc::{Clocks, Rcc};
 
 use crate::time::Hertz;
 use embedded_hal::timer::{CountDown, Periodic};
-use nb;
 use void::Void;
 
 /// Hardware timers

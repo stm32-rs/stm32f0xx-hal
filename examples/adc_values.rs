@@ -5,7 +5,7 @@ use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::{prelude::*, pac};
+use crate::hal::{pac, prelude::*};
 
 use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core};
 use cortex_m_rt::{entry, exception};

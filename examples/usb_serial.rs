@@ -7,7 +7,7 @@ extern crate panic_halt;
 
 use cortex_m_rt::entry;
 use stm32f0xx_hal::usb::{Peripheral, UsbBus};
-use stm32f0xx_hal::{prelude::*, pac};
+use stm32f0xx_hal::{pac, prelude::*};
 use usb_device::prelude::*;
 use usbd_serial::{SerialPort, USB_CLASS_CDC};
 

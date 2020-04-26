@@ -59,9 +59,9 @@
 //! ```
 
 use core::{
+    convert::Infallible,
     fmt::{Result, Write},
     ops::Deref,
-    convert::Infallible,
 };
 
 use embedded_hal::prelude::*;

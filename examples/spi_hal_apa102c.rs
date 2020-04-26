@@ -6,10 +6,10 @@ use panic_halt as _;
 use stm32f0xx_hal as hal;
 
 use crate::hal::{
+    pac,
     prelude::*,
     spi::Spi,
     spi::{Mode, Phase, Polarity},
-    pac,
 };
 
 use cortex_m_rt::entry;

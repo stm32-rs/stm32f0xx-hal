@@ -5,7 +5,7 @@ use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::{i2c::I2c, prelude::*, pac};
+use crate::hal::{i2c::I2c, pac, prelude::*};
 
 use cortex_m_rt::entry;
 

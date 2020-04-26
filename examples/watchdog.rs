@@ -5,9 +5,7 @@ use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::{
-    delay::Delay, prelude::*, serial::Serial, pac, time::Hertz, watchdog::Watchdog,
-};
+use crate::hal::{delay::Delay, pac, prelude::*, serial::Serial, time::Hertz, watchdog::Watchdog};
 
 use cortex_m::peripheral::Peripherals;
 use cortex_m_rt::entry;

@@ -1,7 +1,7 @@
 stm32f0xx-hal
 =============
 
-[![Continuous integration](https://github.com/stm32-rs/stm32f0xx-hal/workflows/Continuous%20integration/badge.svg)
+[![Continuous integration](https://github.com/stm32-rs/stm32f0xx-hal/workflows/Continuous%20integration/badge.svg)](https://github.com/stm32-rs/stm32f0xx-hal)
 [![Crates.io](https://img.shields.io/crates/v/stm32f0xx-hal.svg)](https://crates.io/crates/stm32f0xx-hal)
 [![docs.rs](https://docs.rs/stm32f0xx-hal/badge.svg)](https://docs.rs/stm32f0xx-hal/)
 

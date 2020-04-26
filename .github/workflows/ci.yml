@@ -1,0 +1,32 @@
+on: [push, pull_request]
+
+name: Continuous integration
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - 1.39.0  # MSRV
+        include:
+          - rust: nightly
+            experimental: true
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          target: thumbv6m-none-eabi
+          override: true
+ 
+      - name: Regular build
+        run: python tools/check.py
+
+      - name: Size check
+        run: python tools/check.py size_check
+        
+   

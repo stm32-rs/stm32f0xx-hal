@@ -5,7 +5,7 @@ use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::{gpio::*, prelude::*, stm32};
+use crate::hal::{gpio::*, pac, prelude::*};
 
 use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core, Peripherals};
 use cortex_m_rt::{entry, exception};
@@ -18,7 +18,7 @@ static GPIO: Mutex<RefCell<Option<gpioa::PA1<Output<PushPull>>>>> = Mutex::new(R
 
 #[entry]
 fn main() -> ! {
-    if let (Some(mut p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
+    if let (Some(mut p), Some(cp)) = (pac::Peripherals::take(), Peripherals::take()) {
         cortex_m::interrupt::free(move |cs| {
             let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut p.FLASH);
 

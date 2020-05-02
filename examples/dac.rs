@@ -9,8 +9,8 @@ use panic_halt as _;
 use stm32f0xx_hal as hal;
 
 use crate::hal::dac::*;
+use crate::hal::pac;
 use crate::hal::prelude::*;
-use crate::hal::stm32;
 
 use rt::entry;
 
@@ -21,7 +21,7 @@ enum Direction {
 
 #[entry]
 fn main() -> ! {
-    if let (Some(mut dp), Some(_cp)) = (stm32::Peripherals::take(), cortex_m::Peripherals::take()) {
+    if let (Some(mut dp), Some(_cp)) = (pac::Peripherals::take(), cortex_m::Peripherals::take()) {
         cortex_m::interrupt::free(move |cs| {
             let mut rcc = dp.RCC.configure().sysclk(8.mhz()).freeze(&mut dp.FLASH);
 

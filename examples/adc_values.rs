@@ -5,7 +5,7 @@ use panic_halt as _;
 
 use stm32f0xx_hal as hal;
 
-use crate::hal::{prelude::*, stm32};
+use crate::hal::{pac, prelude::*};
 
 use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core};
 use cortex_m_rt::{entry, exception};
@@ -14,7 +14,7 @@ use core::{cell::RefCell, fmt::Write};
 
 struct Shared {
     adc: hal::adc::Adc,
-    tx: hal::serial::Tx<stm32::USART1>,
+    tx: hal::serial::Tx<pac::USART1>,
 }
 
 static SHARED: Mutex<RefCell<Option<Shared>>> = Mutex::new(RefCell::new(None));
@@ -22,7 +22,7 @@ static SHARED: Mutex<RefCell<Option<Shared>>> = Mutex::new(RefCell::new(None));
 #[entry]
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (
-        hal::stm32::Peripherals::take(),
+        hal::pac::Peripherals::take(),
         cortex_m::peripheral::Peripherals::take(),
     ) {
         cortex_m::interrupt::free(move |cs| {

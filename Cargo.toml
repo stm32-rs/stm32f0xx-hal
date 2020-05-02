@@ -27,6 +27,7 @@ version = "0.16.0"
 
 [package.metadata.docs.rs]
 features = ["stm32f042", "rt", "stm32-usbd"]
+targets = ["thumbv6m-none-eabi"]
 
 [dependencies]
 bare-metal = { version = "0.2", features = ["const-fn"] }
@@ -34,7 +35,7 @@ cast = { version = "0.2", default-features = false }
 cortex-m = "0.6"
 cortex-m-rt = "0.6"
 embedded-hal = { version = "0.2", features = ["unproven"] }
-stm32f0 = "0.9"
+stm32f0 = "0.10"
 nb = "0.1"
 void = { version = "1.0", default-features = false }
 stm32-usbd = { version = "0.5.0", features = ["ram_access_2x16"], optional = true }
@@ -78,6 +79,10 @@ opt-level = "s"
 
 [[example]]
 name = "blinky_timer_irq"
+required-features = ["stm32f072", "rt"]
+
+[[example]]
+name = "serial_stopwatch"
 required-features = ["stm32f072", "rt"]
 
 [[example]]

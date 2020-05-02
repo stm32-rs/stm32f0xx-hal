@@ -24,10 +24,10 @@ macro_rules! i2c_pins {
     })+) => {
         $(
             $(
-                impl SclPin<crate::stm32::$I2C> for $scl {}
+                impl SclPin<crate::pac::$I2C> for $scl {}
             )+
             $(
-                impl SdaPin<crate::stm32::$I2C> for $sda {}
+                impl SdaPin<crate::pac::$I2C> for $sda {}
             )+
         )+
     }
@@ -155,7 +155,7 @@ pub enum Error {
 macro_rules! i2c {
     ($($I2C:ident: ($i2c:ident, $i2cXen:ident, $i2cXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
         $(
-            use crate::stm32::$I2C;
+            use crate::pac::$I2C;
             impl<SCLPIN, SDAPIN> I2c<$I2C, SCLPIN, SDAPIN> {
                 pub fn $i2c(i2c: $I2C, pins: (SCLPIN, SDAPIN), speed: KiloHertz, rcc: &mut Rcc) -> Self
                 where
@@ -197,7 +197,7 @@ i2c! {
 
 // It's s needed for the impls, but rustc doesn't recognize that
 #[allow(dead_code)]
-type I2cRegisterBlock = crate::stm32::i2c1::RegisterBlock;
+type I2cRegisterBlock = crate::pac::i2c1::RegisterBlock;
 
 impl<I2C, SCLPIN, SDAPIN> I2c<I2C, SCLPIN, SDAPIN>
 where

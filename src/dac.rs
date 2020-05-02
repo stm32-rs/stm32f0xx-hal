@@ -15,7 +15,7 @@
 //!
 //!use stm32f0xx_hal as hal;
 //!
-//!use crate::hal::stm32;
+//!use crate::hal::pac;
 //!use crate::hal::prelude::*;
 //!use crate::hal::dac::*;
 //!
@@ -28,7 +28,7 @@
 //!
 //!#[entry]
 //!fn main() -> ! {
-//!    if let (Some(mut dp), Some(_cp)) = (stm32::Peripherals::take(), cortex_m::Peripherals::take()) {
+//!    if let (Some(mut dp), Some(_cp)) = (pac::Peripherals::take(), cortex_m::Peripherals::take()) {
 //!        cortex_m::interrupt::free(move |cs| {
 //!            let mut rcc = dp.RCC.configure().sysclk(8.mhz()).freeze(&mut dp.FLASH);
 //!
@@ -72,8 +72,8 @@ use core::mem;
 
 use crate::gpio::gpioa::{PA4, PA5};
 use crate::gpio::Analog;
+use crate::pac::DAC;
 use crate::rcc::Rcc;
-use crate::stm32::DAC;
 
 pub struct C1;
 pub struct C2;

@@ -4,7 +4,7 @@
 pub use stm32f0;
 
 #[cfg(any(feature = "stm32f030", feature = "stm32f070"))]
-pub use stm32f0::stm32f0x0 as stm32;
+pub use stm32f0::stm32f0x0 as pac;
 
 #[cfg(any(
     feature = "stm32f031",
@@ -12,10 +12,10 @@ pub use stm32f0::stm32f0x0 as stm32;
     feature = "stm32f071",
     feature = "stm32f091",
 ))]
-pub use stm32f0::stm32f0x1 as stm32;
+pub use stm32f0::stm32f0x1 as pac;
 
 #[cfg(any(feature = "stm32f042", feature = "stm32f072"))]
-pub use stm32f0::stm32f0x2 as stm32;
+pub use stm32f0::stm32f0x2 as pac;
 
 #[cfg(any(
     feature = "stm32f038",
@@ -24,7 +24,7 @@ pub use stm32f0::stm32f0x2 as stm32;
     feature = "stm32f078",
     feature = "stm32f098",
 ))]
-pub use stm32f0::stm32f0x8 as stm32;
+pub use stm32f0::stm32f0x8 as pac;
 
 #[cfg(feature = "device-selected")]
 pub mod adc;
@@ -83,3 +83,7 @@ pub mod tsc;
 pub mod usb;
 #[cfg(feature = "device-selected")]
 pub mod watchdog;
+
+#[cfg(feature = "device-selected")]
+#[deprecated(since = "0.17.0", note = "please use `pac` instead")]
+pub use pac as stm32;

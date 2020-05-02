@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version="stable"
+version="nightly"
 features="stm32f042,rt"
 
 filename="bloat_log_"$version"_"`date -Iminutes`".txt"

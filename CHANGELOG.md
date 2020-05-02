@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Remove duplicate error bits clearing in serial `read()` implementation
+- Optimize SPI implementation
+- Use `pac` instead of `stm32` for PAC access and soft-deprecate the former
+- Updated stm32f0 dependency to v0.10 (breaking change)
+
+### Added
+
+- Add 16bit SPI transfers
+- Another example resembling a stop watch controlled via serial interface
+
+### Fixed
+
+- Incorrect PLLSRC bits when using HSE
+
 ## [v0.16.0] - 2020-02-02
 
 ### Added

@@ -21,17 +21,26 @@ trait GpioRegExt {
     fn set_low(&self, pos: u8);
 }
 
+/// Alternate function 0
 pub struct AF0;
+/// Alternate function 1
 pub struct AF1;
+/// Alternate function 2
 pub struct AF2;
+/// Alternate function 3
 pub struct AF3;
+/// Alternate function 4
 pub struct AF4;
+/// Alternate function 5
 pub struct AF5;
+/// Alternate function 6
 pub struct AF6;
+/// Alternate function 7
 pub struct AF7;
 
-pub struct Alternate<MODE> {
-    _mode: PhantomData<MODE>,
+/// Alternate function mode (type state)
+pub struct Alternate<AF> {
+    _mode: PhantomData<AF>,
 }
 
 /// Input mode (type state)
@@ -94,12 +103,14 @@ impl<MODE> OutputPin for Pin<Output<MODE>> {
 
     #[inline(always)]
     fn set_high(&mut self) -> Result<(), Self::Error> {
-        Ok(unsafe { (*self.port).set_high(self.i) })
+        unsafe { (*self.port).set_high(self.i) };
+        Ok(())
     }
 
     #[inline(always)]
     fn set_low(&mut self) -> Result<(), Self::Error> {
-        Ok(unsafe { (*self.port).set_low(self.i) })
+        unsafe { (*self.port).set_low(self.i) }
+        Ok(())
     }
 }
 
@@ -135,7 +146,7 @@ impl<MODE> InputPin for Pin<Input<MODE>> {
 
 macro_rules! gpio_trait {
     ($gpiox:ident) => {
-        impl GpioRegExt for crate::stm32::$gpiox::RegisterBlock {
+        impl GpioRegExt for crate::pac::$gpiox::RegisterBlock {
             fn is_low(&self, pos: u8) -> bool {
                 // NOTE(unsafe) atomic read with no side effects
                 self.idr.read().bits() & (1 << pos) == 0
@@ -176,7 +187,7 @@ macro_rules! gpio {
                 use embedded_hal::digital::v2::{InputPin, OutputPin, StatefulOutputPin, toggleable};
                 use crate::{
                     rcc::Rcc,
-                    stm32::$GPIOX
+                    pac::$GPIOX
                 };
 
                 use cortex_m::interrupt::CriticalSection;
@@ -449,7 +460,7 @@ macro_rules! gpio {
                         }
                     }
 
-                    impl<MODE> $PXi<Alternate<MODE>> {
+                    impl<AF> $PXi<Alternate<AF>> {
                         /// Enables / disables the internal pull up
                         pub fn internal_pull_up(self, _cs: &CriticalSection, on: bool) -> Self {
                             let offset = 2 * $i;
@@ -464,7 +475,7 @@ macro_rules! gpio {
                         }
                     }
 
-                    impl<MODE> $PXi<Alternate<MODE>> {
+                    impl<AF> $PXi<Alternate<AF>> {
                         /// Turns pin alternate configuration pin into open drain
                         pub fn set_open_drain(self, _cs: &CriticalSection) -> Self {
                             let offset = $i;

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Remove duplicate error bits clearing in serial `read()` implementation
 - Optimize SPI implementation
 - Use `pac` instead of `stm32` for PAC access and soft-deprecate the former
-- Updated stm32f0 dependency to v0.10 (breaking change)
+- Updated stm32f0 dependency to v0.11 (breaking change)
 
 ### Added
 

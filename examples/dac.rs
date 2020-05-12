@@ -23,11 +23,11 @@ enum Direction {
 fn main() -> ! {
     if let (Some(mut dp), Some(_cp)) = (pac::Peripherals::take(), cortex_m::Peripherals::take()) {
         let mut rcc = dp.RCC.configure().sysclk(8.mhz()).freeze(&mut dp.FLASH);
+        let gpioa = dp.GPIOA.split(&mut rcc);
 
-        let mut dac = cortex_m::interrupt::free(move |cs| {
-            let gpioa = dp.GPIOA.split(&mut rcc);
-            dac(dp.DAC, gpioa.pa4.into_analog(cs), &mut rcc)
-        });
+        let pa4 = cortex_m::interrupt::free(move |cs| gpioa.pa4.into_analog(cs));
+
+        let mut dac = dac(dp.DAC, pa4, &mut rcc);
 
         dac.enable();
 

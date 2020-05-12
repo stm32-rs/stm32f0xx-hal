@@ -31,35 +31,37 @@ fn main() -> ! {
     };
 
     if let Some(p) = pac::Peripherals::take() {
-        cortex_m::interrupt::free(move |cs| {
-            let mut flash = p.FLASH;
-            let mut rcc = p.RCC.configure().freeze(&mut flash);
+        let mut flash = p.FLASH;
+        let mut rcc = p.RCC.configure().freeze(&mut flash);
 
+        let (sck, miso, mosi, tx, rx) = cortex_m::interrupt::free(move |cs| {
             let gpioa = p.GPIOA.split(&mut rcc);
 
-            // Configure pins for SPI
-            let sck = gpioa.pa5.into_alternate_af0(cs);
-            let miso = gpioa.pa6.into_alternate_af0(cs);
-            let mosi = gpioa.pa7.into_alternate_af0(cs);
-
-            // Configure SPI with 1MHz rate
-            let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), MODE, 1.mhz(), &mut rcc);
-
-            let tx = gpioa.pa9.into_alternate_af1(cs);
-            let rx = gpioa.pa10.into_alternate_af1(cs);
-
-            let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
-
-            let (mut tx, mut rx) = serial.split();
-
-            let mut data = [0];
-            loop {
-                let serial_received = block!(rx.read()).unwrap();
-                spi.write(&[serial_received]).ok();
-                let spi_received = spi.transfer(&mut data).unwrap();
-                block!(tx.write(spi_received[0])).ok();
-            }
+            (
+                // SPI pins
+                gpioa.pa5.into_alternate_af0(cs),
+                gpioa.pa6.into_alternate_af0(cs),
+                gpioa.pa7.into_alternate_af0(cs),
+                // USART pins
+                gpioa.pa9.into_alternate_af1(cs),
+                gpioa.pa10.into_alternate_af1(cs),
+            )
         });
+
+        // Configure SPI with 1MHz rate
+        let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), MODE, 1.mhz(), &mut rcc);
+
+        let serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
+
+        let (mut tx, mut rx) = serial.split();
+
+        let mut data = [0];
+        loop {
+            let serial_received = block!(rx.read()).unwrap();
+            spi.write(&[serial_received]).ok();
+            let spi_received = spi.transfer(&mut data).unwrap();
+            block!(tx.write(spi_received[0])).ok();
+        }
     }
 
     loop {

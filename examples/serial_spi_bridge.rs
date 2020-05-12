@@ -34,9 +34,9 @@ fn main() -> ! {
         let mut flash = p.FLASH;
         let mut rcc = p.RCC.configure().freeze(&mut flash);
 
-        let (sck, miso, mosi, tx, rx) = cortex_m::interrupt::free(move |cs| {
-            let gpioa = p.GPIOA.split(&mut rcc);
+        let gpioa = p.GPIOA.split(&mut rcc);
 
+        let (sck, miso, mosi, tx, rx) = cortex_m::interrupt::free(move |cs| {
             (
                 // SPI pins
                 gpioa.pa5.into_alternate_af0(cs),

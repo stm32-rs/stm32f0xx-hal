@@ -12,14 +12,12 @@ use cortex_m_rt::entry;
 #[entry]
 fn main() -> ! {
     if let Some(mut p) = pac::Peripherals::take() {
-        let mut led = cortex_m::interrupt::free(|cs| {
-            let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut p.FLASH);
+        let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut p.FLASH);
 
-            let gpioa = p.GPIOA.split(&mut rcc);
+        let gpioa = p.GPIOA.split(&mut rcc);
 
-            // (Re-)configure PA1 as output
-            gpioa.pa1.into_push_pull_output(cs)
-        });
+        // (Re-)configure PA1 as output
+        let mut led = cortex_m::interrupt::free(|cs| gpioa.pa1.into_push_pull_output(cs));
 
         loop {
             // Turn PA1 on a million times in a row

@@ -33,7 +33,6 @@ targets = ["thumbv6m-none-eabi"]
 bare-metal = { version = "0.2", features = ["const-fn"] }
 cast = { version = "0.2", default-features = false }
 cortex-m = "0.6"
-cortex-m-rt = "0.6"
 embedded-hal = { version = "0.2", features = ["unproven"] }
 stm32f0 = "0.10"
 nb = "0.1"
@@ -41,6 +40,7 @@ void = { version = "1.0", default-features = false }
 stm32-usbd = { version = "0.5.0", features = ["ram_access_2x16"], optional = true }
 
 [dev-dependencies]
+cortex-m-rt = "0.6"
 panic-halt = "0.2"
 usb-device = "0.2.3"
 usbd-serial = "0.1.0"

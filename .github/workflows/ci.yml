@@ -1,8 +1,7 @@
 on:
   push:
-    branches: [ master ]
+    branches: [ staging, trying, master ]
   pull_request:
-    branches: [ master ]
 
 name: Continuous integration
 
@@ -32,5 +31,3 @@ jobs:
 
       - name: Size check
         run: python tools/check.py size_check
-        
-   

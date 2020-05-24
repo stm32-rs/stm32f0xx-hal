@@ -324,7 +324,7 @@ macro_rules! usart {
             where
                 RXPIN: RxPin<$USART>,
             {
-                /// Creates a new tx-only serial instance
+                /// Creates a new rx-only serial instance
                 pub fn $usartrx(usart: $USART, rxpin: RXPIN, baud_rate: Bps, rcc: &mut Rcc) -> Self
                 {
                     let txpin = ();

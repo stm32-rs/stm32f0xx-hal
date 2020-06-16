@@ -234,7 +234,7 @@ where
             scldel = 3;
         }
 
-        // Enable I2C signal generator, and configure I2C for 400KHz full speed
+        // Enable I2C signal generator, and configure I2C for configured speed
         self.i2c.timingr.write(|w| {
             w.presc()
                 .bits(presc)

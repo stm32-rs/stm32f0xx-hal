@@ -15,12 +15,12 @@ use usbd_serial::{SerialPort, USB_CLASS_CDC};
 fn main() -> ! {
     let mut dp = pac::Peripherals::take().unwrap();
 
-    /* Uncomment the following lines if you have a chip in TSSOP20 (STM32F042F)
-       or UFQFPN28 (STM32F042G) package
-       This code enables clock for SYSCFG and remaps USB pins to PA9 and PA10.
+    /* IMPORTANT: if you have a chip in TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) package,
+     * make sure you enable "usb-remap" feature on your Cargo.toml project, otherwise the device
+     * will not USB enumerate.
+
+       This feature flag enables clock for SYSCFG and remaps USB pins to PA9 and PA10.
     */
-    //dp.RCC.apb2enr.modify(|_, w| w.syscfgen().set_bit());
-    //dp.SYSCFG.cfgr1.modify(|_, w| w.pa11_pa12_rmp().remapped());
 
     let mut rcc = dp
         .RCC

@@ -5,7 +5,7 @@
 //! See <https://github.com/stm32-rs/stm32f0xx-hal/tree/master/examples>
 //! for usage examples.
 
-use crate::pac::{RCC, USB};
+use crate::pac::{RCC, SYSCFG, USB};
 use stm32_usbd::UsbPeripheral;
 
 use crate::gpio::gpioa::{PA11, PA12};
@@ -28,6 +28,7 @@ unsafe impl UsbPeripheral for Peripheral {
 
     fn enable() {
         let rcc = unsafe { (&*RCC::ptr()) };
+        let syscfg = unsafe { (&*SYSCFG::ptr()) };
 
         cortex_m::interrupt::free(|_| {
             // Enable USB peripheral
@@ -36,6 +37,15 @@ unsafe impl UsbPeripheral for Peripheral {
             // Reset USB peripheral
             rcc.apb1rstr.modify(|_, w| w.usbrst().set_bit());
             rcc.apb1rstr.modify(|_, w| w.usbrst().clear_bit());
+
+            #[cfg(any(feature = "usb-remap"))]
+            {
+                // Remap PA11/PA12 pins to PA09 and PA10 for USB on
+                // TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages
+                // This code enables clock for SYSCFG and remaps USB pins to PA9 and PA10.
+                rcc.apb2enr.modify(|_, w| w.syscfgen().set_bit());
+                syscfg.cfgr1.modify(|_, w| w.pa11_pa12_rmp().remapped());
+            }
         });
     }
 

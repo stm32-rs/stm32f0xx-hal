@@ -46,8 +46,6 @@ usb-device = "0.2.3"
 usbd-serial = "0.1.0"
 
 [features]
-usb-remap = ["stm32f042"]  # Remap PA11/PA12 pins to PA09 and PA10 for USB on
-                           # TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages
 device-selected = []
 rt = ["stm32f0/rt"]
 stm32f030 = ["stm32f0/stm32f0x0", "device-selected"]

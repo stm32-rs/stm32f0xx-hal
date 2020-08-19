@@ -12,10 +12,15 @@ use crate::gpio::gpioa::{PA11, PA12};
 use crate::gpio::{Floating, Input};
 pub use stm32_usbd::UsbBus;
 
+/*  TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages equire `remap: true` for USB to function.
+ *  This remapping sets the clock for SYSCFG and remaps USB pins to PA9 and PA10.
+*/
+
 pub struct Peripheral {
     pub usb: USB,
     pub pin_dm: PA11<Input<Floating>>,
     pub pin_dp: PA12<Input<Floating>>,
+    pub remap: bool,
 }
 
 unsafe impl Sync for Peripheral {}
@@ -28,7 +33,6 @@ unsafe impl UsbPeripheral for Peripheral {
 
     fn enable() {
         let rcc = unsafe { (&*RCC::ptr()) };
-        let syscfg = unsafe { (&*SYSCFG::ptr()) };
 
         cortex_m::interrupt::free(|_| {
             // Enable USB peripheral
@@ -37,16 +41,19 @@ unsafe impl UsbPeripheral for Peripheral {
             // Reset USB peripheral
             rcc.apb1rstr.modify(|_, w| w.usbrst().set_bit());
             rcc.apb1rstr.modify(|_, w| w.usbrst().clear_bit());
-
-            #[cfg(any(feature = "usb-remap"))]
-            {
-                // Remap PA11/PA12 pins to PA09 and PA10 for USB on
-                // TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages
-                // This code enables clock for SYSCFG and remaps USB pins to PA9 and PA10.
-                rcc.apb2enr.modify(|_, w| w.syscfgen().set_bit());
-                syscfg.cfgr1.modify(|_, w| w.pa11_pa12_rmp().remapped());
-            }
         });
+    }
+
+    fn enable(usb_remap: bool) {
+        // Normal USB init
+        self.enable();
+
+        // Remap PA11/PA12 pins to PA09/PA10 for USB on
+        // TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages
+        let syscfg = unsafe { (&*SYSCFG::ptr()) };
+
+        rcc.apb2enr.modify(|_, w| w.syscfgen().set_bit());
+        syscfg.cfgr1.modify(|_, w| w.pa11_pa12_rmp().remapped());
     }
 
     fn startup_delay() {

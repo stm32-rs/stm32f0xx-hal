@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-- Move USB remapping for STM32F042x to Cargo.toml as `usb-remap` feature.
+- Simplify USB PA11/12 remapping for STM32F042x via constructor.
 
 ## [v0.17.0] - 2020-06-27
 

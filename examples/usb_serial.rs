@@ -35,14 +35,14 @@ fn main() -> ! {
      * make sure you `remap: true`, otherwise the device will not USB-enumerate.
      *
      * This remap flag enables clock for SYSCFG and remaps USB pins to PA9 and PA10 from PA11/PA12.
-    */
+     */
     let usb = Peripheral {
         usb: dp.USB,
         pin_dm: gpioa.pa11,
         pin_dp: gpioa.pa12,
         remap: false,
     };
-    
+
     let usb_bus = UsbBus::new(usb);
 
     let mut serial = SerialPort::new(&usb_bus);

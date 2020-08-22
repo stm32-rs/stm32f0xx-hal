@@ -43,7 +43,7 @@ unsafe impl UsbPeripheral for Peripheral {
             rcc.apb1rstr.modify(|_, w| w.usbrst().clear_bit());
 
             // Are we remapping USB pins?
-            if self.usb_remap() {
+            if self.usb_remap {
                 // Remap PA11/PA12 pins to PA09/PA10 for USB on
                 // TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages
                 let syscfg = unsafe { (&*SYSCFG::ptr()) };

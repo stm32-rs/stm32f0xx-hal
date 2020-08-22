@@ -28,7 +28,7 @@ def main():
 
     crate_info = cargo_meta["packages"][0]
 
-    features = [""] + ["{} rt".format(x)
+    features = [""] + ["{},rt,stm32-usbd".format(x)
                        for x in crate_info["features"].keys()
                        if x != "device-selected" and x != "rt" and x != "stm32f030"]
 

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-- Simplify USB PA11/12 remapping for STM32F042x via constructor.
+- Simplify USB PA11/12 remapping for STM32F042x via `usb_bus.usb_remap()` function.
 
 ## [v0.17.0] - 2020-06-27
 

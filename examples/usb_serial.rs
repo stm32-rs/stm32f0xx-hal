@@ -31,21 +31,24 @@ fn main() -> ! {
 
     let gpioa = dp.GPIOA.split(&mut rcc);
 
-    /* IMPORTANT: if you have a chip in TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) package,
-     * make sure you `remap: true`, otherwise the device will not USB-enumerate.
-     *
-     * This remap flag enables clock for SYSCFG and remaps USB pins to PA9 and PA10 from PA11/PA12.
-     */
     let usb = Peripheral {
         usb: dp.USB,
         pin_dm: gpioa.pa11,
         pin_dp: gpioa.pa12,
-        remap: false,
     };
 
     let usb_bus = UsbBus::new(usb);
 
     let mut serial = SerialPort::new(&usb_bus);
+
+    /*
+     * IMPORTANT: if you have a chip in TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) package,
+     * and want to use USB, make sure you call `remap_pins(rcc, syscfg)`, otherwise the device will not enumerate.
+     *
+     * Uncomment the following function if the situation above applies to you.
+     */
+
+    //usb_bus.remap_pins();
 
     let mut usb_dev = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x16c0, 0x27dd))
         .manufacturer("Fake company")

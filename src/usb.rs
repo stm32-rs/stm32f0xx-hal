@@ -5,7 +5,7 @@
 //! See <https://github.com/stm32-rs/stm32f0xx-hal/tree/master/examples>
 //! for usage examples.
 
-use crate::pac::{RCC, USB};
+use crate::pac::{RCC, SYSCFG, USB};
 use stm32_usbd::UsbPeripheral;
 
 use crate::gpio::gpioa::{PA11, PA12};
@@ -27,7 +27,7 @@ unsafe impl UsbPeripheral for Peripheral {
     const EP_MEMORY_SIZE: usize = 1024;
 
     fn enable() {
-        let rcc = unsafe { (&*RCC::ptr()) };
+        let rcc = unsafe { &*RCC::ptr() };
 
         cortex_m::interrupt::free(|_| {
             // Enable USB peripheral
@@ -44,6 +44,15 @@ unsafe impl UsbPeripheral for Peripheral {
         // at least that long.
         cortex_m::asm::delay(72);
     }
+}
+
+pub fn remap_pins(rcc: &mut RCC, syscfg: &mut SYSCFG) {
+    cortex_m::interrupt::free(|_| {
+        // Remap PA11/PA12 pins to PA09/PA10 for USB on
+        // TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages
+        rcc.apb2enr.modify(|_, w| w.syscfgen().set_bit());
+        syscfg.cfgr1.modify(|_, w| w.pa11_pa12_rmp().remapped());
+    });
 }
 
 pub type UsbBusType = UsbBus<Peripheral>;

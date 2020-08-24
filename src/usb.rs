@@ -12,10 +12,6 @@ use crate::gpio::gpioa::{PA11, PA12};
 use crate::gpio::{Floating, Input};
 pub use stm32_usbd::UsbBus;
 
-/*  TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages equire `remap: true` for USB to function.
- *  This remapping sets the clock for SYSCFG and remaps USB pins to PA9 and PA10.
-*/
-
 pub struct Peripheral {
     pub usb: USB,
     pub pin_dm: PA11<Input<Floating>>,

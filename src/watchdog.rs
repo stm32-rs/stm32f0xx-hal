@@ -46,16 +46,22 @@ use embedded_hal::watchdog;
 use crate::pac::IWDG;
 use crate::time::Hertz;
 
+use core::convert::Infallible;
+
 /// Watchdog instance
 pub struct Watchdog {
     iwdg: IWDG,
 }
 
 impl watchdog::Watchdog for Watchdog {
+    type Error = Infallible;
+
     /// Feed the watchdog, so that at least one `period` goes by before the next
     /// reset
-    fn feed(&mut self) {
+    fn try_feed(&mut self) -> Result<(), Self::Error> {
         self.iwdg.kr.write(|w| w.key().reset());
+
+        Ok(())
     }
 }
 
@@ -97,7 +103,9 @@ impl Watchdog {
 
 impl watchdog::WatchdogEnable for Watchdog {
     type Time = IwdgTimeout;
-    fn start<T>(&mut self, period: T)
+    type Error = Infallible;
+
+    fn try_start<T>(&mut self, period: T) -> Result<(), Self::Error>
     where
         T: Into<IwdgTimeout>,
     {
@@ -117,5 +125,7 @@ impl watchdog::WatchdogEnable for Watchdog {
         // (potentially false) values
         while self.iwdg.sr.read().bits() != 0 {}
         self.iwdg.kr.write(|w| w.key().reset());
+
+        Ok(())
     }
 }

@@ -23,10 +23,10 @@ fn main() -> ! {
         let mut timer = Timer::tim1(p.TIM1, Hertz(1), &mut rcc);
 
         loop {
-            led.toggle().ok();
+            led.try_toggle().ok();
 
             // Wait for the timer to expire
-            nb::block!(timer.wait()).ok();
+            nb::block!(timer.try_wait()).ok();
         }
     }
 

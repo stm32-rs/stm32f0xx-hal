@@ -191,8 +191,7 @@ macro_rules! adc_pins {
         $(
             impl Channel<Adc> for $pin {
                 type ID = u8;
-
-                fn channel() -> u8 { $chan }
+                const CHANNEL : u8 = $chan;
             }
         )+
     };
@@ -295,7 +294,7 @@ impl VTemp {
             vtemp.enable(adc);
 
             if let Some(dref) = delay {
-                dref.delay_us(2_u16);
+                dref.try_delay_us(2_u16).ok();
             } else {
                 // Double read of vdda to allow sufficient startup time for the temp sensor
                 VRef::read_vdda(adc);
@@ -305,7 +304,7 @@ impl VTemp {
 
         let prev_cfg = adc.default_cfg();
 
-        let vtemp_val = adc.read(&mut vtemp).unwrap();
+        let vtemp_val = adc.try_read(&mut vtemp).unwrap();
 
         if !vtemp_preenable {
             vtemp.disable(adc);
@@ -346,11 +345,11 @@ impl VRef {
         let prev_cfg = adc.default_cfg();
 
         let vref_val: u32 = if vref.is_enabled(&adc) {
-            adc.read(&mut vref).unwrap()
+            adc.try_read(&mut vref).unwrap()
         } else {
             vref.enable(adc);
 
-            let ret = adc.read(&mut vref).unwrap();
+            let ret = adc.try_read(&mut vref).unwrap();
 
             vref.disable(adc);
             ret
@@ -535,7 +534,7 @@ impl Adc {
     /// Read the value of a channel and converts the result to milli-volts
     pub fn read_abs_mv<PIN: Channel<Adc, ID = u8>>(&mut self, pin: &mut PIN) -> u16 {
         let vdda = u32::from(VRef::read_vdda(self));
-        let v: u32 = self.read(pin).unwrap();
+        let v: u32 = self.try_read(pin).unwrap();
         let max_samp = u32::from(self.max_sample());
 
         (v * vdda / max_samp) as u16
@@ -612,9 +611,9 @@ where
 {
     type Error = ();
 
-    fn read(&mut self, _pin: &mut PIN) -> nb::Result<WORD, Self::Error> {
+    fn try_read(&mut self, _pin: &mut PIN) -> nb::Result<WORD, Self::Error> {
         self.power_up();
-        let res = self.convert(PIN::channel());
+        let res = self.convert(PIN::CHANNEL);
         self.power_down();
         Ok(res.into())
     }

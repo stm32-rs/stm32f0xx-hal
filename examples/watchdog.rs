@@ -37,17 +37,17 @@ fn main() -> ! {
 
         serial.write_str("RESET \r\n").ok();
 
-        watchdog.start(Hertz(1));
-        delay.delay_ms(500_u16);
-        watchdog.feed();
-        delay.delay_ms(500_u16);
-        watchdog.feed();
-        delay.delay_ms(500_u16);
+        watchdog.try_start(Hertz(1)).ok();
+        delay.try_delay_ms(500_u16).ok();
+        watchdog.try_feed().ok();
+        delay.try_delay_ms(500_u16).ok();
+        watchdog.try_feed().ok();
+        delay.try_delay_ms(500_u16).ok();
         serial.write_str("This will get printed \r\n").ok();
-        watchdog.feed();
+        watchdog.try_feed().ok();
 
         // Now a reset happens while delaying
-        delay.delay_ms(1500_u16);
+        delay.try_delay_ms(1500_u16).ok();
         serial.write_str("This won't\r\n").ok();
     }
 

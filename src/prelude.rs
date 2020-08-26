@@ -6,10 +6,10 @@ pub use embedded_hal::watchdog::WatchdogEnable as _stm32f0xx_hal_embedded_hal_wa
 
 pub use embedded_hal::adc::OneShot as _embedded_hal_adc_OneShot;
 
-pub use embedded_hal::digital::v2::InputPin as _embedded_hal_gpio_InputPin;
-pub use embedded_hal::digital::v2::OutputPin as _embedded_hal_gpio_OutputPin;
-pub use embedded_hal::digital::v2::StatefulOutputPin as _embedded_hal_gpio_StatefulOutputPin;
-pub use embedded_hal::digital::v2::ToggleableOutputPin as _embedded_hal_gpio_ToggleableOutputPin;
+pub use embedded_hal::digital::InputPin as _embedded_hal_gpio_InputPin;
+pub use embedded_hal::digital::OutputPin as _embedded_hal_gpio_OutputPin;
+pub use embedded_hal::digital::StatefulOutputPin as _embedded_hal_gpio_StatefulOutputPin;
+pub use embedded_hal::digital::ToggleableOutputPin as _embedded_hal_gpio_ToggleableOutputPin;
 
 pub use crate::gpio::GpioExt as _stm32f0xx_hal_gpio_GpioExt;
 pub use crate::rcc::RccExt as _stm32f0xx_hal_rcc_RccExt;

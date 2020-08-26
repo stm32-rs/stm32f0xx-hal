@@ -439,7 +439,7 @@ where
 {
     type Error = Error;
 
-    fn transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> {
+    fn try_transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> {
         // We want to transfer bidirectionally, make sure we're in the correct mode
         self.set_bidi();
 
@@ -461,7 +461,7 @@ where
 {
     type Error = Error;
 
-    fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
+    fn try_write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
         let mut bufcap: u8 = 0;
 
         // We only want to send, so we don't need to worry about the receive buffer overflowing
@@ -494,7 +494,7 @@ where
 {
     type Error = Error;
 
-    fn transfer<'w>(&mut self, words: &'w mut [u16]) -> Result<&'w [u16], Self::Error> {
+    fn try_transfer<'w>(&mut self, words: &'w mut [u16]) -> Result<&'w [u16], Self::Error> {
         // We want to transfer bidirectionally, make sure we're in the correct mode
         self.set_bidi();
 
@@ -516,7 +516,7 @@ where
 {
     type Error = Error;
 
-    fn write(&mut self, words: &[u16]) -> Result<(), Self::Error> {
+    fn try_write(&mut self, words: &[u16]) -> Result<(), Self::Error> {
         // We only want to send, so we don't need to worry about the receive buffer overflowing
         self.set_send_only();
 

@@ -57,10 +57,10 @@ fn main() -> ! {
 
         let mut data = [0];
         loop {
-            let serial_received = block!(rx.read()).unwrap();
-            spi.write(&[serial_received]).ok();
-            let spi_received = spi.transfer(&mut data).unwrap();
-            block!(tx.write(spi_received[0])).ok();
+            let serial_received = block!(rx.try_read()).unwrap();
+            spi.try_write(&[serial_received]).ok();
+            let spi_received = spi.try_transfer(&mut data).unwrap();
+            block!(tx.try_write(spi_received[0])).ok();
         }
     }
 

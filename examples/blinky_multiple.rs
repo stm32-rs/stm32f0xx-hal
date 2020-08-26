@@ -13,7 +13,7 @@ use cortex_m_rt::entry;
 #[entry]
 fn main() -> ! {
     if let (Some(mut p), Some(cp)) = (pac::Peripherals::take(), Peripherals::take()) {
-        let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut p.FLASH);
+        let mut rcc = p.RCC.configure().sysclk(8_u32.mhz()).freeze(&mut p.FLASH);
 
         let gpioa = p.GPIOA.split(&mut rcc);
         let gpiob = p.GPIOB.split(&mut rcc);
@@ -34,14 +34,14 @@ fn main() -> ! {
         let mut leds = [led1.downgrade(), led2.downgrade()];
         loop {
             for l in &mut leds {
-                l.set_high().ok();
+                l.try_set_high().ok();
             }
-            delay.delay_ms(1_000_u16);
+            delay.try_delay_ms(1_000_u16).ok();
 
             for l in &mut leds {
-                l.set_low().ok();
+                l.try_set_low().ok();
             }
-            delay.delay_ms(1_000_u16);
+            delay.try_delay_ms(1_000_u16).ok();
         }
     }
 

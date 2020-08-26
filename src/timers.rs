@@ -32,10 +32,10 @@ use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
 use crate::rcc::{Clocks, Rcc};
+use core::convert::Infallible;
 
 use crate::time::Hertz;
 use embedded_hal::timer::{CountDown, Periodic};
-use void::Void;
 
 /// Hardware timers
 pub struct Timer<TIM> {
@@ -60,7 +60,7 @@ impl Timer<SYST> {
             tim: syst,
             clocks: rcc.clocks,
         };
-        timer.start(timeout);
+        timer.try_start(timeout).ok();
         timer
     }
 
@@ -84,9 +84,10 @@ impl Timer<SYST> {
 /// Be aware that intervals less than 4 Hertz may not function properly
 impl CountDown for Timer<SYST> {
     type Time = Hertz;
+    type Error = Infallible;
 
     /// Start the timer with a `timeout`
-    fn start<T>(&mut self, timeout: T)
+    fn try_start<T>(&mut self, timeout: T) -> Result<(), Self::Error>
     where
         T: Into<Hertz>,
     {
@@ -97,11 +98,13 @@ impl CountDown for Timer<SYST> {
         self.tim.set_reload(rvr);
         self.tim.clear_current();
         self.tim.enable_counter();
+
+        Ok(())
     }
 
     /// Return `Ok` if the timer has wrapped
     /// Automatically clears the flag and restarts the time
-    fn wait(&mut self) -> nb::Result<(), Void> {
+    fn try_wait(&mut self) -> nb::Result<(), Self::Error> {
         if self.tim.has_wrapped() {
             Ok(())
         } else {
@@ -134,7 +137,7 @@ macro_rules! timers {
                         clocks: rcc.clocks,
                         tim,
                     };
-                    timer.start(timeout);
+                    timer.try_start(timeout).ok();
 
                     timer
                 }
@@ -172,9 +175,10 @@ macro_rules! timers {
 
             impl CountDown for Timer<$TIM> {
                 type Time = Hertz;
+                type Error = Infallible;
 
                 /// Start the timer with a `timeout`
-                fn start<T>(&mut self, timeout: T)
+                fn try_start<T>(&mut self, timeout: T) -> Result<(), Self::Error>
                 where
                     T: Into<Hertz>,
                 {
@@ -200,11 +204,13 @@ macro_rules! timers {
 
                     // start counter
                     self.tim.cr1.modify(|_, w| w.cen().set_bit());
+
+                    Ok(())
                 }
 
                 /// Return `Ok` if the timer has wrapped
                 /// Automatically clears the flag and restarts the time
-                fn wait(&mut self) -> nb::Result<(), Void> {
+                fn try_wait(&mut self) -> nb::Result<(), Self::Error> {
                     if self.tim.sr.read().uif().bit_is_clear() {
                         Err(nb::Error::WouldBlock)
                     } else {

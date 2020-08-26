@@ -49,7 +49,7 @@ fn main() -> ! {
             let mut led = gpioa.pa1.into_push_pull_output(cs);
 
             // Turn off LED
-            led.set_low().ok();
+            led.try_set_low().ok();
 
             // Initialise delay provider
             let delay = Delay::new(cp.SYST, &rcc);
@@ -96,13 +96,13 @@ fn EXTI0_1() {
             INT.borrow(cs).borrow_mut().deref_mut(),
         ) {
             // Turn on LED
-            led.set_high().ok();
+            led.try_set_high().ok();
 
             // Wait a second
-            delay.delay_ms(1_000_u16);
+            delay.try_delay_ms(1_000_u16).ok();
 
             // Turn off LED
-            led.set_low().ok();
+            led.try_set_low().ok();
 
             // Clear event triggering the interrupt
             exti.pr.write(|w| w.pif1().set_bit());

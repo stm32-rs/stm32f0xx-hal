@@ -24,8 +24,8 @@ fn main() -> ! {
         let mut delay = Delay::new(cp.SYST, &rcc);
 
         loop {
-            led.toggle().ok();
-            delay.delay_ms(1_000_u16);
+            led.try_toggle().ok();
+            delay.try_delay_ms(1_000_u16).ok();
         }
     }
 

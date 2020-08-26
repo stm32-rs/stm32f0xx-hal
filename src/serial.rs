@@ -64,8 +64,7 @@ use core::{
     ops::Deref,
 };
 
-use embedded_hal::prelude::*;
-
+use crate::prelude::*;
 use crate::{gpio::*, rcc::Rcc, time::Bps};
 
 use core::marker::PhantomData;
@@ -430,7 +429,7 @@ where
     type Error = Error;
 
     /// Tries to read a byte from the uart
-    fn read(&mut self) -> nb::Result<u8, Error> {
+    fn try_read(&mut self) -> nb::Result<u8, Error> {
         read(self.usart)
     }
 }
@@ -443,7 +442,7 @@ where
     type Error = Error;
 
     /// Tries to read a byte from the uart
-    fn read(&mut self) -> nb::Result<u8, Error> {
+    fn try_read(&mut self) -> nb::Result<u8, Error> {
         read(&*self.usart)
     }
 }
@@ -455,13 +454,13 @@ where
     type Error = Infallible;
 
     /// Ensures that none of the previously written words are still buffered
-    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+    fn try_flush(&mut self) -> nb::Result<(), Self::Error> {
         flush(self.usart)
     }
 
     /// Tries to write a byte to the uart
     /// Fails if the transmit buffer is full
-    fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
+    fn try_write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
         write(self.usart, byte)
     }
 }
@@ -474,13 +473,13 @@ where
     type Error = Infallible;
 
     /// Ensures that none of the previously written words are still buffered
-    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+    fn try_flush(&mut self) -> nb::Result<(), Self::Error> {
         flush(&*self.usart)
     }
 
     /// Tries to write a byte to the uart
     /// Fails if the transmit buffer is full
-    fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
+    fn try_write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
         write(&*self.usart, byte)
     }
 }
@@ -520,7 +519,7 @@ where
     fn write_str(&mut self, s: &str) -> Result {
         s.as_bytes()
             .iter()
-            .try_for_each(|c| nb::block!(self.write(*c)))
+            .try_for_each(|c| nb::block!(self.try_write(*c)))
             .map_err(|_| core::fmt::Error)
     }
 }
@@ -533,7 +532,7 @@ where
     fn write_str(&mut self, s: &str) -> Result {
         s.as_bytes()
             .iter()
-            .try_for_each(|c| nb::block!(self.write(*c)))
+            .try_for_each(|c| nb::block!(self.try_write(*c)))
             .map_err(|_| core::fmt::Error)
     }
 }

@@ -37,30 +37,30 @@ fn main() -> ! {
         });
 
         // Configure SPI with 100kHz rate
-        let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), MODE, 100_000.hz(), &mut rcc);
+        let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), MODE, 100_000_u32.hz(), &mut rcc);
 
         // Cycle through colors on 16 chained APA102C LEDs
         loop {
             for r in 0..255 {
-                let _ = spi.write(&[0, 0, 0, 0]);
+                let _ = spi.try_write(&[0, 0, 0, 0]);
                 for _i in 0..16 {
-                    let _ = spi.write(&[0b1110_0001, 0, 0, r]);
+                    let _ = spi.try_write(&[0b1110_0001, 0, 0, r]);
                 }
-                let _ = spi.write(&[0xFF, 0xFF, 0xFF, 0xFF]);
+                let _ = spi.try_write(&[0xFF, 0xFF, 0xFF, 0xFF]);
             }
             for b in 0..255 {
-                let _ = spi.write(&[0, 0, 0, 0]);
+                let _ = spi.try_write(&[0, 0, 0, 0]);
                 for _i in 0..16 {
-                    let _ = spi.write(&[0b1110_0001, b, 0, 0]);
+                    let _ = spi.try_write(&[0b1110_0001, b, 0, 0]);
                 }
-                let _ = spi.write(&[0xFF, 0xFF, 0xFF, 0xFF]);
+                let _ = spi.try_write(&[0xFF, 0xFF, 0xFF, 0xFF]);
             }
             for g in 0..255 {
-                let _ = spi.write(&[0, 0, 0, 0]);
+                let _ = spi.try_write(&[0, 0, 0, 0]);
                 for _i in 0..16 {
-                    let _ = spi.write(&[0b1110_0001, 0, g, 0]);
+                    let _ = spi.try_write(&[0b1110_0001, 0, g, 0]);
                 }
-                let _ = spi.write(&[0xFF, 0xFF, 0xFF, 0xFF]);
+                let _ = spi.try_write(&[0xFF, 0xFF, 0xFF, 0xFF]);
             }
         }
     }

@@ -33,7 +33,7 @@ fn main() -> ! {
                 // The write method sends the specified address and checks for acknowledgement;
                 // if no ack is given by the slave device the result is Err(), otherwise Ok()
                 // Since we only care for an acknowledgement the data sent can be empty
-                if i2c.write(add, &[]).is_ok() {
+                if i2c.try_write(add, &[]).is_ok() {
                     _devices += 1;
                 }
             }

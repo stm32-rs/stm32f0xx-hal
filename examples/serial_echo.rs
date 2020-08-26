@@ -28,10 +28,10 @@ fn main() -> ! {
 
         loop {
             // Wait for reception of a single byte
-            let received = nb::block!(serial.read()).unwrap();
+            let received = nb::block!(serial.try_read()).unwrap();
 
             // Send back previously received byte and wait for completion
-            nb::block!(serial.write(received)).ok();
+            nb::block!(serial.try_write(received)).ok();
         }
     }
 

@@ -26,6 +26,7 @@
 //! ```
 
 use cast::{u16, u32};
+use core::convert::Infallible;
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
@@ -60,35 +61,45 @@ impl Delay {
 }
 
 impl DelayMs<u32> for Delay {
+    type Error = Infallible;
+
     // At 48 MHz (the maximum frequency), calling delay_us with ms * 1_000 directly overflows at 0x15D86 (just over the max u16 value)
     // So we implement a separate, higher level, delay loop
-    fn delay_ms(&mut self, mut ms: u32) {
+    fn try_delay_ms(&mut self, mut ms: u32) -> Result<(), Self::Error> {
         const MAX_MS: u32 = 0x0000_FFFF;
         while ms != 0 {
             let current_ms = if ms <= MAX_MS { ms } else { MAX_MS };
-            self.delay_us(current_ms * 1_000);
+            self.try_delay_us(current_ms * 1_000)?;
             ms -= current_ms;
         }
+
+        Ok(())
     }
 }
 
 impl DelayMs<u16> for Delay {
-    fn delay_ms(&mut self, ms: u16) {
+    type Error = Infallible;
+
+    fn try_delay_ms(&mut self, ms: u16) -> Result<(), Self::Error> {
         // Call delay_us directly, so we don't have to use the additional
         // delay loop the u32 variant uses
-        self.delay_us(u32(ms) * 1_000);
+        self.try_delay_us(u32(ms) * 1_000)
     }
 }
 
 impl DelayMs<u8> for Delay {
-    fn delay_ms(&mut self, ms: u8) {
-        self.delay_ms(u16(ms));
+    type Error = Infallible;
+
+    fn try_delay_ms(&mut self, ms: u8) -> Result<(), Self::Error> {
+        self.try_delay_ms(u16(ms))
     }
 }
 
 // At 48MHz (the maximum frequency), this overflows at approx. 2^32 / 48 = 89 seconds
 impl DelayUs<u32> for Delay {
-    fn delay_us(&mut self, us: u32) {
+    type Error = Infallible;
+
+    fn try_delay_us(&mut self, us: u32) -> Result<(), Self::Error> {
         // The SysTick Reload Value register supports values between 1 and 0x00FFFFFF.
         // Here less than maximum is used so we have some play if there's a long running interrupt.
         const MAX_TICKS: u32 = 0x007F_FFFF;
@@ -109,17 +120,23 @@ impl DelayUs<u32> for Delay {
             // from 0 to 0xFFFF
             while (start_count.wrapping_sub(SYST::get_current()) % SYSTICK_RANGE) < current_ticks {}
         }
+
+        Ok(())
     }
 }
 
 impl DelayUs<u16> for Delay {
-    fn delay_us(&mut self, us: u16) {
-        self.delay_us(u32(us))
+    type Error = Infallible;
+
+    fn try_delay_us(&mut self, us: u16) -> Result<(), Self::Error> {
+        self.try_delay_us(u32(us))
     }
 }
 
 impl DelayUs<u8> for Delay {
-    fn delay_us(&mut self, us: u8) {
-        self.delay_us(u32(us))
+    type Error = Infallible;
+
+    fn try_delay_us(&mut self, us: u8) -> Result<(), Self::Error> {
+        self.try_delay_us(u32(us))
     }
 }

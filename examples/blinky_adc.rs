@@ -33,9 +33,9 @@ fn main() -> ! {
         let mut adc = Adc::new(p.ADC, &mut rcc);
 
         loop {
-            led.toggle().ok();
+            led.try_toggle().ok();
 
-            let time: u16 = if let Ok(val) = adc.read(&mut an_in) as Result<u16, _> {
+            let time: u16 = if let Ok(val) = adc.try_read(&mut an_in) as Result<u16, _> {
                 /* shift the value right by 3, same as divide by 8, reduces
                 the 0-4095 range into something approximating 1-512 */
                 (val >> 3) + 1
@@ -43,7 +43,7 @@ fn main() -> ! {
                 1000
             };
 
-            delay.delay_ms(time);
+            delay.try_delay_ms(time).ok();
         }
     }
 

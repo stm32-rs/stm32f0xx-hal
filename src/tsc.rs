@@ -7,7 +7,7 @@
 //! usually comprised between 47nF and 100nF. These values are given as reference for an
 //! electrode fitting a human finger tip size across a few millimeters dielectric panel.
 
-use crate::gpio::{gpioa, gpiob, Alternate, AF3};
+use crate::gpio::*;
 use crate::pac::TSC;
 use crate::rcc::Rcc;
 
@@ -66,11 +66,33 @@ tsc_pins!(
     gpioa::PA7<Alternate<AF3>> => (2_u8, 4_u8),
 );
 
+// all with a TSC minus 42 and 48
+#[cfg(any(
+    feature = "stm32f051",
+    feature = "stm32f058",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098"
+))]
+tsc_pins!( gpioc::PC5<Alternate<AF0>> => (3_u8, 1_u8) );
+
 tsc_pins!(
     gpiob::PB0<Alternate<AF3>> => (3_u8, 2_u8),
     gpiob::PB1<Alternate<AF3>> => (3_u8, 3_u8),
-    gpiob::PB2<Alternate<AF3>> => (3_u8, 4_u8),
 );
+
+// all with a TCS minus 58, 78 and 98
+#[cfg(any(
+    feature = "stm32f042",
+    feature = "stm32f048",
+    feature = "stm32f051",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f091"
+))]
+tsc_pins!( gpiob::PB2<Alternate<AF3>> => (3_u8, 4_u8) );
 
 tsc_pins!(
     gpioa::PA9<Alternate<AF3>> => (4_u8, 1_u8),
@@ -84,6 +106,53 @@ tsc_pins!(
     gpiob::PB4<Alternate<AF3>> => (5_u8, 2_u8),
     gpiob::PB6<Alternate<AF3>> => (5_u8, 3_u8),
     gpiob::PB7<Alternate<AF3>> => (5_u8, 4_u8),
+);
+
+// all with a TSC minus 42 and 48
+#[cfg(any(
+    feature = "stm32f051",
+    feature = "stm32f058",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098"
+))]
+tsc_pins!(
+    gpiob::PB11<Alternate<AF3>> => (6_u8, 1_u8),
+    gpiob::PB12<Alternate<AF3>> => (6_u8, 2_u8),
+    gpiob::PB13<Alternate<AF3>> => (6_u8, 3_u8),
+    gpiob::PB14<Alternate<AF3>> => (6_u8, 4_u8),
+);
+
+// all with a TSC and gpioe
+#[cfg(any(
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098"
+))]
+tsc_pins!(
+    gpioe::PE2<Alternate<AF3>> => (7_u8, 1_u8),
+    gpioe::PE3<Alternate<AF3>> => (7_u8, 2_u8),
+    gpioe::PE4<Alternate<AF3>> => (7_u8, 3_u8),
+    gpioe::PE5<Alternate<AF3>> => (7_u8, 4_u8),
+);
+
+// all with a TSC and gpiod
+#[cfg(any(
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098"
+))]
+tsc_pins!(
+    gpiod::PD12<Alternate<AF3>> => (8_u8, 1_u8),
+    gpiod::PD13<Alternate<AF3>> => (8_u8, 2_u8),
+    gpiod::PD14<Alternate<AF3>> => (8_u8, 3_u8),
+    gpiod::PD15<Alternate<AF3>> => (8_u8, 4_u8),
 );
 
 pub struct Tsc {

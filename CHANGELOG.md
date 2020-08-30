@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 - Simplify USB PA11/12 remapping for STM32F042x via `usb_bus.usb_remap()` function.
+- Complete the `TscPin` trait implementation for all touch pins in the f0 family
 
 ## [v0.17.0] - 2020-06-27
 

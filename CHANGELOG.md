@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.17.1] - 2020-08-30
+
+### Changed
+
 - Simplify USB PA11/12 remapping for STM32F042x via `usb_bus.usb_remap()` function.
+
+### Added
+
 - Complete the `TscPin` trait implementation for all touch pins in the f0 family
 
 ## [v0.17.0] - 2020-06-27
@@ -207,7 +214,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated stm32f0 dependency to v0.5.0.
 - Interrupt handler to new #[interrupt] attribute
 
-[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.17.1...HEAD
+[v0.17.1]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.17.0...v0.17.1
 [v0.17.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.16.0...v0.17.0
 [v0.16.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.15.2...v0.16.0
 [v0.15.2]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.15.1...v0.15.2

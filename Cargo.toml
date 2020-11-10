@@ -36,6 +36,7 @@ cortex-m = "0.6"
 embedded-hal = { version = "0.2", features = ["unproven"] }
 stm32f0 = "0.12.1"
 nb = "1.0"
+embedded-dma = "0.1.2"
 void = { version = "1.0", default-features = false }
 stm32-usbd = { version = "0.5.1", features = ["ram_access_2x16"], optional = true }
 

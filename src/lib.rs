@@ -86,6 +86,12 @@ pub mod usb;
 #[cfg(feature = "device-selected")]
 pub mod watchdog;
 
+// TODO other controllers have CAN
+#[cfg(any(
+    feature = "stm32f091",
+))]
+pub mod can;
+
 #[cfg(feature = "device-selected")]
 #[deprecated(since = "0.17.0", note = "please use `pac` instead")]
 pub use pac as stm32;

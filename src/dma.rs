@@ -27,8 +27,8 @@ pub enum Half {
 }
 
 pub struct CircBuffer<BUFFER, PAYLOAD>
-    where
-        BUFFER: 'static,
+where
+    BUFFER: 'static,
 {
     buffer: &'static mut [BUFFER; 2],
     payload: PAYLOAD,
@@ -36,9 +36,9 @@ pub struct CircBuffer<BUFFER, PAYLOAD>
 }
 
 impl<BUFFER, PAYLOAD> CircBuffer<BUFFER, PAYLOAD>
-    where
-        &'static mut [BUFFER; 2]: StaticWriteBuffer,
-        BUFFER: 'static,
+where
+    &'static mut [BUFFER; 2]: StaticWriteBuffer,
+    BUFFER: 'static,
 {
     pub(crate) fn new(buf: &'static mut [BUFFER; 2], payload: PAYLOAD) -> Self {
         CircBuffer {
@@ -61,8 +61,8 @@ pub trait TransferPayload {
 }
 
 pub struct Transfer<MODE, BUFFER, PAYLOAD>
-    where
-        PAYLOAD: TransferPayload,
+where
+    PAYLOAD: TransferPayload,
 {
     _mode: PhantomData<MODE>,
     buffer: BUFFER,
@@ -70,8 +70,8 @@ pub struct Transfer<MODE, BUFFER, PAYLOAD>
 }
 
 impl<BUFFER, PAYLOAD> Transfer<R, BUFFER, PAYLOAD>
-    where
-        PAYLOAD: TransferPayload,
+where
+    PAYLOAD: TransferPayload,
 {
     pub(crate) fn r(buffer: BUFFER, payload: PAYLOAD) -> Self {
         Transfer {
@@ -83,8 +83,8 @@ impl<BUFFER, PAYLOAD> Transfer<R, BUFFER, PAYLOAD>
 }
 
 impl<BUFFER, PAYLOAD> Transfer<W, BUFFER, PAYLOAD>
-    where
-        PAYLOAD: TransferPayload,
+where
+    PAYLOAD: TransferPayload,
 {
     pub(crate) fn w(buffer: BUFFER, payload: PAYLOAD) -> Self {
         Transfer {
@@ -96,8 +96,8 @@ impl<BUFFER, PAYLOAD> Transfer<W, BUFFER, PAYLOAD>
 }
 
 impl<MODE, BUFFER, PAYLOAD> Drop for Transfer<MODE, BUFFER, PAYLOAD>
-    where
-        PAYLOAD: TransferPayload,
+where
+    PAYLOAD: TransferPayload,
 {
     fn drop(&mut self) {
         self.payload.stop();
@@ -126,8 +126,8 @@ macro_rules! dma {
             pub mod $dmaX {
                 use core::{sync::atomic::{self, Ordering}, ptr, mem};
 
-                use stm32f0xx_hal::pac::{$DMAX, dma1};
-                use stm32f0xx_hal::rcc::Rcc;
+                use crate::pac::{$DMAX, dma1};
+                use crate::rcc::Rcc;
 
                 use crate::dma::{CircBuffer, DmaExt, Error, Event, Half, Transfer, W, RxDma, TxDma, TransferPayload};
 
@@ -145,7 +145,7 @@ macro_rules! dma {
                         ///
                         /// `inc` indicates whether the address will be incremented after every byte transfer
                         pub fn set_peripheral_address(&mut self, address: u32, inc: bool) {
-                            self.ch().par.write(|w| w.pa().bits(address) );
+                            self.ch().par.write(|w| unsafe { w.pa().bits(address) } );
                             self.ch().cr.modify(|_, w| w.pinc().bit(inc) );
                         }
 
@@ -153,7 +153,7 @@ macro_rules! dma {
                         ///
                         /// `inc` indicates whether the address will be incremented after every byte transfer
                         pub fn set_memory_address(&mut self, address: u32, inc: bool) {
-                            self.ch().mar.write(|w| w.ma().bits(address) );
+                            self.ch().mar.write(|w| unsafe { w.ma().bits(address) } );
                             self.ch().cr.modify(|_, w| w.minc().bit(inc) );
                         }
 
@@ -393,7 +393,7 @@ macro_rules! dma {
                     type Channels = Channels;
 
                     fn split(self, rcc: &mut Rcc) -> Channels {
-                        rcc.ahbenr.modify(|_, w| w.$dmaen().set_bit());
+                        rcc.regs.ahbenr.modify(|_, w| w.$dmaen().set_bit());
 
                         // reset the DMA control registers (stops all on-going transfers)
                         $(
@@ -409,7 +409,7 @@ macro_rules! dma {
 }
 
 dma! {
-    DMA1: (dma1, dmaen, {
+    DMA1: (dma1, dma1en, {
         C1: (
             ch1,
             htif1, tcif1,
@@ -479,28 +479,28 @@ pub trait Transmit {
 
 /// Trait for circular DMA readings from peripheral to memory.
 pub trait CircReadDma<B, RS>: Receive
-    where
-        &'static mut [B; 2]: StaticWriteBuffer<Word = RS>,
-        B: 'static,
-        Self: core::marker::Sized,
+where
+    &'static mut [B; 2]: StaticWriteBuffer<Word = RS>,
+    B: 'static,
+    Self: core::marker::Sized,
 {
     fn circ_read(self, buffer: &'static mut [B; 2]) -> CircBuffer<B, Self>;
 }
 
 /// Trait for DMA readings from peripheral to memory.
 pub trait ReadDma<B, RS>: Receive
-    where
-        B: StaticWriteBuffer<Word = RS>,
-        Self: core::marker::Sized + TransferPayload,
+where
+    B: StaticWriteBuffer<Word = RS>,
+    Self: core::marker::Sized + TransferPayload,
 {
     fn read(self, buffer: B) -> Transfer<W, B, Self>;
 }
 
 /// Trait for DMA writing from memory to peripheral.
 pub trait WriteDma<B, TS>: Transmit
-    where
-        B: StaticReadBuffer<Word = TS>,
-        Self: core::marker::Sized + TransferPayload,
+where
+    B: StaticReadBuffer<Word = TS>,
+    Self: core::marker::Sized + TransferPayload,
 {
     fn write(self, buffer: B) -> Transfer<R, B, Self>;
 }

@@ -2,9 +2,10 @@ use super::pac;
 use super::pac::can::TX;
 use crate::gpio::gpiob::{PB8, PB9};
 use crate::gpio::{Alternate, AF4};
+use crate::rcc::Rcc;
 
 pub struct CANBus {
-    can: stm32::CAN,
+    can: pac::CAN,
     _rx: PB8<Alternate<AF4>>,
     _tx: PB9<Alternate<AF4>>,
 }
@@ -15,17 +16,20 @@ pub enum Event {
 
 impl CANBus {
     // TODO add setting of pins the same way as done in other peripherals
-    pub fn new(can: pac::CAN, rx: PB8<Alternate<AF4>>, tx: PB9<Alternate<AF4>>) -> Self {
-        unsafe {
-            let rcc = &(*stm32::RCC::ptr());
-            rcc.apb1enr.modify(|_, w| w.canen().enabled());
-            rcc.apb1rstr.modify(|_, w| w.canrst().reset());
-            rcc.apb1rstr.modify(|_, w| w.canrst().clear_bit());
-        }
+    pub fn new(
+        can: pac::CAN,
+        rx: PB8<Alternate<AF4>>,
+        tx: PB9<Alternate<AF4>>,
+        rcc: &mut Rcc,
+    ) -> Self {
+        rcc.regs.apb1enr.modify(|_, w| w.canen().enabled());
+        rcc.regs.apb1rstr.modify(|_, w| w.canrst().reset());
+        rcc.regs.apb1rstr.modify(|_, w| w.canrst().clear_bit());
 
         can.mcr.write(|w| w.sleep().clear_bit());
         can.mcr.modify(|_, w| w.inrq().set_bit());
         while !can.msr.read().inak().bit() {}
+
         can.mcr.modify(|_, w| {
             w.ttcm()
                 .clear_bit() // no time triggered communication
@@ -141,8 +145,7 @@ impl CANBus {
     pub fn read(&self) -> nb::Result<CANFrame, CANError> {
         for (i, rfr) in self.can.rfr.iter().enumerate() {
             let pending = rfr.read().fmp().bits();
-
-            for _ in 0..pending {
+            if pending > 0 {
                 let rx = &self.can.rx[i];
                 let id = rx.rir.read().stid().bits();
                 let rtr = rx.rir.read().rtr().bit_is_set();

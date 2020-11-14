@@ -30,20 +30,20 @@ features = ["stm32f042", "rt", "stm32-usbd"]
 targets = ["thumbv6m-none-eabi"]
 
 [dependencies]
-bare-metal = { version = "0.2", features = ["const-fn"] }
+bare-metal = { version = "1.0.0" }
 cast = { version = "0.2", default-features = false }
 cortex-m = "0.6"
 embedded-hal = { version = "0.2", features = ["unproven"] }
-stm32f0 = "0.11"
-nb = "0.1"
+stm32f0 = "0.12.1"
+nb = "1.0"
 void = { version = "1.0", default-features = false }
-stm32-usbd = { version = "0.5.0", features = ["ram_access_2x16"], optional = true }
+stm32-usbd = { version = "0.5.1", features = ["ram_access_2x16"], optional = true }
 
 [dev-dependencies]
 cortex-m-rt = "0.6"
 panic-halt = "0.2"
-usb-device = "0.2.3"
-usbd-serial = "0.1.0"
+usb-device = "0.2.7"
+usbd-serial = "0.1.1"
 
 [features]
 device-selected = []

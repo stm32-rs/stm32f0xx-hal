@@ -1,5 +1,5 @@
-use super::pac::can::TX;
 use super::pac;
+use super::pac::can::TX;
 use crate::gpio::gpiob::{PB8, PB9};
 use crate::gpio::{Alternate, AF4};
 

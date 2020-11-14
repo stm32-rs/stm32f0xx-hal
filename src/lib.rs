@@ -44,8 +44,6 @@ pub mod gpio;
 #[cfg(feature = "device-selected")]
 pub mod i2c;
 #[cfg(feature = "device-selected")]
-pub mod i2c_slave;
-#[cfg(feature = "device-selected")]
 pub mod prelude;
 #[cfg(feature = "device-selected")]
 pub mod rcc;
@@ -86,9 +84,9 @@ pub mod usb;
 #[cfg(feature = "device-selected")]
 pub mod watchdog;
 
-// TODO other controllers have CAN
-#[cfg(any(
-    feature = "stm32f091",
+#[cfg(all(
+    feature = "device-selected",
+    any(feature = "stm32f091", feature = "stm32f042", feature = "stm32f072",)
 ))]
 pub mod can;
 

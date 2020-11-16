@@ -1,27 +1,49 @@
 use super::pac;
 use super::pac::can::TX;
+use crate::gpio::gpioa::{PA11, PA12};
 use crate::gpio::gpiob::{PB8, PB9};
 use crate::gpio::{Alternate, AF4};
 use crate::rcc::Rcc;
 
-pub struct CANBus {
+pub trait RxPin {}
+pub trait TxPin {}
+
+macro_rules! can_pins {
+    (
+        rx => [$($rx:ty),+ $(,)*],
+        tx => [$($tx:ty),+ $(,)*],
+    ) => {
+        $(
+            impl RxPin for $rx {}
+        )+
+        $(
+            impl TxPin for $tx {}
+        )+
+    };
+}
+
+#[cfg(any(feature = "stm32f042", feature = "stm32f072", feature = "stm32f091"))]
+can_pins! {
+    rx => [PA11<Alternate<AF4>>, PB8<Alternate<AF4>>],
+    tx => [PA12<Alternate<AF4>>, PB9<Alternate<AF4>>],
+}
+
+pub struct CANBus<RX_PIN, TX_PIN> {
     can: pac::CAN,
-    _rx: PB8<Alternate<AF4>>,
-    _tx: PB9<Alternate<AF4>>,
+    _rx: RX_PIN,
+    _tx: TX_PIN,
 }
 
 pub enum Event {
     RxMessagePending,
 }
 
-impl CANBus {
-    // TODO add setting of pins the same way as done in other peripherals
-    pub fn new(
-        can: pac::CAN,
-        rx: PB8<Alternate<AF4>>,
-        tx: PB9<Alternate<AF4>>,
-        rcc: &mut Rcc,
-    ) -> Self {
+impl<RX_PIN, TX_PIN> CANBus<RX_PIN, TX_PIN>
+where
+    RX_PIN: RxPin,
+    TX_PIN: TxPin,
+{
+    pub fn new(can: pac::CAN, rx: RX_PIN, tx: TX_PIN, rcc: &mut Rcc) -> Self {
         rcc.regs.apb1enr.modify(|_, w| w.canen().enabled());
         rcc.regs.apb1rstr.modify(|_, w| w.canrst().reset());
         rcc.regs.apb1rstr.modify(|_, w| w.canrst().clear_bit());

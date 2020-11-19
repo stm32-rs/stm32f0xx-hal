@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+- Add CAN bus abstraction.
+
 ## [v0.17.1] - 2020-08-30
 
 ### Changed

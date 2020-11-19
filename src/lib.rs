@@ -84,6 +84,12 @@ pub mod usb;
 #[cfg(feature = "device-selected")]
 pub mod watchdog;
 
+#[cfg(all(
+    feature = "device-selected",
+    any(feature = "stm32f091", feature = "stm32f042", feature = "stm32f072",)
+))]
+pub mod can;
+
 #[cfg(feature = "device-selected")]
 #[deprecated(since = "0.17.0", note = "please use `pac` instead")]
 pub use pac as stm32;

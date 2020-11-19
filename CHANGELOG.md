@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+- Remove dependency on MSRV.
+
 ## [v0.17.1] - 2020-08-30
 
 ### Changed

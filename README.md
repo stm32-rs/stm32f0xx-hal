@@ -58,8 +58,7 @@ If you are unfamiliar with embedded development using Rust, there are a number o
 Minimum supported Rust version
 ------------------------------
 
-We have decided not to yet commit to a specific minimum supported Rust version as this HAL is still under development and committing to MSRV would be premature.
-Once the HAL stabilizes, a proper MSRV will be published.
+The minimum supported Rust version is the latest stable release. Older versions may compile, especially when some features are not used in your application.
 
 Changelog
 ---------

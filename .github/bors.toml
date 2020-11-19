@@ -4,5 +4,4 @@ delete_merged_branches = true
 status = [
     "Rustfmt",
     "ci (stable)",
-    "ci (1.39.0, stable)",
 ]

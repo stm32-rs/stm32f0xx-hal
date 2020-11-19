@@ -12,7 +12,6 @@ jobs:
       matrix:
         rust:
           - stable
-          - 1.39.0  # MSRV
         include:
           - rust: nightly
             experimental: true

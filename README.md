@@ -58,9 +58,7 @@ If you are unfamiliar with embedded development using Rust, there are a number o
 Minimum supported Rust version
 ------------------------------
 
-The minimum supported Rust version at the moment is **1.39.0**. Older versions
-**may** compile, especially when some features are not used in your
-application.
+The minimum supported Rust version is the latest stable release. Older versions may compile, especially when some features are not used in your application.
 
 Changelog
 ---------

@@ -46,10 +46,10 @@ unsafe impl UsbPeripheral for Peripheral {
     }
 }
 
+/// Remap PA11/PA12 pins to PA09/PA10 for USB on
+/// TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages
 pub fn remap_pins(rcc: &mut RCC, syscfg: &mut SYSCFG) {
     cortex_m::interrupt::free(|_| {
-        // Remap PA11/PA12 pins to PA09/PA10 for USB on
-        // TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) packages
         rcc.apb2enr.modify(|_, w| w.syscfgen().set_bit());
         syscfg.cfgr1.modify(|_, w| w.pa11_pa12_rmp().remapped());
     });

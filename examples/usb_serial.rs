@@ -15,6 +15,15 @@ use usbd_serial::{SerialPort, USB_CLASS_CDC};
 fn main() -> ! {
     let mut dp = pac::Peripherals::take().unwrap();
 
+    /*
+     * IMPORTANT: if you have a chip in TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) package,
+     * and want to use USB, make sure you call `remap_pins(rcc, syscfg)`, otherwise the device will not enumerate.
+     *
+     * Uncomment the following function if the situation above applies to you.
+     */
+
+    // stm32f0xx_hal::usb::remap_pins(&mut dp.RCC, &mut dp.SYSCFG);
+
     let mut rcc = dp
         .RCC
         .configure()
@@ -40,15 +49,6 @@ fn main() -> ! {
     let usb_bus = UsbBus::new(usb);
 
     let mut serial = SerialPort::new(&usb_bus);
-
-    /*
-     * IMPORTANT: if you have a chip in TSSOP20 (STM32F042F) or UFQFPN28 (STM32F042G) package,
-     * and want to use USB, make sure you call `remap_pins(rcc, syscfg)`, otherwise the device will not enumerate.
-     *
-     * Uncomment the following function if the situation above applies to you.
-     */
-
-    //usb_bus.remap_pins();
 
     let mut usb_dev = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x16c0, 0x27dd))
         .manufacturer("Fake company")

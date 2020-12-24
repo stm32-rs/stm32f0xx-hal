@@ -481,6 +481,13 @@ where
             bufcap -= 1;
         }
 
+        loop {
+            let sr = self.spi.sr.read();
+            if !sr.bsy().bit_is_set() {
+                break;
+            }
+        }
+
         // Do one last status register check before continuing
         self.check_send().ok();
         Ok(())
@@ -523,6 +530,13 @@ where
         for word in words {
             nb::block!(self.check_send())?;
             self.send_u16(word.clone());
+        }
+
+        loop {
+            let sr = self.spi.sr.read();
+            if !sr.bsy().bit_is_set() {
+                break;
+            }
         }
 
         // Do one last status register check before continuing

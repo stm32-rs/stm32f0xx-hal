@@ -1,5 +1,6 @@
-use super::i2c::{SclPin, SdaPin};
-use super::pac::I2C1;
+use crate::i2c::{SclPin, SdaPin};
+use crate::rcc::Rcc;
+use core::ops::Deref;
 
 #[derive(PartialEq)]
 pub enum TransferState {
@@ -18,16 +19,15 @@ pub enum State {
 
 const BUFFER_SIZE: usize = 32;
 
-pub struct I2CSlave<SDA, SCL> {
-    i2c: I2C1,
+pub struct I2CSlave<I2C, SCL, SDA> {
+    i2c: I2C,
     transfer_buffer: [u8; BUFFER_SIZE],
     transfer_len: usize,
     buffer_index: usize,
     register: u8,
     transfer_state: TransferState,
     state: Option<State>,
-    _sda: SDA,
-    _scl: SCL,
+    pins: (SCL, SDA),
 }
 
 // direction as specified in the datasheet
@@ -71,18 +71,69 @@ pub enum Status {
     TxEmpty,
 }
 
-impl<SDA, SCL> I2CSlave<SDA, SCL>
-where
-    SDA: SdaPin<I2C1>,
-    SCL: SclPin<I2C1>,
-{
-    pub fn new(i2c: I2C1, address: u8, sda: SDA, scl: SCL) -> Self {
-        let rcc = unsafe { &(*stm32f0xx_hal::pac::RCC::ptr()) };
-        rcc.apb1enr.modify(|_, w| w.i2c1en().enabled());
-        rcc.apb1rstr.modify(|_, w| w.i2c1rst().set_bit());
-        rcc.apb1rstr.modify(|_, w| w.i2c1rst().clear_bit());
+pub use crate::i2c;
 
-        i2c.cr1.write(|w| {
+macro_rules! i2c_slave {
+    ($($I2C:ident: ($i2c_slave:ident, $i2cXen:ident, $i2cXrst:ident, $apbenr:ident, $apbrstr:ident),)+) => {
+        $(
+            use crate::pac::$I2C;
+            impl<SCLPIN, SDAPIN> I2CSlave<$I2C, SCLPIN, SDAPIN> {
+                pub fn $i2c_slave(i2c: $I2C, pins: (SCLPIN, SDAPIN), address: u8, rcc: &mut Rcc) -> Self
+                where
+                    SCLPIN: SclPin<$I2C>,
+                    SDAPIN: SdaPin<$I2C>,
+                {
+                    // Enable clock for I2C
+                    rcc.regs.$apbenr.modify(|_, w| w.$i2cXen().set_bit());
+
+                    // Reset I2C
+                    rcc.regs.$apbrstr.modify(|_, w| w.$i2cXrst().set_bit());
+                    rcc.regs.$apbrstr.modify(|_, w| w.$i2cXrst().clear_bit());
+                    I2CSlave {
+                        i2c,
+                        transfer_buffer: [0u8; BUFFER_SIZE],
+                        transfer_len: 0,
+                        buffer_index: 0,
+                        register: 0,
+                        transfer_state: TransferState::Idle,
+                        state: None,
+                        pins
+                    }.i2c_init(address)
+                }
+            }
+        )+
+    }
+}
+
+i2c_slave! {
+    I2C1: (i2c1_slave, i2c1en, i2c1rst, apb1enr, apb1rstr),
+}
+
+#[cfg(any(
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+    feature = "stm32f051",
+    feature = "stm32f058",
+    feature = "stm32f070xb",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
+i2c_slave! {
+    I2C2: (i2c2_slave, i2c2en, i2c2rst, apb1enr, apb1rstr),
+}
+// It's s needed for the impls, but rustc doesn't recognize that
+#[allow(dead_code)]
+type I2cRegisterBlock = crate::pac::i2c1::RegisterBlock;
+
+impl<I2C, SCL, SDA> I2CSlave<I2C, SCL, SDA>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    fn i2c_init(self, address: u8) -> Self {
+        self.i2c.cr1.write(|w| {
             w.nostretch()
                 .enabled() // enable clock stretching
                 .anfoff()
@@ -105,7 +156,7 @@ where
 
         // TODO set up timing for nostretch mode
         // let scll = cmp::max((((48_000_000 >> 1) >> 1) / KiloHertz(100).0) - 1, 255) as u8;
-        // i2c.timingr.write(|w| {
+        // self.i2c.timingr.write(|w| {
         //     w.presc()
         //         .bits(1)
         //         .scldel()
@@ -118,7 +169,7 @@ where
         //         .bits(scll)
         // });
 
-        i2c.oar1.write(|w| {
+        self.i2c.oar1.write(|w| {
             w.oa1en()
                 .enabled()
                 .oa1()
@@ -127,21 +178,10 @@ where
                 .bit7()
         });
 
-        i2c.cr1.modify(
+        self.i2c.cr1.modify(
             |_, w| w.pe().enabled(), // enable peripheral
         );
-
-        I2CSlave {
-            i2c,
-            transfer_buffer: [0u8; BUFFER_SIZE],
-            transfer_len: 0,
-            buffer_index: 0,
-            register: 0,
-            transfer_state: TransferState::Idle,
-            state: None,
-            _sda: sda,
-            _scl: scl,
-        }
+        self
     }
 
     pub fn is_status(&self, status: Status, clear: bool) -> bool {
@@ -379,5 +419,9 @@ where
 
     pub fn get_state(&self) -> Option<State> {
         self.state
+    }
+
+    pub fn release(self) -> (I2C, (SCL, SDA)) {
+        (self.i2c, self.pins)
     }
 }

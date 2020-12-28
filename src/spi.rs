@@ -400,7 +400,7 @@ where
             nb::Error::Other(Error::ModeFault)
         } else if sr.crcerr().bit_is_set() {
             nb::Error::Other(Error::Crc)
-        } else if sr.txe().bit_is_set() {
+        } else if sr.txe().bit_is_set() && sr.bsy().bit_is_clear() {
             return Ok(());
         } else {
             nb::Error::WouldBlock
@@ -481,15 +481,8 @@ where
             bufcap -= 1;
         }
 
-        loop {
-            let sr = self.spi.sr.read();
-            if !sr.bsy().bit_is_set() {
-                break;
-            }
-        }
-
         // Do one last status register check before continuing
-        self.check_send().ok();
+        nb::block!(self.check_send()).ok();
         Ok(())
     }
 }
@@ -532,15 +525,8 @@ where
             self.send_u16(word.clone());
         }
 
-        loop {
-            let sr = self.spi.sr.read();
-            if !sr.bsy().bit_is_set() {
-                break;
-            }
-        }
-
         // Do one last status register check before continuing
-        self.check_send().ok();
+        nb::block!(self.check_send()).ok();
         Ok(())
     }
 }

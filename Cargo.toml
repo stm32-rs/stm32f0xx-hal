@@ -38,7 +38,7 @@ stm32f0 = "0.12.1"
 nb = "1.0"
 void = { version = "1.0", default-features = false }
 stm32-usbd = { version = "0.5.1", features = ["ram_access_2x16"], optional = true }
-bxcan = "0.2.0"
+bxcan = "0.4.0"
 
 [dev-dependencies]
 cortex-m-rt = "0.6"

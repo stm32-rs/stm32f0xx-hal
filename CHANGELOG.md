@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-- Add CAN bus abstraction.
+- Add CAN bus abstraction based on the [bxcan] crate.
+
+[bxcan]: https://crates.io/crates/bxcan
 
 ## [v0.17.1] - 2020-08-30
 

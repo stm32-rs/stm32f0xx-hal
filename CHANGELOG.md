@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+=======
+### Changed
+
+- Updated stm32f0 dependency to v0.13 (breaking change)
+- Move SPI busy polling to `check_send()`
+- Poll for SPI transaction completion before returning
+- Update `remap_pins()` and remove critical section
+
+### Added
+
 - Add CAN bus abstraction based on the [bxcan] crate.
 
 [bxcan]: https://crates.io/crates/bxcan

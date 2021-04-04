@@ -32,12 +32,12 @@ targets = ["thumbv6m-none-eabi"]
 [dependencies]
 bare-metal = { version = "1.0.0" }
 cast = { version = "0.2", default-features = false }
-cortex-m = "0.6"
+cortex-m = "0.7"
 embedded-hal = { version = "0.2", features = ["unproven"] }
-stm32f0 = "0.12.1"
-nb = "1.0"
+stm32f0 = "0.13"
+nb = "1"
 void = { version = "1.0", default-features = false }
-stm32-usbd = { version = "0.5.1", features = ["ram_access_2x16"], optional = true }
+stm32-usbd = { version = "0.6", optional = true }
 bxcan = "0.4.0"
 
 [dev-dependencies]

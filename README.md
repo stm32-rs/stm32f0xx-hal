@@ -44,7 +44,7 @@ To use stm32f0xx-hal as a dependency in a standalone project the target device f
 [dependencies]
 cortex-m = "0.6.0"
 cortex-m-rt = "0.6.8"
-stm32f0xx-hal = {version = "0.16", features = ["stm32f030"]}
+stm32f0xx-hal = { version = "0.17", features = ["stm32f030"]}
 ```
 
 If you are unfamiliar with embedded development using Rust, there are a number of fantastic resources available to help.

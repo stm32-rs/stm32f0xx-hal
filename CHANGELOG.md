@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Add CAN bus abstraction based on the [bxcan] crate.
+- Add PWM output generation based on the timers.
 
 [bxcan]: https://crates.io/crates/bxcan
 

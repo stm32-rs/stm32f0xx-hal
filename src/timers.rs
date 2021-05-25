@@ -273,3 +273,151 @@ timers! {
 timers! {
     TIM7: (tim7, tim7en, tim7rst, apb1enr, apb1rstr),
 }
+
+use crate::gpio::{AF0, AF1, AF2, AF4, AF5};
+
+use crate::gpio::{gpioa::*, gpiob::*, Alternate};
+
+// Output channels marker traits
+pub trait PinC1<TIM> {}
+pub trait PinC2<TIM> {}
+pub trait PinC3<TIM> {}
+pub trait PinC4<TIM> {}
+
+macro_rules! channel_impl {
+    ( $( $TIM:ident, $PINC:ident, $PINX:ident, $MODE:ident<$AF:ident>; )+ ) => {
+        $(
+            impl $PINC<$TIM> for $PINX<$MODE<$AF>> {}
+        )+
+    };
+}
+
+channel_impl!(
+    TIM1, PinC1, PA8, Alternate<AF2>;
+    TIM1, PinC2, PA9, Alternate<AF2>;
+    TIM1, PinC3, PA10, Alternate<AF2>;
+    TIM1, PinC4, PA11, Alternate<AF2>;
+
+    TIM3, PinC1, PA6, Alternate<AF1>;
+    TIM3, PinC2, PA7, Alternate<AF1>;
+
+    TIM3, PinC1, PB4, Alternate<AF1>;
+    TIM3, PinC2, PB5, Alternate<AF1>;
+    TIM3, PinC3, PB0, Alternate<AF1>;
+    TIM3, PinC4, PB1, Alternate<AF1>;
+
+
+    TIM14, PinC1, PA4, Alternate<AF4>;
+    TIM14, PinC1, PA7, Alternate<AF4>;
+    TIM14, PinC1, PB1, Alternate<AF0>;
+
+    TIM16, PinC1, PA6, Alternate<AF5>;
+    TIM16, PinC1, PB8, Alternate<AF2>;
+
+    TIM17, PinC1, PA7, Alternate<AF5>;
+    TIM17, PinC1, PB9, Alternate<AF2>;
+);
+
+#[cfg(any(
+    feature = "stm32f030x8",
+    feature = "stm32f030xc",
+    feature = "stm32f051",
+    feature = "stm32f058",
+    feature = "stm32f070xb",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
+channel_impl!(
+    TIM15, PinC1, PA2, Alternate<AF0>;
+    TIM15, PinC2, PA3, Alternate<AF0>;
+
+    TIM15, PinC1, PB14, Alternate<AF1>;
+    TIM15, PinC2, PB15, Alternate<AF1>;
+);
+
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f051",
+    feature = "stm32f058",
+    feature = "stm32f070",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098"
+))]
+use crate::gpio::gpioc::*;
+
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f051",
+    feature = "stm32f058",
+    feature = "stm32f070",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098"
+))]
+channel_impl!(
+    TIM3, PinC1, PC6, Alternate<AF0>;
+    TIM3, PinC2, PC7, Alternate<AF0>;
+    TIM3, PinC3, PC8, Alternate<AF0>;
+    TIM3, PinC4, PC9, Alternate<AF0>;
+);
+
+#[cfg(any(
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098"
+))]
+use crate::gpio::gpioe::*;
+
+#[cfg(any(
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098"
+))]
+channel_impl!(
+    TIM1, PinC1, PE9, Alternate<AF0>;
+    TIM1, PinC2, PE11, Alternate<AF0>;
+    TIM1, PinC3, PE13, Alternate<AF0>;
+    TIM1, PinC4, PE14, Alternate<AF0>;
+
+    TIM3, PinC1, PE3, Alternate<AF0>;
+    TIM3, PinC2, PE4, Alternate<AF0>;
+    TIM3, PinC3, PE5, Alternate<AF0>;
+    TIM3, PinC4, PE6, Alternate<AF0>;
+
+    TIM16, PinC1, PE0, Alternate<AF0>;
+
+    TIM17, PinC1, PE1, Alternate<AF0>;
+);
+
+#[cfg(any(
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
+use crate::gpio::gpiof::*;
+
+#[cfg(any(
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
+channel_impl!(
+    TIM15, PinC1, PF9, Alternate<AF0>;
+    TIM15, PinC2, PF10, Alternate<AF0>;
+);

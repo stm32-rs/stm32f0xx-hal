@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Update `remap_pins()` and remove critical section
 - Updated `stm32f0` peripheral access crate from 0.13 to 0.14
 - Address a few clippy lints
+- Fix `VTemp::convert_temp()`
 
 ### Added
 

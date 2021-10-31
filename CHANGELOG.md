@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Move SPI busy polling to `check_send()`
 - Poll for SPI transaction completion before returning
 - Update `remap_pins()` and remove critical section
+- Updated `stm32f0` peripheral access crate from 0.13 to 0.14
 
 ### Added
 

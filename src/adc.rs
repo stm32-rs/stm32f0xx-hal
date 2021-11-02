@@ -289,7 +289,7 @@ impl VTemp {
     /// Otherwise it will approximate the required delay using ADC reads.
     pub fn read(adc: &mut Adc, delay: Option<&mut Delay>) -> i16 {
         let mut vtemp = Self::new();
-        let vtemp_preenable = vtemp.is_enabled(&adc);
+        let vtemp_preenable = vtemp.is_enabled(adc);
 
         if !vtemp_preenable {
             vtemp.enable(adc);
@@ -345,7 +345,7 @@ impl VRef {
 
         let prev_cfg = adc.default_cfg();
 
-        let vref_val: u32 = if vref.is_enabled(&adc) {
+        let vref_val: u32 = if vref.is_enabled(adc) {
             adc.read(&mut vref).unwrap()
         } else {
             vref.enable(adc);
@@ -435,7 +435,7 @@ impl VBat {
     pub fn read(adc: &mut Adc) -> u16 {
         let mut vbat = Self::new();
 
-        let vbat_val: u16 = if vbat.is_enabled(&adc) {
+        let vbat_val: u16 = if vbat.is_enabled(adc) {
             adc.read_abs_mv(&mut vbat)
         } else {
             vbat.enable(adc);

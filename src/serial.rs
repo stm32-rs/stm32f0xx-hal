@@ -71,6 +71,7 @@ use crate::{gpio::*, rcc::Rcc, time::Bps};
 use core::marker::PhantomData;
 
 /// Serial error
+#[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
     /// Framing error
@@ -81,8 +82,6 @@ pub enum Error {
     Overrun,
     /// Parity check error
     Parity,
-    #[doc(hidden)]
-    _Extensible,
 }
 
 /// Interrupt event

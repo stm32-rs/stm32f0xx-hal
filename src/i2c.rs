@@ -203,7 +203,7 @@ impl<I2C, SCLPIN, SDAPIN> I2c<I2C, SCLPIN, SDAPIN>
 where
     I2C: Deref<Target = I2cRegisterBlock>,
 {
-    fn i2c_init(self: Self, speed: KiloHertz) -> Self {
+    fn i2c_init(self, speed: KiloHertz) -> Self {
         use core::cmp;
 
         // Make sure the I2C unit is disabled so we can configure it

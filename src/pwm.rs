@@ -318,18 +318,10 @@ macro_rules! pwm_2_channels {
                 rcc.regs.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
 
                 if PINS::C1 {
-                    //NOTE(unsafe) 6 is a valid value to write to oc1m
-                    unsafe {
-                        tim.ccmr1_output()
-                            .modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
-                    }
+                    tim.ccmr1_output().modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
                 }
                 if PINS::C2 {
-                    //NOTE(unsafe) 6 is a valid value to write to oc1m
-                    unsafe {
-                        tim.ccmr1_output()
-                            .modify(|_, w| w.oc2pe().set_bit().oc1m().bits(6));
-                    }
+                    tim.ccmr1_output().modify(|_, w| w.oc2pe().set_bit().oc1m().bits(6));
                 }
 
                 // If pclk is prescaled from hclk, the frequency fed into the timers is doubled
@@ -379,7 +371,7 @@ macro_rules! pwm_2_channels {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr1().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -389,7 +381,7 @@ macro_rules! pwm_2_channels {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr1().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -408,7 +400,7 @@ macro_rules! pwm_2_channels {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr2.read().ccr2().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr2.read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -418,7 +410,7 @@ macro_rules! pwm_2_channels {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr2().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr().bits(duty.into())) }
                 }
             }
         )+
@@ -440,11 +432,7 @@ macro_rules! pwm_1_channel {
                 rcc.regs.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
 
                 if PINS::C1 {
-                    //NOTE(unsafe) 6 is a valid value to write to oc1m
-                    unsafe {
-                        tim.ccmr1_output()
-                            .modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
-                    }
+                    tim.ccmr1_output().modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
                 }
 
                 // If pclk is prescaled from hclk, the frequency fed into the timers is doubled
@@ -524,11 +512,7 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
                 rcc.regs.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
 
                 if PINS::C1 {
-                    //NOTE(unsafe) 6 is a valid value to write to oc1m
-                    unsafe {
-                        tim.ccmr1_output()
-                            .modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
-                    }
+                    tim.ccmr1_output().modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
                 }
 
                 // If pclk is prescaled from hclk, the frequency fed into the timers is doubled
@@ -579,7 +563,7 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr1().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -589,7 +573,7 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr1().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
                 }
             }
         )+

@@ -28,9 +28,11 @@ def main():
 
     crate_info = cargo_meta["packages"][0]
 
-    features = [""] + ["{},rt,stm32-usbd".format(x)
-                       for x in crate_info["features"].keys()
-                       if x != "device-selected" and x != "rt" and x != "stm32f030"]
+    features = [
+        "{},rt,stm32-usbd".format(x)
+        for x in crate_info["features"].keys()
+        if x != "device-selected" and x != "rt" and x != "stm32f030"
+    ]
 
     if 'size_check' in sys.argv:
         cargo_cmd = ['cargo', 'build', '--release']

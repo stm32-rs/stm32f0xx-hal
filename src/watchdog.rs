@@ -66,13 +66,13 @@ pub struct IwdgTimeout {
     reload: u16,
 }
 
-impl Into<IwdgTimeout> for Hertz {
+impl From<Hertz> for IwdgTimeout {
     /// This converts the value so it's usable by the IWDG
     /// Due to conversion losses, the specified frequency is a maximum
     ///
     /// It can also only represent values < 10000 Hertz
-    fn into(self) -> IwdgTimeout {
-        let mut time = 40_000 / 4 / self.0;
+    fn from(hz: Hertz) -> Self {
+        let mut time = 40_000 / 4 / hz.0;
         let mut psc = 0;
         let mut reload = 0;
         while psc < 7 {

@@ -270,19 +270,15 @@ impl VTemp {
     }
 
     fn convert_temp(vtemp: u16, vdda: u16) -> i16 {
-        let vtemp30_cal = i32::from(unsafe { ptr::read(VTEMPCAL30) }) * 100;
-        let vtemp110_cal = i32::from(unsafe { ptr::read(VTEMPCAL110) }) * 100;
-
-        let mut temperature = i32::from(vtemp) * 100;
-        temperature = (temperature * (i32::from(vdda) / i32::from(VDD_CALIB))) - vtemp30_cal;
-        temperature *= (110 - 30) * 100;
-        temperature /= vtemp110_cal - vtemp30_cal;
-        temperature += 3000;
-        temperature as i16
+        let vtemp30_cal = unsafe { ptr::read(VTEMPCAL30) } as i32;
+        let vtemp110_cal = unsafe { ptr::read(VTEMPCAL110) } as i32;
+        let raw_temp_comp = vtemp as u32 * vdda as u32 / VDD_CALIB as u32;
+        ((raw_temp_comp as i32 - vtemp30_cal) * 10 * (110 - 30) / (vtemp110_cal - vtemp30_cal)
+            + 300) as i16
     }
 
     /// Read the value of the internal temperature sensor and return the
-    /// result in 100ths of a degree centigrade.
+    /// result in 10ths of a degree centigrade.
     ///
     /// Given a delay reference it will attempt to restrict to the
     /// minimum delay needed to ensure a 10 us t<sub>START</sub> value.

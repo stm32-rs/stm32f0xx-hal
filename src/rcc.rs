@@ -58,6 +58,7 @@ pub enum HSEBypassMode {
     feature = "stm32f072",
     feature = "stm32f078",
 ))]
+#[allow(clippy::upper_case_acronyms)]
 pub enum USBClockSource {
     #[cfg(feature = "stm32f070")]
     /// USB peripheral's tranceiver is disabled
@@ -89,6 +90,7 @@ mod inner {
     ))]
     pub(super) const RCC_PLLSRC_PREDIV1_SUPPORT: bool = false;
 
+    #[allow(clippy::upper_case_acronyms)]
     pub(super) enum SysClkSource {
         HSI,
         /// High-speed external clock(freq,bypassed)
@@ -205,6 +207,7 @@ mod inner {
     ))]
     pub(super) const RCC_PLLSRC_PREDIV1_SUPPORT: bool = false;
 
+    #[allow(clippy::upper_case_acronyms)]
     pub(super) enum SysClkSource {
         HSI,
         /// High-speed external clock(freq,bypassed)

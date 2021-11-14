@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Add CAN bus abstraction based on the [bxcan] crate.
 - Add PWM output generation based on the timers.
+- Added `impl From<KiloHertz> for Hertz`
+- Added `impl From<MegaHertz> for Hertz`
+- Added `impl From<KiloHertz> for MegaHertz`
+- Added `impl From<Hertz> for IwdgTimeout`
 
 [bxcan]: https://crates.io/crates/bxcan
 

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.18.0] - 2021-11-14
+
 ### Changed
 
 - Updated stm32f0 dependency to v0.13 (breaking change)
@@ -236,7 +238,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated stm32f0 dependency to v0.5.0.
 - Interrupt handler to new #[interrupt] attribute
 
-[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.17.1...HEAD
+[Unreleased]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.18.0...HEAD
+[v0.18.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.17.1...v0.18.0
 [v0.17.1]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.17.0...v0.17.1
 [v0.17.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.16.0...v0.17.0
 [v0.16.0]: https://github.com/stm32-rs/stm32f0xx-hal/compare/v0.15.2...v0.16.0

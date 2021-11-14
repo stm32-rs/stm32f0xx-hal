@@ -23,7 +23,7 @@ license = "0BSD"
 name = "stm32f0xx-hal"
 readme = "README.md"
 repository = "https://github.com/stm32-rs/stm32f0xx-hal"
-version = "0.17.1"
+version = "0.18.0"
 
 [package.metadata.docs.rs]
 features = ["stm32f042", "rt", "stm32-usbd"]

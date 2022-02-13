@@ -31,7 +31,10 @@ def main():
     features = [
         "{},rt,stm32-usbd".format(x)
         for x in crate_info["features"].keys()
-        if x != "device-selected" and x != "rt" and x != "stm32f030"
+        if x != "device-selected"
+        and x != "rt"
+        and x != "stm32f030"
+        and x != "stm32-usbd"
     ]
 
     if 'size_check' in sys.argv:

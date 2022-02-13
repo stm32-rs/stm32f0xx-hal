@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Wrong mode when using PWM channel 2 of a two-channel timer
+
 ## [v0.18.0] - 2021-11-14
 
 ### Changed

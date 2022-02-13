@@ -321,7 +321,7 @@ macro_rules! pwm_2_channels {
                     tim.ccmr1_output().modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
                 }
                 if PINS::C2 {
-                    tim.ccmr1_output().modify(|_, w| w.oc2pe().set_bit().oc1m().bits(6));
+                    tim.ccmr1_output().modify(|_, w| w.oc2pe().set_bit().oc2m().bits(6));
                 }
 
                 // If pclk is prescaled from hclk, the frequency fed into the timers is doubled

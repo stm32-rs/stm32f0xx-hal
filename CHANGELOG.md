@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Updated the `cast` dependency from 0.2 to 0.3
+
 ### Fixed
 
 - Wrong mode when using PWM channel 2 of a two-channel timer

@@ -31,7 +31,7 @@ targets = ["thumbv6m-none-eabi"]
 
 [dependencies]
 bare-metal = { version = "1.0.0" }
-cast = { version = "0.2", default-features = false }
+cast = "0.3"
 cortex-m = "0.7"
 embedded-hal = { version = "0.2", features = ["unproven"] }
 stm32f0 = "0.14"

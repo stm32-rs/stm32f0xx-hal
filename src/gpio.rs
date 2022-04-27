@@ -80,7 +80,7 @@ pub struct Pin<MODE> {
     _mode: PhantomData<MODE>,
 }
 
-// NOTE(unsafe) The only write acess is to BSRR, which is thread safe
+// NOTE(unsafe) The only write access is to BSRR, which is thread safe
 unsafe impl<MODE> Sync for Pin<MODE> {}
 // NOTE(unsafe) this only enables read access to the same pin from multiple
 // threads

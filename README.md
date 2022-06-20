@@ -36,7 +36,7 @@ Getting Started
 ---------------
 The `examples` folder contains several example programs. To compile them, one must specify the target device as cargo feature:
 ```
-$ cargo build --features=stm32f030
+$ cargo build --features=stm32f030x4
 ```
 
 To use stm32f0xx-hal as a dependency in a standalone project the target device feature must be specified in the `Cargo.toml` file:

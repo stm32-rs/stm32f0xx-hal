@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Updated the `cast` dependency from 0.2 to 0.3
 
+### Added
+
+- Provide getters to serial status flags idle/txe/rxne/tc.
+
 ### Fixed
 
 - Wrong mode when using PWM channel 2 of a two-channel timer

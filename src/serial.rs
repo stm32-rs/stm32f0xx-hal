@@ -378,6 +378,26 @@ macro_rules! usart {
                         },
                     }
                 }
+
+                /// Returns true if the line idle status is set
+                pub fn is_idle(&self) -> bool {
+                    self.usart.isr.read().idle().bit_is_set()
+                }
+
+                /// Returns true if the tx register is empty
+                pub fn is_txe(&self) -> bool {
+                    self.usart.isr.read().txe().bit_is_set()
+                }
+
+                /// Returns true if the rx register is not empty (and can be read)
+                pub fn is_rx_not_empty(&self) -> bool {
+                    self.usart.isr.read().rxne().bit_is_set()
+                }
+
+                /// Returns true if transmission is complete
+                pub fn is_tx_complete(&self) -> bool {
+                    self.usart.isr.read().tc().bit_is_set()
+                }
             }
         )+
     }

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Provide getters to serial status flags idle/txe/rxne/tc.
+- Provide ability to reset timer UIF interrupt flag
 
 ### Fixed
 

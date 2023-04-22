@@ -168,6 +168,11 @@ macro_rules! timers {
                     rcc.$apbenr.modify(|_, w| w.$timXen().clear_bit());
                     self.tim
                 }
+
+                /// Clears interrupt flag
+                pub fn clear_irq(&mut self) {
+                    self.tim.sr.modify(|_, w| w.uif().clear_bit());
+                }
             }
 
             impl CountDown for Timer<$TIM> {

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- PWM complementary output capability for TIM1
+- New example to demonstrate
+
 ### Changed
 
 - Updated the `cast` dependency from 0.2 to 0.3

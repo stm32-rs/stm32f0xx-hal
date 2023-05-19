@@ -54,6 +54,7 @@ macro_rules! pins_impl {
 
 pins_impl!(
     (P1, P2, P3, P4), (PinC1, PinC2, PinC3, PinC4), (C1, C2, C3, C4);
+    (P1, P1N, P2, P2N, P3, P3N), (PinC1, PinC1N, PinC2, PinC2N, PinC3, PinC3N), (C1, C1N, C2, C2N, C3, C3N);
     (P1, P1N, P2, P2N), (PinC1, PinC1N, PinC2, PinC2N), (C1, C1N, C2, C2N);
     (P2, P2N, P3, P3N), (PinC2, PinC2N, PinC3, PinC3N), (C2, C2N, C3, C3N);
     (P1, P1N, P3, P3N), (PinC1, PinC1N, PinC3, PinC3N), (C1, C1N, C3, C3N);

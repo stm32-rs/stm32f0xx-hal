@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- PWM complementary output capability for TIM1
-- New example to demonstrate
+- PWM complementary output capability for TIM1 with new example to demonstrate
 
 ### Changed
 

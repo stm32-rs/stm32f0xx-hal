@@ -5,13 +5,12 @@
 // Halt on panic
 use panic_halt as _;
 
-use cortex_m_rt::entry;
 use cortex_m;
+use cortex_m_rt::entry;
 
 use stm32f0xx_hal as hal;
 
 use hal::{delay::Delay, pac, prelude::*, pwm};
-
 
 #[entry]
 fn main() -> ! {
@@ -23,7 +22,7 @@ fn main() -> ! {
         let channels = cortex_m::interrupt::free(move |cs| {
             (
                 gpioa.pa8.into_alternate_af2(cs), // on TIM1_CH1
-                gpioa.pa7.into_alternate_af2(cs),  // on TIM1_CH1N
+                gpioa.pa7.into_alternate_af2(cs), // on TIM1_CH1N
             )
         });
 
@@ -58,5 +57,4 @@ fn main() -> ! {
     loop {
         cortex_m::asm::nop();
     }
-    
 }

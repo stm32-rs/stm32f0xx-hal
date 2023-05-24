@@ -285,8 +285,11 @@ use crate::gpio::{gpioa::*, gpiob::*, Alternate};
 
 // Output channels marker traits
 pub trait PinC1<TIM> {}
+pub trait PinC1N<TIM> {}
 pub trait PinC2<TIM> {}
+pub trait PinC2N<TIM> {}
 pub trait PinC3<TIM> {}
+pub trait PinC3N<TIM> {}
 pub trait PinC4<TIM> {}
 
 macro_rules! channel_impl {
@@ -299,8 +302,14 @@ macro_rules! channel_impl {
 
 channel_impl!(
     TIM1, PinC1, PA8, Alternate<AF2>;
+    TIM1, PinC1N, PA7, Alternate<AF2>;
+    TIM1, PinC1N, PB13, Alternate<AF2>;
     TIM1, PinC2, PA9, Alternate<AF2>;
+    TIM1, PinC2N, PB0, Alternate<AF2>;
+    TIM1, PinC2N, PB14, Alternate<AF2>;
     TIM1, PinC3, PA10, Alternate<AF2>;
+    TIM1, PinC3N, PB1, Alternate<AF2>;
+    TIM1, PinC3N, PB15, Alternate<AF2>;
     TIM1, PinC4, PA11, Alternate<AF2>;
 
     TIM3, PinC1, PA6, Alternate<AF1>;

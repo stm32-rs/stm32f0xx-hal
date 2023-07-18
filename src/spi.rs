@@ -96,6 +96,19 @@ pub trait SckPin<SPI> {}
 pub trait MisoPin<SPI> {}
 pub trait MosiPin<SPI> {}
 
+/// A filler type for when the SCK pin is unnecessary
+pub struct NoSck;
+/// A filler type for when the Miso pin is unnecessary
+pub struct NoMiso;
+/// A filler type for when the Mosi pin is unnecessary
+pub struct NoMosi;
+
+impl<REMAP> Sck<REMAP> for NoSck {}
+impl<REMAP> Miso<REMAP> for NoMiso {}
+impl<REMAP> Mosi<REMAP> for NoMosi {}
+impl<REMAP> So<REMAP> for NoMiso {}
+impl<REMAP> Si<REMAP> for NoMosi {}
+
 macro_rules! spi_pins {
     ($($SPI:ident => {
         sck => [$($sck:ty),+ $(,)*],

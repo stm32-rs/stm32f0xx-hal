@@ -333,6 +333,31 @@ channel_impl!(
 );
 
 #[cfg(any(
+    feature = "stm32f031",
+    feature = "stm32f038",
+    feature = "stm32f042",
+    feature = "stm32f048",
+    feature = "stm32f051",
+    feature = "stm32f058",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
+channel_impl!(
+    TIM2, PinC1, PA0, Alternate<AF2>;
+    TIM2, PinC2, PA1, Alternate<AF2>;
+    TIM2, PinC3, PA2, Alternate<AF2>;
+    TIM2, PinC4, PA3, Alternate<AF2>;
+    TIM2, PinC1, PA5, Alternate<AF2>;
+    TIM2, PinC1, PA15, Alternate<AF2>;
+    TIM2, PinC2, PB3, Alternate<AF2>;
+    TIM2, PINC3, PB10, Alternate<AF2>;
+    TIM2, PINC4, PB11, Alternate<AF2>;
+);
+
+#[cfg(any(
     feature = "stm32f030x8",
     feature = "stm32f030xc",
     feature = "stm32f051",

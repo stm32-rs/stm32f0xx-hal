@@ -353,8 +353,8 @@ channel_impl!(
     TIM2, PinC1, PA5, Alternate<AF2>;
     TIM2, PinC1, PA15, Alternate<AF2>;
     TIM2, PinC2, PB3, Alternate<AF2>;
-    TIM2, PINC3, PB10, Alternate<AF2>;
-    TIM2, PINC4, PB11, Alternate<AF2>;
+    TIM2, PinC3, PB10, Alternate<AF2>;
+    TIM2, PinC4, PB11, Alternate<AF2>;
 );
 
 #[cfg(any(

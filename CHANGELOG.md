@@ -16,11 +16,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Provide getters to serial status flags idle/txe/rxne/tc.
 - Provide ability to reset timer UIF interrupt flag
 - PWM complementary output capability for TIM1 with new example to demonstrate
+- Very simple dead time control of complementary PWM channels
 
 ### Fixed
 
 - Wrong mode when using PWM channel 2 of a two-channel timer
 - `adc_values` example conversion error
+- Fixed typo in setup of complementary channels
 
 ## [v0.18.0] - 2021-11-14
 

@@ -97,3 +97,7 @@ required-features = ["stm32f042", "rt"]
 [[example]]
 name = "usb_serial"
 required-features = ["rt", "stm32f042", "stm32-usbd"]
+
+[[example]]
+name = "serial_echo_irq"
+required-features = ["stm32f031"]

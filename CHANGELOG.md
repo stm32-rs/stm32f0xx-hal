@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- `adc_values` example conversion error
+
 ### Added
 
 - PWM complementary output capability for TIM1 with new example to demonstrate

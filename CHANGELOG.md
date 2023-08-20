@@ -7,13 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-- `adc_values` example conversion error
-
-### Added
-
-- PWM complementary output capability for TIM1 with new example to demonstrate
-
 ### Changed
 
 - Updated the `cast` dependency from 0.2 to 0.3
@@ -22,10 +15,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Provide getters to serial status flags idle/txe/rxne/tc.
 - Provide ability to reset timer UIF interrupt flag
+- PWM complementary output capability for TIM1 with new example to demonstrate
 
 ### Fixed
 
 - Wrong mode when using PWM channel 2 of a two-channel timer
+- `adc_values` example conversion error
 
 ## [v0.18.0] - 2021-11-14
 

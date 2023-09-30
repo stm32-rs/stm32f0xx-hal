@@ -79,7 +79,7 @@ fn SysTick() {
         if let Some(ref mut shared) = SHARED.borrow(cs).borrow_mut().deref_mut() {
             // Read temperature data from internal sensor using ADC
             let t = hal::adc::VTemp::read(&mut shared.adc, None);
-            writeln!(shared.tx, "Temperature {}.{}C\r", t / 100, t % 100).ok();
+            writeln!(shared.tx, "Temperature {}.{}C\r", t / 10, t % 10).ok();
 
             // Read volatage reference data from internal sensor using ADC
             let t = hal::adc::VRef::read_vdda(&mut shared.adc);

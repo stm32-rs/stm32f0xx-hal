@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Provide getters to serial status flags idle/txe/rxne/tc.
 - Provide ability to reset timer UIF interrupt flag
 - PWM complementary output capability for TIM1 with new example to demonstrate
+- New `serial_echo_irq` example to showcase an interrupt driven serial echo
 
 ### Fixed
 

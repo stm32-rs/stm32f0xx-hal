@@ -10,7 +10,12 @@ use cortex_m_rt::entry;
 
 use stm32f0xx_hal as hal;
 
-use hal::{delay::Delay, pac, prelude::*, pwm};
+use hal::{
+    delay::Delay,
+    pac,
+    prelude::*,
+    pwm::{self, DTInterval::*, *},
+};
 
 #[entry]
 fn main() -> ! {
@@ -31,6 +36,8 @@ fn main() -> ! {
         let max_duty = ch1.get_max_duty();
         ch1.set_duty(max_duty / 2);
         ch1.enable();
+
+        ch1n.set_dead_time(DT_2);
         ch1n.enable();
 
         // simple duty sweep

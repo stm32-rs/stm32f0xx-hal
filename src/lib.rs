@@ -58,6 +58,8 @@ pub mod spi;
 pub mod time;
 #[cfg(feature = "device-selected")]
 pub mod timers;
+#[cfg(feature = "device-selected")]
+pub mod signature;
 #[cfg(any(
     feature = "stm32f031",
     feature = "stm32f051",

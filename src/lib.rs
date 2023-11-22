@@ -59,6 +59,8 @@ pub mod time;
 #[cfg(feature = "device-selected")]
 pub mod timers;
 #[cfg(feature = "device-selected")]
+pub mod flash;
+#[cfg(feature = "device-selected")]
 pub mod signature;
 #[cfg(any(
     feature = "stm32f031",

@@ -20,12 +20,12 @@ fn main() -> ! {
     if let Some(mut p) = pac::Peripherals::take() {
         let _ = p.RCC.configure().freeze(&mut p.FLASH);
 
-        const OFFSET_START: u32 = 32 * 1024;
-        const OFFSET_END: u32 = 33 * 1024;
+        // All examples use the first 16K of flash for the program so we use the first page after that
+        const OFFSET_START: u32 = 16 * 1024;
+        const OFFSET_END: u32 = OFFSET_START + 1024;
         // Unlock flash before writing
         let mut unlocked_flash = p.FLASH.unlocked();
 
-        // All examples use the first 16K of flash for the program so we use the first page after that
         NorFlash::erase(&mut unlocked_flash, OFFSET_START, OFFSET_END).unwrap();
 
         // Write some data to the start of that page

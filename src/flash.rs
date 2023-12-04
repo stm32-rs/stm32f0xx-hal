@@ -1,5 +1,5 @@
 use core::convert::TryInto;
-use core::{ptr, slice};
+use core::{mem, ptr, slice};
 
 use embedded_storage::nor_flash::{
     ErrorType, MultiwriteNorFlash, NorFlash, NorFlashError, NorFlashErrorKind, ReadNorFlash,
@@ -8,11 +8,60 @@ use embedded_storage::nor_flash::{
 use crate::pac::FLASH;
 use crate::signature::FlashSize;
 
+/// First address of the flash memory
+pub const FLASH_START: usize = 0x0800_0000;
+
+// F03x, F04x and F05x pages are 1K long
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f031",
+    feature = "stm32f038",
+    feature = "stm32f042",
+    feature = "stm32f048",
+    feature = "stm32f051",
+    feature = "stm32f058",
+))]
+pub const PAGE_SIZE: u32 = 1024;
+// F03x, F04x and F05x have 64 flash pages
+#[cfg(any(
+    feature = "stm32f030",
+    feature = "stm32f031",
+    feature = "stm32f038",
+    feature = "stm32f042",
+    feature = "stm32f048",
+    feature = "stm32f051",
+    feature = "stm32f058",
+))]
+pub const NUM_PAGES: u32 = 64;
+
+// F07x and F09x pages are 2K long
+#[cfg(any(
+    feature = "stm32f070",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
+pub const PAGE_SIZE: u32 = 2048;
+// F07x and F09x have 128 flash pages
+#[cfg(any(
+    feature = "stm32f070",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
+pub const NUM_PAGES: u32 = 128;
+
 /// Flash erase/program error
 #[derive(Debug, Clone, Copy)]
 pub enum Error {
     Programming,
     WriteProtection,
+    /// STM32F0 can only write Half Words (16 Bit) to flash. Can not write to addresses not aligned to that.
+    Alignment,
 }
 
 impl Error {
@@ -43,13 +92,11 @@ pub trait FlashExt {
     /// Unlock flash for erasing/programming until this method's
     /// result is dropped
     fn unlocked(&mut self) -> UnlockedFlash;
-    /// Returns flash memory sector of a given offset. Returns none if offset is out of range.
-    fn sector(&self, offset: usize) -> Option<FlashSector>;
 }
 
 impl FlashExt for FLASH {
     fn address(&self) -> usize {
-        0x0800_0000
+        FLASH_START
     }
 
     fn len(&self) -> usize {
@@ -59,10 +106,6 @@ impl FlashExt for FLASH {
     fn unlocked(&mut self) -> UnlockedFlash {
         unlock(self);
         UnlockedFlash { flash: self }
-    }
-
-    fn sector(&self, offset: usize) -> Option<FlashSector> {
-        flash_sectors(self.len()).find(|s| s.contains(offset))
     }
 }
 
@@ -105,10 +148,6 @@ impl FlashExt for LockedFlash {
     fn unlocked(&mut self) -> UnlockedFlash {
         self.flash.unlocked()
     }
-
-    fn sector(&self, offset: usize) -> Option<FlashSector> {
-        self.flash.sector(offset)
-    }
 }
 
 /// Result of `FlashExt::unlocked()`
@@ -147,67 +186,108 @@ impl Drop for UnlockedFlash<'_> {
     }
 }
 
+pub trait WriteErase {
+    /// Native type for the flash for writing with the correct alignment and size
+    ///
+    /// Can be `u8`, `u16`, `u32`, ... (`u16` for STM32F0xx devices)
+    type NativeType;
+
+    /// The smallest possible write, depends on the platform
+    fn program_native(&mut self, offset: usize, data: &[Self::NativeType]) -> Result<(), Error>;
+
+    /// Write a buffer of bytes to memory and use native writes internally.
+    /// If it is not the same length as a set of native writes the write will be padded to fill the
+    /// native write.
+    fn program(&mut self, offset: usize, data: &[u8]) -> Result<(), Error>;
+}
+
+impl WriteErase for UnlockedFlash<'_> {
+    type NativeType = u16;
+
+    fn program_native(
+        &mut self,
+        mut offset: usize,
+        data: &[Self::NativeType],
+    ) -> Result<(), Error> {
+        // Wait for ready bit
+        self.wait_ready();
+
+        let addr = self.flash.address() as *mut u16;
+
+        // Write the data to flash
+        for &half_word in data {
+            self.flash.cr.modify(|_, w| w.pg().set_bit());
+            unsafe {
+                ptr::write_volatile(addr.add(offset), half_word);
+            }
+            offset += mem::size_of::<Self::NativeType>();
+        }
+
+        self.wait_ready();
+
+        // Clear programming bit
+        self.flash.cr.modify(|_, w| w.pg().clear_bit());
+
+        self.ok()
+    }
+
+    fn program(&mut self, mut offset: usize, data: &[u8]) -> Result<(), Error> {
+        if offset % mem::align_of::<Self::NativeType>() != 0 {
+            return Err(Error::Alignment);
+        }
+
+        let mut chunks = data.chunks_exact(mem::size_of::<Self::NativeType>());
+
+        for exact_chunk in &mut chunks {
+            let native = &[Self::NativeType::from_ne_bytes(
+                exact_chunk.try_into().unwrap(),
+            )];
+            self.program_native(offset, native)?;
+            offset += mem::size_of::<Self::NativeType>();
+        }
+
+        let remainder = chunks.remainder();
+
+        if !remainder.is_empty() {
+            let mut data = Self::NativeType::MAX;
+
+            for b in remainder.iter().rev() {
+                data = (data << 8) | *b as Self::NativeType;
+            }
+
+            let native = &[data];
+            self.program_native(offset, native)?;
+        }
+
+        self.ok()
+    }
+}
+
 impl UnlockedFlash<'_> {
     /// Erase a flash page at offset
     ///
     /// Refer to the reference manual to see which sector corresponds
     /// to which memory address.
     pub fn erase(&mut self, offset: u32) -> Result<(), Error> {
+        // Wait for ready bit
+        self.wait_ready();
+
+        // Set the PER (page erase) bit in CR register
+        self.flash.cr.modify(|_, w| w.per().set_bit());
+
         // Write address into the AR register
         self.flash
             .ar
             .write(|w| w.far().bits(self.flash.address() as u32 + offset));
-        #[rustfmt::skip]
-        self.flash.cr.modify(|_, w|
-            w
-                // page erase
-                .per().set_bit()
-                // start
-                .strt().set_bit()
-        );
+        // Set the STRT (start) Bit in CR register
+        self.flash.cr.modify(|_, w| w.strt().set_bit());
+
+        // Wait for the operation to finish
         self.wait_ready();
+
         // Clear PER bit after operation is finished
         self.flash.cr.modify(|_, w| w.per().clear_bit());
         self.ok()
-    }
-
-    /// Program bytes with offset into flash memory
-    pub fn program<'a, I>(&mut self, mut offset: usize, mut bytes: I) -> Result<(), Error>
-    where
-        I: Iterator<Item = &'a u8>,
-    {
-        if self.flash.cr.read().lock().bit_is_set() {
-            return Err(Error::Programming);
-        }
-        let ptr = self.flash.address() as *mut u8;
-        let mut bytes_written = 1;
-        while bytes_written > 0 {
-            bytes_written = 0;
-            let amount = 2 - (offset % 2);
-
-            #[allow(unused_unsafe)]
-            self.flash.cr.modify(|_, w| unsafe {
-                // programming
-                w.pg().set_bit()
-            });
-            for _ in 0..amount {
-                match bytes.next() {
-                    Some(byte) => {
-                        unsafe {
-                            ptr::write_volatile(ptr.add(offset), *byte);
-                        }
-                        offset += 1;
-                        bytes_written += 1;
-                    }
-                    None => break,
-                }
-            }
-            self.wait_ready();
-            self.ok()?;
-        }
-        self.flash.cr.modify(|_, w| w.pg().clear_bit());
-
-        Ok(())
     }
 
     fn ok(&self) -> Result<(), Error> {
@@ -364,10 +444,9 @@ impl<'a> ReadNorFlash for UnlockedFlash<'a> {
 }
 
 impl<'a> NorFlash for UnlockedFlash<'a> {
-    const WRITE_SIZE: usize = 1;
+    const WRITE_SIZE: usize = 2;
 
-    // Use largest sector size of 128 KB. All smaller sectors will be erased together.
-    const ERASE_SIZE: usize = 128 * 1024;
+    const ERASE_SIZE: usize = PAGE_SIZE as usize;
 
     fn erase(&mut self, from: u32, to: u32) -> Result<(), Self::Error> {
         let mut current = from as usize;
@@ -387,7 +466,7 @@ impl<'a> NorFlash for UnlockedFlash<'a> {
     }
 
     fn write(&mut self, offset: u32, bytes: &[u8]) -> Result<(), Self::Error> {
-        self.program(offset as usize, bytes.iter())
+        self.program(offset as usize, bytes)
     }
 }
 

@@ -13,10 +13,16 @@ use crate::hal::{
 use cortex_m_rt::entry;
 use embedded_storage::nor_flash::{NorFlash, ReadNorFlash};
 
+/// # NOTE
+/// This example assumes a flash size of more than 16K. If your MCU has less or equal than 16K Bytes
+/// of flash memory, adjust the `memory.x` file and `OFFSET_START` + `OFFSET_END` constants accordingly.
 #[entry]
 fn main() -> ! {
     if let Some(mut p) = pac::Peripherals::take() {
         let _ = p.RCC.configure().freeze(&mut p.FLASH);
+
+        // Check that flash is big enough for this example
+        assert!(p.FLASH.len() > 16 * 1024);
 
         // All examples use the first 16K of flash for the program so we use the first page after that
         const OFFSET_START: u32 = 16 * 1024;

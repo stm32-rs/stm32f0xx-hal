@@ -2,7 +2,7 @@ use core::convert::TryInto;
 use core::{mem, ptr, slice};
 
 use embedded_storage::nor_flash::{
-    ErrorType, MultiwriteNorFlash, NorFlash, NorFlashError, NorFlashErrorKind, ReadNorFlash,
+    ErrorType, NorFlash, NorFlashError, NorFlashErrorKind, ReadNorFlash,
 };
 
 use crate::pac::FLASH;
@@ -85,7 +85,7 @@ pub trait FlashExt {
     /// Size in bytes
     fn len(&self) -> usize;
     /// Returns a read-only view of flash memory
-    fn read(&self) -> &[u8] {
+    fn read_all(&self) -> &[u8] {
         let ptr = self.address() as *const _;
         unsafe { slice::from_raw_parts(ptr, self.len()) }
     }
@@ -204,23 +204,19 @@ pub trait WriteErase {
 impl WriteErase for UnlockedFlash<'_> {
     type NativeType = u16;
 
-    fn program_native(
-        &mut self,
-        mut offset: usize,
-        data: &[Self::NativeType],
-    ) -> Result<(), Error> {
+    fn program_native(&mut self, address: usize, data: &[Self::NativeType]) -> Result<(), Error> {
         // Wait for ready bit
         self.wait_ready();
 
-        let addr = self.flash.address() as *mut u16;
+        let mut addr = address as *mut Self::NativeType;
 
         // Write the data to flash
         for &half_word in data {
             self.flash.cr.modify(|_, w| w.pg().set_bit());
             unsafe {
-                ptr::write_volatile(addr.add(offset), half_word);
+                ptr::write_volatile(addr, half_word);
+                addr = addr.add(mem::size_of::<Self::NativeType>());
             }
-            offset += mem::size_of::<Self::NativeType>();
         }
 
         self.wait_ready();
@@ -231,8 +227,8 @@ impl WriteErase for UnlockedFlash<'_> {
         self.ok()
     }
 
-    fn program(&mut self, mut offset: usize, data: &[u8]) -> Result<(), Error> {
-        if offset % mem::align_of::<Self::NativeType>() != 0 {
+    fn program(&mut self, mut address: usize, data: &[u8]) -> Result<(), Error> {
+        if address % mem::align_of::<Self::NativeType>() != 0 {
             return Err(Error::Alignment);
         }
 
@@ -242,8 +238,8 @@ impl WriteErase for UnlockedFlash<'_> {
             let native = &[Self::NativeType::from_ne_bytes(
                 exact_chunk.try_into().unwrap(),
             )];
-            self.program_native(offset, native)?;
-            offset += mem::size_of::<Self::NativeType>();
+            self.program_native(address, native)?;
+            address += mem::size_of::<Self::NativeType>();
         }
 
         let remainder = chunks.remainder();
@@ -256,7 +252,7 @@ impl WriteErase for UnlockedFlash<'_> {
             }
 
             let native = &[data];
-            self.program_native(offset, native)?;
+            self.program_native(address, native)?;
         }
 
         self.ok()
@@ -420,7 +416,7 @@ impl ReadNorFlash for LockedFlash {
 
     fn read(&mut self, offset: u32, bytes: &mut [u8]) -> Result<(), Self::Error> {
         let offset = offset as usize;
-        bytes.copy_from_slice(&self.flash.read()[offset..offset + bytes.len()]);
+        bytes.copy_from_slice(&self.flash.read_all()[offset..offset + bytes.len()]);
         Ok(())
     }
 
@@ -434,7 +430,7 @@ impl<'a> ReadNorFlash for UnlockedFlash<'a> {
 
     fn read(&mut self, offset: u32, bytes: &mut [u8]) -> Result<(), Self::Error> {
         let offset = offset as usize;
-        bytes.copy_from_slice(&self.flash.read()[offset..offset + bytes.len()]);
+        bytes.copy_from_slice(&self.flash.read_all()[offset..offset + bytes.len()]);
         Ok(())
     }
 
@@ -466,9 +462,6 @@ impl<'a> NorFlash for UnlockedFlash<'a> {
     }
 
     fn write(&mut self, offset: u32, bytes: &[u8]) -> Result<(), Self::Error> {
-        self.program(offset as usize, bytes)
+        self.program(self.flash.address() + offset as usize, bytes)
     }
 }
-
-// STM32F4 supports multiple writes
-impl<'a> MultiwriteNorFlash for UnlockedFlash<'a> {}

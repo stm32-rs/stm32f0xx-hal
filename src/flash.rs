@@ -215,7 +215,7 @@ impl WriteErase for UnlockedFlash<'_> {
             self.flash.cr.modify(|_, w| w.pg().set_bit());
             unsafe {
                 ptr::write_volatile(addr, half_word);
-                addr = addr.add(mem::size_of::<Self::NativeType>());
+                addr = addr.add(1);
             }
         }
 

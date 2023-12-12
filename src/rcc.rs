@@ -14,7 +14,7 @@ impl RccExt for RCC {
             pclk: None,
             sysclk: None,
             clock_src: SysClkSource::HSI,
-            /// CRS is only available on devices with HSI48
+            // CRS is only available on devices with HSI48
             #[cfg(any(
                 feature = "stm32f042",
                 feature = "stm32f048",

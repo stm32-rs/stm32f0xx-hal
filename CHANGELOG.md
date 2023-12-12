@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Wrong mode when using PWM channel 2 of a two-channel timer
 - `adc_values` example conversion error
+- `invalid_reference_casting` Compilation error in spi.rs for Rust version 1.73+ (
+  See [PR#112431](https://github.com/rust-lang/rust/pull/112431) for more info)
+- `unused_doc_comments` Warning in rcc.rs
 
 ## [v0.18.0] - 2021-11-14
 

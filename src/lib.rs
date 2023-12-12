@@ -41,6 +41,8 @@ pub mod dac;
 #[cfg(feature = "device-selected")]
 pub mod delay;
 #[cfg(feature = "device-selected")]
+pub mod flash;
+#[cfg(feature = "device-selected")]
 pub mod gpio;
 #[cfg(feature = "device-selected")]
 pub mod i2c;
@@ -52,6 +54,8 @@ pub mod pwm;
 pub mod rcc;
 #[cfg(feature = "device-selected")]
 pub mod serial;
+#[cfg(feature = "device-selected")]
+pub mod signature;
 #[cfg(feature = "device-selected")]
 pub mod spi;
 #[cfg(feature = "device-selected")]

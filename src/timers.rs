@@ -327,6 +327,7 @@ channel_impl!(
 
     TIM16, PinC1, PA6, Alternate<AF5>;
     TIM16, PinC1, PB8, Alternate<AF2>;
+    TIM16, PinC1N, PB6, Alternate<AF2>;
 
     TIM17, PinC1, PA7, Alternate<AF5>;
     TIM17, PinC1, PB9, Alternate<AF2>;

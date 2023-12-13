@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-### Added
-
-- PWM capability for TIM2
-
-- PWM complementary output capability for TIM1 with new example to demonstrate
-
 ### Changed
 
 - Updated the `cast` dependency from 0.2 to 0.3
@@ -21,10 +15,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Provide getters to serial status flags idle/txe/rxne/tc.
 - Provide ability to reset timer UIF interrupt flag
+- PWM complementary output capability for TIM1 with new example to demonstrate
+- Implement interface for reading and writing to the internal flash memory and an example for demonstration.
+- PWM output on complementary channels only for single channel timers (TIM16 + TIM17)
+- PWM capability for TIM2
 
 ### Fixed
 
 - Wrong mode when using PWM channel 2 of a two-channel timer
+- `adc_values` example conversion error
+- `invalid_reference_casting` Compilation error in spi.rs for Rust version 1.73+ (
+  See [PR#112431](https://github.com/rust-lang/rust/pull/112431) for more info)
+- `unused_doc_comments` Warning in rcc.rs
 
 ## [v0.18.0] - 2021-11-14
 

@@ -75,6 +75,9 @@ pins_impl!(
     (P2), (PinC2), (C2);
     (P3), (PinC3), (C3);
     (P4), (PinC4), (C4);
+    (P1N), (PinC1N), (C1N);
+    (P2N), (PinC2N), (C2N);
+    (P3N), (PinC3N), (C3N);
 );
 
 impl<TIM, P1: PinC1<TIM>, P2: PinC1<TIM>> PinC1<TIM> for (P1, P2) {}
@@ -803,7 +806,7 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
                 rcc.regs.$apbrstr.modify(|_, w| w.$timXrst().set_bit());
                 rcc.regs.$apbrstr.modify(|_, w| w.$timXrst().clear_bit());
 
-                if PINS::C1 {
+                if PINS::C1 || PINS::C1N {
                     tim.ccmr1_output().modify(|_, w| w.oc1pe().set_bit().oc1m().bits(6));
                 }
 
@@ -851,6 +854,35 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
                 //NOTE(unsafe) atomic write with no side effects
                 fn enable(&mut self) {
                     unsafe { (*($TIMX::ptr())).ccer.modify(|_, w| w.cc1e().set_bit()) };
+                }
+
+                //NOTE(unsafe) atomic read with no side effects
+                fn get_duty(&self) -> u16 {
+                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
+                }
+
+                //NOTE(unsafe) atomic read with no side effects
+                fn get_max_duty(&self) -> u16 {
+                    unsafe { (*$TIMX::ptr()).arr.read().arr().bits() as u16 }
+                }
+
+                //NOTE(unsafe) atomic write with no side effects
+                fn set_duty(&mut self, duty: u16) {
+                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
+                }
+            }
+
+            impl hal::PwmPin for PwmChannels<$TIMX, C1N> {
+                type Duty = u16;
+
+                //NOTE(unsafe) atomic write with no side effects
+                fn disable(&mut self) {
+                    unsafe { (*($TIMX::ptr())).ccer.modify(|_, w| w.cc1ne().clear_bit()) };
+                }
+
+                //NOTE(unsafe) atomic write with no side effects
+                fn enable(&mut self) {
+                    unsafe { (*($TIMX::ptr())).ccer.modify(|_, w| w.cc1ne().set_bit()) };
                 }
 
                 //NOTE(unsafe) atomic read with no side effects

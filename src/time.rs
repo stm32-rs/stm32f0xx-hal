@@ -119,14 +119,14 @@ impl From<Second> for MicroSecond {
     }
 }
 
-impl From<Second> for MilliSecond {
-    fn from(period: Second) -> MilliSecond {
-        MilliSecond(period.0 * 1_000)
+impl From<MilliSecond> for MicroSecond {
+    fn from(period: MilliSecond) -> MicroSecond {
+        MicroSecond(period.0 * 1_000)
     }
 }
 
-impl From<MicroSecond> for MilliSecond {
-    fn from(period: MicroSecond) -> MilliSecond {
+impl From<Second> for MilliSecond {
+    fn from(period: Second) -> MilliSecond {
         MilliSecond(period.0 * 1_000)
     }
 }

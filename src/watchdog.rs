@@ -30,8 +30,8 @@
 //!
 //! use crate::hal::pac;
 //! use crate::hal::prelude::*;
-//! use crate::hal:watchdog::Watchdog;
-//! use crate::hal:time::Hertz;
+//! use crate::hal::watchdog::Watchdog;
+//! use crate::hal::time::Hertz;
 //!
 //! let mut p = pac::Peripherals::take().unwrap();
 //!

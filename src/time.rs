@@ -1,14 +1,14 @@
 /// Bits per second
-#[derive(PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 pub struct Bps(pub u32);
 
-#[derive(PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 pub struct Hertz(pub u32);
 
-#[derive(PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 pub struct KiloHertz(pub u32);
 
-#[derive(PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 pub struct MegaHertz(pub u32);
 
 /// Extension trait that adds convenience methods to the `u32` type

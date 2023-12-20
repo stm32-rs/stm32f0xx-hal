@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Updated the `cast` dependency from 0.2 to 0.3
+- The IwdgTimeout can now be any type that implements Into<MicroSeconds>
 
 ### Added
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - PWM complementary output capability for TIM1 with new example to demonstrate
 - Implement interface for reading and writing to the internal flash memory and an example for demonstration.
 - PWM output on complementary channels only for single channel timers (TIM16 + TIM17)
+- Types for Microseconds, Milliseconds and Seconds in time.rs
 
 ### Fixed
 

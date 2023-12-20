@@ -1,5 +1,3 @@
-use embedded_hal::prelude::_embedded_hal_watchdog_Watchdog;
-
 /// Bits per second
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 pub struct Bps(pub u32);

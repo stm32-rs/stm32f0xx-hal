@@ -313,15 +313,8 @@ where
         let value = self.i2c.rxdr.read().bits() as u8;
         Ok(value)
     }
-}
 
-impl<I2C, SCLPIN, SDAPIN> WriteRead for I2c<I2C, SCLPIN, SDAPIN>
-where
-    I2C: Deref<Target = I2cRegisterBlock>,
-{
-    type Error = Error;
-
-    fn write_read(&mut self, addr: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Error> {
+    fn write_read_impl(&mut self, addr: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Error> {
         // Set up current slave address for writing and disable autoending
         self.i2c.cr2.modify(|_, w| {
             w.sadd()
@@ -386,15 +379,8 @@ where
 
         Ok(())
     }
-}
 
-impl<I2C, SCLPIN, SDAPIN> Read for I2c<I2C, SCLPIN, SDAPIN>
-where
-    I2C: Deref<Target = I2cRegisterBlock>,
-{
-    type Error = Error;
-
-    fn read(&mut self, addr: u8, buffer: &mut [u8]) -> Result<(), Error> {
+    fn read_impl(&mut self, addr: u8, buffer: &mut [u8]) -> Result<(), Error> {
         // Set up current address for reading
         self.i2c.cr2.modify(|_, w| {
             w.sadd()
@@ -421,15 +407,8 @@ where
 
         Ok(())
     }
-}
 
-impl<I2C, SCLPIN, SDAPIN> Write for I2c<I2C, SCLPIN, SDAPIN>
-where
-    I2C: Deref<Target = I2cRegisterBlock>,
-{
-    type Error = Error;
-
-    fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Error> {
+    fn write_impl(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Error> {
         // Set up current slave address for writing and enable autoending
         self.i2c.cr2.modify(|_, w| {
             w.sadd()
@@ -454,5 +433,95 @@ where
         self.check_and_clear_error_flags(&self.i2c.isr.read())?;
 
         Ok(())
+    }
+}
+
+impl<I2C, SCLPIN, SDAPIN> WriteRead for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    type Error = Error;
+
+    fn write_read(&mut self, addr: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Error> {
+        self.write_read_impl(addr, bytes, buffer)
+    }
+}
+
+impl<I2C, SCLPIN, SDAPIN> Read for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    type Error = Error;
+
+    fn read(&mut self, addr: u8, buffer: &mut [u8]) -> Result<(), Error> {
+        self.read_impl(addr, buffer)
+    }
+}
+
+impl<I2C, SCLPIN, SDAPIN> Write for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    type Error = Error;
+
+    fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Error> {
+        self.write_impl(addr, bytes)
+    }
+}
+
+impl<I2C, SCLPIN, SDAPIN> embedded_hal_1::i2c::I2c for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    fn read(
+        &mut self,
+        address: embedded_hal_1::i2c::SevenBitAddress,
+        read: &mut [u8],
+    ) -> Result<(), Self::Error> {
+        self.read_impl(address, read)
+    }
+
+    fn write(
+        &mut self,
+        address: embedded_hal_1::i2c::SevenBitAddress,
+        write: &[u8],
+    ) -> Result<(), Self::Error> {
+        self.write_impl(address, write)
+    }
+
+    fn write_read(
+        &mut self,
+        address: embedded_hal_1::i2c::SevenBitAddress,
+        write: &[u8],
+        read: &mut [u8],
+    ) -> Result<(), Self::Error> {
+        self.write_read_impl(address, write, read)
+    }
+
+    fn transaction(
+        &mut self,
+        _address: embedded_hal_1::i2c::SevenBitAddress,
+        _operations: &mut [embedded_hal_1::i2c::Operation<'_>],
+    ) -> Result<(), Self::Error> {
+        todo!()
+    }
+}
+
+impl<I2C, SCLPIN, SDAPIN> embedded_hal_1::i2c::ErrorType for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    type Error = Error;
+}
+
+impl embedded_hal_1::i2c::Error for Error {
+    fn kind(&self) -> embedded_hal_1::i2c::ErrorKind {
+        match self {
+            Error::OVERRUN => embedded_hal_1::i2c::ErrorKind::Overrun,
+            Error::NACK => embedded_hal_1::i2c::ErrorKind::NoAcknowledge(
+                embedded_hal_1::i2c::NoAcknowledgeSource::Unknown,
+            ),
+            Error::BUS => embedded_hal_1::i2c::ErrorKind::Bus,
+        }
     }
 }

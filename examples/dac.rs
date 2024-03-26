@@ -2,7 +2,6 @@
 #![no_main]
 #![no_std]
 
-use cortex_m;
 use cortex_m_rt as rt;
 use panic_halt as _;
 

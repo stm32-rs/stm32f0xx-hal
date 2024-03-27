@@ -2,8 +2,6 @@
 //!
 //! (stored in flash memory)
 
-use core::str::from_utf8_unchecked;
-
 /// This is the test voltage in millivolts of the calibration done at the factory
 pub const VDDA_CALIB: u32 = 3300;
 
@@ -54,7 +52,7 @@ impl Uid {
 
     /// Lot number
     pub fn lot_num(&self) -> &str {
-        unsafe { from_utf8_unchecked(&self.waf_lot[1..]) }
+        unsafe { core::str::from_utf8_unchecked(&self.waf_lot[1..]) }
     }
 }
 

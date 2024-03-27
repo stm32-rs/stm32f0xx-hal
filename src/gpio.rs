@@ -758,4 +758,4 @@ gpio!([
         PF9: (pf9, 9, Input<Floating>),
         PF10: (pf10, 10, Input<Floating>),
     ]
-    ]);
+]);

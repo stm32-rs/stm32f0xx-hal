@@ -30,8 +30,8 @@
 //!
 //! use crate::hal::pac;
 //! use crate::hal::prelude::*;
-//! use crate::hal:watchdog::Watchdog;
-//! use crate::hal:time::Hertz;
+//! use crate::hal::watchdog::Watchdog;
+//! use crate::hal::time::Hertz;
 //!
 //! let mut p = pac::Peripherals::take().unwrap();
 //!
@@ -44,7 +44,7 @@
 use embedded_hal::watchdog;
 
 use crate::pac::IWDG;
-use crate::time::Hertz;
+use crate::time::{MicroSecond, U32Ext};
 
 /// Watchdog instance
 pub struct Watchdog {
@@ -66,13 +66,16 @@ pub struct IwdgTimeout {
     reload: u16,
 }
 
-impl From<Hertz> for IwdgTimeout {
+impl<T> From<T> for IwdgTimeout
+where
+    T: Into<MicroSecond>,
+{
     /// This converts the value so it's usable by the IWDG
     /// Due to conversion losses, the specified frequency is a maximum
     ///
     /// It can also only represent values < 10000 Hertz
-    fn from(hz: Hertz) -> Self {
-        let mut time = 40_000 / 4 / hz.0;
+    fn from(period: T) -> Self {
+        let mut time = period.into().cycles((40_000 / 4).hz());
         let mut psc = 0;
         let mut reload = 0;
         while psc < 7 {
@@ -83,9 +86,8 @@ impl From<Hertz> for IwdgTimeout {
             psc += 1;
             time /= 2;
         }
-        // As we get an integer value, reload is always below 0xFFF
         let reload = reload as u16;
-        IwdgTimeout { psc, reload }
+        Self { psc, reload }
     }
 }
 

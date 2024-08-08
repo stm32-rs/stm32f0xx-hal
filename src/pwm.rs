@@ -206,7 +206,7 @@ macro_rules! pwm_4_channels {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr1().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -216,7 +216,7 @@ macro_rules! pwm_4_channels {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr1().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -235,7 +235,7 @@ macro_rules! pwm_4_channels {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr2.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr2().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -245,7 +245,7 @@ macro_rules! pwm_4_channels {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr2().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -264,7 +264,7 @@ macro_rules! pwm_4_channels {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr3.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr3().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -274,7 +274,7 @@ macro_rules! pwm_4_channels {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr3.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr3().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -293,7 +293,7 @@ macro_rules! pwm_4_channels {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr4.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr4().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -303,7 +303,7 @@ macro_rules! pwm_4_channels {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr4.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr4().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
         )+
@@ -395,7 +395,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr1().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -405,7 +405,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr1().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -424,7 +424,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr1().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -434,7 +434,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr1().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -453,7 +453,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr2.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr2().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -463,7 +463,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr2().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -482,7 +482,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr2.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr2().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -492,7 +492,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr2().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -511,7 +511,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr3.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr3().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -521,7 +521,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr3.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr3().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -540,7 +540,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr3.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr3().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -550,7 +550,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr3.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr3().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -569,7 +569,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr4.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr4().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -579,7 +579,7 @@ macro_rules! pwm_4_channels_with_3_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr4.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr4().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
         )+
@@ -666,7 +666,7 @@ macro_rules! pwm_2_channels {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr1().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -676,7 +676,7 @@ macro_rules! pwm_2_channels {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr1().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -695,7 +695,7 @@ macro_rules! pwm_2_channels {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr2.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr2().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -705,7 +705,7 @@ macro_rules! pwm_2_channels {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr2.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr2().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
         )+
@@ -775,7 +775,7 @@ macro_rules! pwm_1_channel {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr1().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -785,7 +785,7 @@ macro_rules! pwm_1_channel {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr1().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
         )+
@@ -858,7 +858,7 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr1().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -868,7 +868,7 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr1().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
 
@@ -887,7 +887,7 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
 
                 //NOTE(unsafe) atomic read with no side effects
                 fn get_duty(&self) -> u16 {
-                    unsafe { (*$TIMX::ptr()).ccr1.read().ccr().bits() as u16 }
+                    unsafe { (*$TIMX::ptr()).ccr1().read().ccr().bits() as u16 }
                 }
 
                 //NOTE(unsafe) atomic read with no side effects
@@ -897,7 +897,7 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
 
                 //NOTE(unsafe) atomic write with no side effects
                 fn set_duty(&mut self, duty: u16) {
-                    unsafe { (*$TIMX::ptr()).ccr1.write(|w| w.ccr().bits(duty.into())) }
+                    unsafe { (*$TIMX::ptr()).ccr1().write(|w| w.ccr().bits(duty.into())) }
                 }
             }
         )+

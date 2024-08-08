@@ -103,14 +103,14 @@ impl AdcSampleTime {
 impl From<AdcSampleTime> for SMP_A {
     fn from(val: AdcSampleTime) -> Self {
         match val {
-            AdcSampleTime::T_1 => SMP_A::CYCLES1_5,
-            AdcSampleTime::T_7 => SMP_A::CYCLES7_5,
-            AdcSampleTime::T_13 => SMP_A::CYCLES13_5,
-            AdcSampleTime::T_28 => SMP_A::CYCLES28_5,
-            AdcSampleTime::T_41 => SMP_A::CYCLES41_5,
-            AdcSampleTime::T_55 => SMP_A::CYCLES55_5,
-            AdcSampleTime::T_71 => SMP_A::CYCLES71_5,
-            AdcSampleTime::T_239 => SMP_A::CYCLES239_5,
+            AdcSampleTime::T_1 => SMP_A::Cycles15,
+            AdcSampleTime::T_7 => SMP_A::Cycles75,
+            AdcSampleTime::T_13 => SMP_A::Cycles135,
+            AdcSampleTime::T_28 => SMP_A::Cycles285,
+            AdcSampleTime::T_41 => SMP_A::Cycles415,
+            AdcSampleTime::T_55 => SMP_A::Cycles555,
+            AdcSampleTime::T_71 => SMP_A::Cycles715,
+            AdcSampleTime::T_239 => SMP_A::Cycles2395,
         }
     }
 }
@@ -148,9 +148,9 @@ impl AdcAlign {
 impl From<AdcAlign> for ALIGN_A {
     fn from(val: AdcAlign) -> Self {
         match val {
-            AdcAlign::Left => ALIGN_A::LEFT,
-            AdcAlign::Right => ALIGN_A::RIGHT,
-            AdcAlign::LeftAsRM => ALIGN_A::LEFT,
+            AdcAlign::Left => ALIGN_A::Left,
+            AdcAlign::Right => ALIGN_A::Right,
+            AdcAlign::LeftAsRM => ALIGN_A::Left,
         }
     }
 }
@@ -178,10 +178,10 @@ impl AdcPrecision {
 impl From<AdcPrecision> for RES_A {
     fn from(val: AdcPrecision) -> Self {
         match val {
-            AdcPrecision::B_12 => RES_A::TWELVEBIT,
-            AdcPrecision::B_10 => RES_A::TENBIT,
-            AdcPrecision::B_8 => RES_A::EIGHTBIT,
-            AdcPrecision::B_6 => RES_A::SIXBIT,
+            AdcPrecision::B_12 => RES_A::TwelveBit,
+            AdcPrecision::B_10 => RES_A::TenBit,
+            AdcPrecision::B_8 => RES_A::EightBit,
+            AdcPrecision::B_6 => RES_A::SixBit,
         }
     }
 }

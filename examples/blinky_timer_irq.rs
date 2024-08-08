@@ -15,8 +15,9 @@ use crate::hal::{
 
 use cortex_m_rt::entry;
 
+use bare_metal::Mutex;
 use core::cell::RefCell;
-use cortex_m::{interrupt::Mutex, peripheral::Peripherals as c_m_Peripherals};
+use cortex_m::peripheral::Peripherals as c_m_Peripherals;
 
 // A type definition for the GPIO pin to be used for our LED
 type LEDPIN = gpioa::PA5<Output<PushPull>>;
@@ -35,14 +36,24 @@ fn TIM7() {
     static mut INT: Option<Timer<TIM7>> = None;
 
     let led = LED.get_or_insert_with(|| {
-        cortex_m::interrupt::free(|cs| {
+        cortex_m::interrupt::free(|_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { bare_metal::CriticalSection::new() };
+
             // Move LED pin here, leaving a None in its place
             GLED.borrow(cs).replace(None).unwrap()
         })
     });
 
     let int = INT.get_or_insert_with(|| {
-        cortex_m::interrupt::free(|cs| {
+        cortex_m::interrupt::free(|_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { bare_metal::CriticalSection::new() };
+
             // Move LED pin here, leaving a None in its place
             GINT.borrow(cs).replace(None).unwrap()
         })
@@ -55,7 +66,12 @@ fn TIM7() {
 #[entry]
 fn main() -> ! {
     if let (Some(mut p), Some(cp)) = (Peripherals::take(), c_m_Peripherals::take()) {
-        cortex_m::interrupt::free(move |cs| {
+        cortex_m::interrupt::free(move |_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { &bare_metal::CriticalSection::new() };
+
             let mut rcc = p
                 .RCC
                 .configure()
@@ -71,7 +87,7 @@ fn main() -> ! {
             let led = gpioa.pa5.into_push_pull_output(cs);
 
             // Move the pin into our global storage
-            *GLED.borrow(cs).borrow_mut() = Some(led);
+            *GLED.borrow(*cs).borrow_mut() = Some(led);
 
             // Set up a timer expiring after 1s
             let mut timer = Timer::tim7(p.TIM7, Hertz(1), &mut rcc);
@@ -80,7 +96,7 @@ fn main() -> ! {
             timer.listen(Event::TimeOut);
 
             // Move the timer into our global storage
-            *GINT.borrow(cs).borrow_mut() = Some(timer);
+            *GINT.borrow(*cs).borrow_mut() = Some(timer);
 
             // Enable TIM7 IRQ, set prio 1 and clear any pending IRQs
             let mut nvic = cp.NVIC;

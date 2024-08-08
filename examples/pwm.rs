@@ -1,4 +1,3 @@
-#![deny(unsafe_code)]
 #![no_main]
 #![no_std]
 
@@ -18,7 +17,12 @@ fn main() -> ! {
         let mut rcc = dp.RCC.configure().sysclk(8.mhz()).freeze(&mut dp.FLASH);
 
         let gpioa = dp.GPIOA.split(&mut rcc);
-        let channels = cortex_m::interrupt::free(move |cs| {
+        let channels = cortex_m::interrupt::free(move |_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { &bare_metal::CriticalSection::new() };
+
             (
                 gpioa.pa8.into_alternate_af2(cs),
                 gpioa.pa9.into_alternate_af2(cs),

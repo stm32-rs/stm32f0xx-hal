@@ -7,7 +7,8 @@ use stm32f0xx_hal as hal;
 
 use crate::hal::{gpio::*, pac, prelude::*};
 
-use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core, Peripherals};
+use bare_metal::Mutex;
+use cortex_m::{peripheral::syst::SystClkSource::Core, Peripherals};
 use cortex_m_rt::{entry, exception};
 
 use core::cell::RefCell;
@@ -19,7 +20,12 @@ static GPIO: Mutex<RefCell<Option<gpioa::PA1<Output<PushPull>>>>> = Mutex::new(R
 #[entry]
 fn main() -> ! {
     if let (Some(mut p), Some(cp)) = (pac::Peripherals::take(), Peripherals::take()) {
-        cortex_m::interrupt::free(move |cs| {
+        cortex_m::interrupt::free(move |_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { &bare_metal::CriticalSection::new() };
+
             let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut p.FLASH);
 
             let gpioa = p.GPIOA.split(&mut rcc);
@@ -28,7 +34,7 @@ fn main() -> ! {
             let led = gpioa.pa1.into_push_pull_output(cs);
 
             // Transfer GPIO into a shared structure
-            *GPIO.borrow(cs).borrow_mut() = Some(led);
+            *GPIO.borrow(*cs).borrow_mut() = Some(led);
 
             let mut syst = cp.SYST;
 
@@ -62,7 +68,12 @@ fn SysTick() {
     static mut STATE: u8 = 1;
 
     // Enter critical section
-    cortex_m::interrupt::free(|cs| {
+    cortex_m::interrupt::free(|_| {
+        // SAFETY: We are in a critical section, but the `cortex_m` critical section
+        // token is not compatible with the `bare_metal` token. Future version of the
+        // `cortex_m` crate will not supply *any* token to this callback!
+        let cs = unsafe { bare_metal::CriticalSection::new() };
+
         // Borrow access to our GPIO pin from the shared structure
         if let Some(ref mut led) = *GPIO.borrow(cs).borrow_mut().deref_mut() {
             // Check state variable, keep LED off most of the time and turn it on every 10th tick

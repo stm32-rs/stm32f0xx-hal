@@ -14,7 +14,12 @@ use cortex_m_rt::entry;
 #[entry]
 fn main() -> ! {
     if let Some(p) = pac::Peripherals::take() {
-        cortex_m::interrupt::free(move |cs| {
+        cortex_m::interrupt::free(move |_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { &bare_metal::CriticalSection::new() };
+
             let mut flash = p.FLASH;
             let mut rcc = p.RCC.configure().freeze(&mut flash);
 

@@ -15,7 +15,8 @@ use core::cell::RefCell;
 use core::fmt::Write as _;
 use core::ops::DerefMut;
 
-use cortex_m::{interrupt::Mutex, peripheral::Peripherals as c_m_Peripherals};
+use bare_metal::Mutex;
+use cortex_m::peripheral::Peripherals as c_m_Peripherals;
 use cortex_m_rt::entry;
 
 // Make timer interrupt registers globally available
@@ -36,7 +37,12 @@ static TIME: Mutex<RefCell<Time>> = Mutex::new(RefCell::new(Time {
 // interrupt trips when the timer timed out
 #[interrupt]
 fn TIM7() {
-    cortex_m::interrupt::free(|cs| {
+    cortex_m::interrupt::free(|_| {
+        // SAFETY: We are in a critical section, but the `cortex_m` critical section
+        // token is not compatible with the `bare_metal` token. Future version of the
+        // `cortex_m` crate will not supply *any* token to this callback!
+        let cs = unsafe { bare_metal::CriticalSection::new() };
+
         // Move LED pin here, leaving a None in its place
         GINT.borrow(cs)
             .borrow_mut()
@@ -57,7 +63,12 @@ fn TIM7() {
 #[entry]
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (Peripherals::take(), c_m_Peripherals::take()) {
-        let mut serial = cortex_m::interrupt::free(move |cs| {
+        let mut serial = cortex_m::interrupt::free(move |_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { &bare_metal::CriticalSection::new() };
+
             let mut flash = p.FLASH;
             let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut flash);
 
@@ -73,7 +84,7 @@ fn main() -> ! {
             timer.listen(Event::TimeOut);
 
             // Move the timer into our global storage
-            *GINT.borrow(cs).borrow_mut() = Some(timer);
+            *GINT.borrow(*cs).borrow_mut() = Some(timer);
 
             // Enable TIM7 IRQ, set prio 1 and clear any pending IRQs
             let mut nvic = cp.NVIC;
@@ -98,7 +109,12 @@ fn main() -> ! {
             // Wait for reception of a single byte
             let received = nb::block!(serial.read()).unwrap();
 
-            let time = cortex_m::interrupt::free(|cs| {
+            let time = cortex_m::interrupt::free(|_| {
+                // SAFETY: We are in a critical section, but the `cortex_m` critical section
+                // token is not compatible with the `bare_metal` token. Future version of the
+                // `cortex_m` crate will not supply *any* token to this callback!
+                let cs = unsafe { bare_metal::CriticalSection::new() };
+
                 let mut time = TIME.borrow(cs).borrow_mut();
 
                 // If we received a 0, reset the time

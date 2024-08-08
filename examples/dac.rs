@@ -24,7 +24,7 @@ fn main() -> ! {
         let mut rcc = dp.RCC.configure().sysclk(8.mhz()).freeze(&mut dp.FLASH);
         let gpioa = dp.GPIOA.split(&mut rcc);
 
-        let pa4 = cortex_m::interrupt::free(move |cs| gpioa.pa4.into_analog(cs));
+        let pa4 = critical_section::with(move |cs| gpioa.pa4.into_analog(&cs));
 
         let mut dac = dac(dp.DAC, pa4, &mut rcc);
 

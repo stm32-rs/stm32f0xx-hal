@@ -7,8 +7,9 @@ use stm32f0xx_hal as hal;
 
 use crate::hal::{gpio::*, pac, prelude::*};
 
-use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core, Peripherals};
+use cortex_m::{peripheral::syst::SystClkSource::Core, Peripherals};
 use cortex_m_rt::{entry, exception};
+use critical_section::Mutex;
 
 use core::cell::RefCell;
 use core::mem::swap;
@@ -22,14 +23,14 @@ static GPIO: Mutex<RefCell<Option<LEDPIN>>> = Mutex::new(RefCell::new(None));
 #[entry]
 fn main() -> ! {
     if let (Some(mut p), Some(cp)) = (pac::Peripherals::take(), Peripherals::take()) {
-        cortex_m::interrupt::free(move |cs| {
+        critical_section::with(move |cs| {
             let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut p.FLASH);
 
             // Get access to individual pins in the GPIO port
             let gpioa = p.GPIOB.split(&mut rcc);
 
             // (Re-)configure the pin connected to our LED as output
-            let led = gpioa.pb3.into_push_pull_output(cs);
+            let led = gpioa.pb3.into_push_pull_output(&cs);
 
             // Transfer GPIO into a shared structure
             swap(&mut Some(led), &mut GPIO.borrow(cs).borrow_mut());
@@ -88,7 +89,7 @@ fn SysTick() {
     // Otherwise move it out of the Mutex protected shared region into our exception handler
     else {
         // Enter critical section
-        cortex_m::interrupt::free(|cs| {
+        critical_section::with(|cs| {
             // Swap globally stored data with SysTick private data
             swap(LED, &mut GPIO.borrow(cs).borrow_mut());
         });

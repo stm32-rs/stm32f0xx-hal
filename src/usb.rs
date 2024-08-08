@@ -30,7 +30,7 @@ unsafe impl UsbPeripheral for Peripheral {
     fn enable() {
         let rcc = unsafe { &*RCC::ptr() };
 
-        cortex_m::interrupt::free(|_| {
+        critical_section::with(|_| {
             // Enable USB peripheral
             rcc.apb1enr.modify(|_, w| w.usben().set_bit());
 

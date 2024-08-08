@@ -7,8 +7,9 @@ use stm32f0xx_hal as hal;
 
 use crate::hal::{pac, prelude::*};
 
-use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core};
+use cortex_m::peripheral::syst::SystClkSource::Core;
 use cortex_m_rt::{entry, exception};
+use critical_section::Mutex;
 
 use core::{cell::RefCell, fmt::Write};
 
@@ -25,7 +26,7 @@ fn main() -> ! {
         hal::pac::Peripherals::take(),
         cortex_m::peripheral::Peripherals::take(),
     ) {
-        cortex_m::interrupt::free(move |cs| {
+        critical_section::with(move |cs| {
             let mut flash = p.FLASH;
             let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut flash);
 
@@ -46,8 +47,8 @@ fn main() -> ! {
             syst.enable_interrupt();
 
             // USART1 at PA9 (TX) and PA10(RX)
-            let tx = gpioa.pa9.into_alternate_af1(cs);
-            let rx = gpioa.pa10.into_alternate_af1(cs);
+            let tx = gpioa.pa9.into_alternate_af1(&cs);
+            let rx = gpioa.pa10.into_alternate_af1(&cs);
 
             // Initialiase UART
             let (mut tx, _) =
@@ -74,7 +75,7 @@ fn SysTick() {
     use core::ops::DerefMut;
 
     // Enter critical section
-    cortex_m::interrupt::free(|cs| {
+    critical_section::with(|cs| {
         // Get access to the Mutex protected shared data
         if let Some(ref mut shared) = SHARED.borrow(cs).borrow_mut().deref_mut() {
             // Read temperature data from internal sensor using ADC

@@ -18,10 +18,10 @@ fn main() -> ! {
         let mut rcc = dp.RCC.configure().sysclk(8.mhz()).freeze(&mut dp.FLASH);
 
         let gpioa = dp.GPIOA.split(&mut rcc);
-        let channels = cortex_m::interrupt::free(move |cs| {
+        let channels = critical_section::with(move |cs| {
             (
-                gpioa.pa8.into_alternate_af2(cs), // on TIM1_CH1
-                gpioa.pa7.into_alternate_af2(cs), // on TIM1_CH1N
+                gpioa.pa8.into_alternate_af2(&cs), // on TIM1_CH1
+                gpioa.pa7.into_alternate_af2(&cs), // on TIM1_CH1N
             )
         });
 

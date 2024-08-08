@@ -15,8 +15,9 @@ use core::cell::RefCell;
 use core::fmt::Write as _;
 use core::ops::DerefMut;
 
-use cortex_m::{interrupt::Mutex, peripheral::Peripherals as c_m_Peripherals};
+use cortex_m::peripheral::Peripherals as c_m_Peripherals;
 use cortex_m_rt::entry;
+use critical_section::Mutex;
 
 // Make timer interrupt registers globally available
 static GINT: Mutex<RefCell<Option<Timer<TIM7>>>> = Mutex::new(RefCell::new(None));
@@ -36,7 +37,7 @@ static TIME: Mutex<RefCell<Time>> = Mutex::new(RefCell::new(Time {
 // interrupt trips when the timer timed out
 #[interrupt]
 fn TIM7() {
-    cortex_m::interrupt::free(|cs| {
+    critical_section::with(|cs| {
         // Move LED pin here, leaving a None in its place
         GINT.borrow(cs)
             .borrow_mut()
@@ -57,14 +58,14 @@ fn TIM7() {
 #[entry]
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (Peripherals::take(), c_m_Peripherals::take()) {
-        let mut serial = cortex_m::interrupt::free(move |cs| {
+        let mut serial = critical_section::with(move |cs| {
             let mut flash = p.FLASH;
             let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut flash);
 
             // Use USART2 with PA2 and PA3 as serial port
             let gpioa = p.GPIOA.split(&mut rcc);
-            let tx = gpioa.pa2.into_alternate_af1(cs);
-            let rx = gpioa.pa3.into_alternate_af1(cs);
+            let tx = gpioa.pa2.into_alternate_af1(&cs);
+            let rx = gpioa.pa3.into_alternate_af1(&cs);
 
             // Set up a timer expiring every millisecond
             let mut timer = Timer::tim7(p.TIM7, 1000.hz(), &mut rcc);
@@ -98,7 +99,7 @@ fn main() -> ! {
             // Wait for reception of a single byte
             let received = nb::block!(serial.read()).unwrap();
 
-            let time = cortex_m::interrupt::free(|cs| {
+            let time = critical_section::with(|cs| {
                 let mut time = TIME.borrow(cs).borrow_mut();
 
                 // If we received a 0, reset the time

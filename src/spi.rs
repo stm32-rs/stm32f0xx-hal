@@ -13,7 +13,8 @@
 //! use crate::hal::prelude::*;
 //! use crate::hal::spi::{Spi, Mode, Phase, Polarity};
 //!
-//! cortex_m::interrupt::free(|cs| {
+//! cortex_m::interrupt::free(|_| {
+//!     let cs = unsafe { &bare_metal::CriticalSection::new() };
 //!     let mut p = pac::Peripherals::take().unwrap();
 //!     let mut rcc = p.RCC.constrain().freeze(&mut p.FLASH);
 //!

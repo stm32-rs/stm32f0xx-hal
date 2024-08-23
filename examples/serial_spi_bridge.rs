@@ -36,7 +36,11 @@ fn main() -> ! {
 
         let gpioa = p.GPIOA.split(&mut rcc);
 
-        let (sck, miso, mosi, tx, rx) = cortex_m::interrupt::free(move |cs| {
+        let (sck, miso, mosi, tx, rx) = cortex_m::interrupt::free(move |_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { &bare_metal::CriticalSection::new() };
             (
                 // SPI pins
                 gpioa.pa5.into_alternate_af0(cs),

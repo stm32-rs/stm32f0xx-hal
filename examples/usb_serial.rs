@@ -35,7 +35,13 @@ fn main() -> ! {
 
     // Configure the on-board LED (LD3, green)
     let gpiob = dp.GPIOB.split(&mut rcc);
-    let mut led = cortex_m::interrupt::free(|cs| gpiob.pb3.into_push_pull_output(cs));
+    let mut led = cortex_m::interrupt::free(|_| {
+        // SAFETY: We are in a critical section, but the `cortex_m` critical section
+        // token is not compatible with the `bare_metal` token. Future version of the
+        // `cortex_m` crate will not supply *any* token to this callback!
+        let cs = unsafe { &bare_metal::CriticalSection::new() };
+        gpiob.pb3.into_push_pull_output(cs)
+    });
     led.set_low().ok(); // Turn off
 
     let gpioa = dp.GPIOA.split(&mut rcc);

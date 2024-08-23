@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Updated the `cast` dependency from 0.2 to 0.3
+- Use `bare_metal::CriticalSection` for GPIO configuration (breaking change)
 
 ### Added
 

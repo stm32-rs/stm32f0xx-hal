@@ -17,7 +17,13 @@ fn main() -> ! {
         let gpioa = p.GPIOA.split(&mut rcc);
 
         // (Re-)configure PA1 as output
-        let mut led = cortex_m::interrupt::free(|cs| gpioa.pa1.into_push_pull_output(cs));
+        let mut led = cortex_m::interrupt::free(|_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { &bare_metal::CriticalSection::new() };
+            gpioa.pa1.into_push_pull_output(cs)
+        });
 
         loop {
             // Turn PA1 on a million times in a row

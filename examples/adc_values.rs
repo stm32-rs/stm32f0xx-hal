@@ -7,7 +7,8 @@ use stm32f0xx_hal as hal;
 
 use crate::hal::{pac, prelude::*};
 
-use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core};
+use bare_metal::Mutex;
+use cortex_m::peripheral::syst::SystClkSource::Core;
 use cortex_m_rt::{entry, exception};
 
 use core::{cell::RefCell, fmt::Write};
@@ -25,7 +26,12 @@ fn main() -> ! {
         hal::pac::Peripherals::take(),
         cortex_m::peripheral::Peripherals::take(),
     ) {
-        cortex_m::interrupt::free(move |cs| {
+        cortex_m::interrupt::free(move |_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { &bare_metal::CriticalSection::new() };
+
             let mut flash = p.FLASH;
             let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut flash);
 
@@ -60,7 +66,7 @@ fn main() -> ! {
             tx.write_str("\n\rThis ADC example will read various values using the ADC and print them out to the serial terminal\r\n").ok();
 
             // Move all components under Mutex supervision
-            *SHARED.borrow(cs).borrow_mut() = Some(Shared { adc, tx });
+            *SHARED.borrow(*cs).borrow_mut() = Some(Shared { adc, tx });
         });
     }
 
@@ -74,7 +80,12 @@ fn SysTick() {
     use core::ops::DerefMut;
 
     // Enter critical section
-    cortex_m::interrupt::free(|cs| {
+    cortex_m::interrupt::free(|_| {
+        // SAFETY: We are in a critical section, but the `cortex_m` critical section
+        // token is not compatible with the `bare_metal` token. Future version of the
+        // `cortex_m` crate will not supply *any* token to this callback!
+        let cs = unsafe { bare_metal::CriticalSection::new() };
+
         // Get access to the Mutex protected shared data
         if let Some(ref mut shared) = SHARED.borrow(cs).borrow_mut().deref_mut() {
             // Read temperature data from internal sensor using ADC

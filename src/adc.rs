@@ -12,7 +12,8 @@
 //! use crate::hal::prelude::*;
 //! use crate::hal::adc::Adc;
 //!
-//! cortex_m::interrupt::free(|cs| {
+//! cortex_m::interrupt::free(|_| {
+//!     let cs = unsafe { &bare_metal::CriticalSection::new() };
 //!     let mut p = pac::Peripherals::take().unwrap();
 //!     let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
 //!

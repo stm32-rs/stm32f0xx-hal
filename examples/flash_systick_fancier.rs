@@ -7,7 +7,8 @@ use stm32f0xx_hal as hal;
 
 use crate::hal::{gpio::*, pac, prelude::*};
 
-use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core, Peripherals};
+use bare_metal::Mutex;
+use cortex_m::{peripheral::syst::SystClkSource::Core, Peripherals};
 use cortex_m_rt::{entry, exception};
 
 use core::cell::RefCell;
@@ -22,7 +23,12 @@ static GPIO: Mutex<RefCell<Option<LEDPIN>>> = Mutex::new(RefCell::new(None));
 #[entry]
 fn main() -> ! {
     if let (Some(mut p), Some(cp)) = (pac::Peripherals::take(), Peripherals::take()) {
-        cortex_m::interrupt::free(move |cs| {
+        cortex_m::interrupt::free(move |_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { &bare_metal::CriticalSection::new() };
+
             let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut p.FLASH);
 
             // Get access to individual pins in the GPIO port
@@ -32,7 +38,7 @@ fn main() -> ! {
             let led = gpioa.pb3.into_push_pull_output(cs);
 
             // Transfer GPIO into a shared structure
-            swap(&mut Some(led), &mut GPIO.borrow(cs).borrow_mut());
+            swap(&mut Some(led), &mut GPIO.borrow(*cs).borrow_mut());
 
             let mut syst = cp.SYST;
 
@@ -88,7 +94,12 @@ fn SysTick() {
     // Otherwise move it out of the Mutex protected shared region into our exception handler
     else {
         // Enter critical section
-        cortex_m::interrupt::free(|cs| {
+        cortex_m::interrupt::free(|_| {
+            // SAFETY: We are in a critical section, but the `cortex_m` critical section
+            // token is not compatible with the `bare_metal` token. Future version of the
+            // `cortex_m` crate will not supply *any* token to this callback!
+            let cs = unsafe { bare_metal::CriticalSection::new() };
+
             // Swap globally stored data with SysTick private data
             swap(LED, &mut GPIO.borrow(cs).borrow_mut());
         });

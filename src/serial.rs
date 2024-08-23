@@ -16,7 +16,8 @@
 //!
 //! use nb::block;
 //!
-//! cortex_m::interrupt::free(|cs| {
+//! cortex_m::interrupt::free(|_| {
+//!     let cs = unsafe { &bare_metal::CriticalSection::new() };
 //!     let rcc = p.RCC.configure().sysclk(48.mhz()).freeze();
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);
@@ -43,7 +44,8 @@
 //!
 //! use nb::block;
 //!
-//! cortex_m::interrupt::free(|cs| {
+//! cortex_m::interrupt::free(|_| {
+//!     let cs = unsafe { &bare_metal::CriticalSection::new() };
 //!     let rcc = p.RCC.configure().sysclk(48.mhz()).freeze();
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);

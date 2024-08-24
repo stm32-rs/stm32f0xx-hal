@@ -34,7 +34,7 @@ bare-metal = { version = "1.0.0" }
 cast = "0.3"
 cortex-m = "0.7"
 embedded-hal = { version = "0.2", features = ["unproven"] }
-stm32f0 = "0.14"
+stm32f0 = "0.15"
 nb = "1"
 void = { version = "1.0", default-features = false }
 stm32-usbd = { version = "0.6", optional = true }

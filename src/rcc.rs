@@ -154,8 +154,8 @@ mod inner {
 
     pub(super) fn get_sww(c_src: &SysClkSource) -> SW_A {
         match c_src {
-            SysClkSource::HSI => SW_A::HSI,
-            SysClkSource::HSE(_, _) => SW_A::HSE,
+            SysClkSource::HSI => SW_A::Hsi,
+            SysClkSource::HSE(_, _) => SW_A::Hse,
         }
     }
 }
@@ -316,7 +316,7 @@ mod inner {
 
     pub(super) fn get_sww(c_src: &SysClkSource) -> SW_A {
         match c_src {
-            SysClkSource::HSI => SW_A::HSI,
+            SysClkSource::HSI => SW_A::Hsi,
             #[cfg(any(
                 feature = "stm32f042",
                 feature = "stm32f048",
@@ -326,8 +326,8 @@ mod inner {
                 feature = "stm32f091",
                 feature = "stm32f098",
             ))]
-            SysClkSource::HSI48 => SW_A::HSI48,
-            SysClkSource::HSE(_, _) => SW_A::HSE,
+            SysClkSource::HSI48 => SW_A::Hsi48,
+            SysClkSource::HSE(_, _) => SW_A::Hse,
         }
     }
 }

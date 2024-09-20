@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Updated the `cast` dependency from 0.2 to 0.3
 - Updated `stm32f0` peripheral access crate from 0.14 to 0.15
+- Updated `bxcan` dependency from 0.6.0 to 0.8.0
 
 ### Added
 

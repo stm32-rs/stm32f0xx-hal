@@ -364,17 +364,27 @@ where
     fn check_read(&mut self) -> nb::Result<(), Error> {
         let sr = self.spi.sr.read();
 
-        Err(if sr.ovr().bit_is_set() {
-            nb::Error::Other(Error::Overrun)
-        } else if sr.modf().bit_is_set() {
-            nb::Error::Other(Error::ModeFault)
-        } else if sr.crcerr().bit_is_set() {
-            nb::Error::Other(Error::Crc)
-        } else if sr.rxne().bit_is_set() {
-            return Ok(());
+        self.check_errors()?;
+
+        if !sr.rxne().bit_is_set() {
+            Err(nb::Error::WouldBlock)
         } else {
-            nb::Error::WouldBlock
-        })
+            Ok(())
+        }
+    }
+
+    fn check_errors(&mut self) -> Result<(), Error> {
+        let sr = self.spi.sr.read();
+
+        if sr.ovr().bit_is_set() {
+            Err(Error::Overrun)
+        } else if sr.modf().bit_is_set() {
+            Err(Error::ModeFault)
+        } else if sr.crcerr().bit_is_set() {
+            Err(Error::Crc)
+        } else {
+            Ok(())
+        }
     }
 
     fn send_buffer_size(&mut self) -> u8 {
@@ -393,17 +403,13 @@ where
     fn check_send(&mut self) -> nb::Result<(), Error> {
         let sr = self.spi.sr.read();
 
-        Err(if sr.ovr().bit_is_set() {
-            nb::Error::Other(Error::Overrun)
-        } else if sr.modf().bit_is_set() {
-            nb::Error::Other(Error::ModeFault)
-        } else if sr.crcerr().bit_is_set() {
-            nb::Error::Other(Error::Crc)
-        } else if sr.txe().bit_is_set() && sr.bsy().bit_is_clear() {
-            return Ok(());
+        self.check_errors()?;
+
+        if !(sr.txe().bit_is_set() && sr.bsy().bit_is_clear()) {
+            Err(nb::Error::WouldBlock)
         } else {
-            nb::Error::WouldBlock
-        })
+            Ok(())
+        }
     }
 
     fn read_u8(&mut self) -> u8 {
@@ -453,6 +459,29 @@ where
     }
 }
 
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::spi::FullDuplex<u8>
+    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, EightBit>
+where
+    SPI: Deref<Target = SpiRegisterBlock>,
+{
+    type Error = Error;
+
+    fn read(&mut self) -> nb::Result<u8, Error> {
+        self.check_read()?;
+        Ok(self.read_u8())
+    }
+
+    fn send(&mut self, byte: u8) -> nb::Result<(), Error> {
+        // We want to transfer bidirectionally, make sure we're in the correct mode
+        self.set_bidi();
+
+        self.check_send()?;
+        self.send_u8(byte);
+
+        self.check_errors().map_err(|e| nb::Error::Other(e))
+    }
+}
+
 impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::blocking::spi::Write<u8>
     for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, EightBit>
 where
@@ -481,8 +510,33 @@ where
         }
 
         // Do one last status register check before continuing
-        nb::block!(self.check_send()).ok();
-        Ok(())
+        self.check_errors()
+    }
+}
+
+impl<SPI, SCKPIN, MISOPIN, MOSIPIN> ::embedded_hal::spi::FullDuplex<u16>
+    for Spi<SPI, SCKPIN, MISOPIN, MOSIPIN, SixteenBit>
+where
+    SPI: Deref<Target = SpiRegisterBlock>,
+{
+    type Error = Error;
+
+    fn read(&mut self) -> nb::Result<u16, Error> {
+        self.check_read()?;
+        Ok(self.read_u16())
+    }
+
+    fn send(&mut self, byte: u16) -> nb::Result<(), Error> {
+        // We want to transfer bidirectionally, make sure we're in the correct mode
+        self.set_bidi();
+
+        self.check_send()?;
+        self.send_u16(byte);
+
+        match self.check_errors() {
+            Ok(_) => Ok(()),
+            Err(e) => Err(nb::Error::Other(e)),
+        }
     }
 }
 
@@ -525,7 +579,6 @@ where
         }
 
         // Do one last status register check before continuing
-        nb::block!(self.check_send()).ok();
-        Ok(())
+        self.check_errors()
     }
 }

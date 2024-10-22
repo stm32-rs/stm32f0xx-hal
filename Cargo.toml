@@ -46,6 +46,9 @@ cortex-m-rt = "0.7"
 panic-halt = "0.2"
 usb-device = "0.2.7"
 usbd-serial = "0.1.1"
+rtt-target = "0.5.0"
+cortex-m = { version = "0.7.6", features = ["critical-section-single-core"]}
+
 
 [features]
 device-selected = []
@@ -98,3 +101,7 @@ required-features = ["stm32f042", "rt"]
 [[example]]
 name = "usb_serial"
 required-features = ["rt", "stm32f042", "stm32-usbd"]
+
+[[example]]
+name = "i2c_slave"
+required-features = ["stm32f030x4", "rt"]

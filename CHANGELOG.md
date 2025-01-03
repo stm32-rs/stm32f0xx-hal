@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - PWM complementary output capability for TIM1 with new example to demonstrate
 - Implement interface for reading and writing to the internal flash memory and an example for demonstration.
 - PWM output on complementary channels only for single channel timers (TIM16 + TIM17)
+- PWM capability for TIM2
 
 ### Fixed
 

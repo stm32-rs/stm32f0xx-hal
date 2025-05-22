@@ -42,7 +42,7 @@ const VTEMPCAL30: *const u16 = 0x1FFF_F7B8 as *const u16;
 const VTEMPCAL110: *const u16 = 0x1FFF_F7C2 as *const u16;
 const VDD_CALIB: u16 = 3300;
 
-use core::{ptr, default};
+use core::{default, ptr};
 
 use embedded_hal::{
     adc::{Channel, OneShot},

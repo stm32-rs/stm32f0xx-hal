@@ -61,12 +61,12 @@ pub enum HSEBypassMode {
 #[allow(clippy::upper_case_acronyms)]
 pub enum USBClockSource {
     #[cfg(feature = "stm32f070")]
-    /// USB peripheral's tranceiver is disabled
+    /// USB peripheral's transceiver is disabled
     Disabled,
     #[cfg(not(feature = "stm32f070"))]
-    /// HSI48 is used as USB peripheral tranceiver clock
+    /// HSI48 is used as USB peripheral transceiver clock
     HSI48,
-    /// PLL output is used as USB peripheral tranceiver clock
+    /// PLL output is used as USB peripheral transceiver clock
     PLL,
 }
 /// RCC for F0x0 devices
@@ -465,7 +465,7 @@ impl CFGR {
             let pllmul = (2 * pllprediv * self.sysclk.unwrap_or(src_clk_freq) + src_clk_freq)
                 / src_clk_freq
                 / 2;
-            let pllmul = core::cmp::min(core::cmp::max(pllmul, 2), 16);
+            let pllmul = pllmul.clamp(2, 16);
             r_sysclk = pllmul * src_clk_freq / pllprediv;
 
             pllmul_bits = Some(pllmul as u8 - 2)
@@ -562,17 +562,14 @@ impl CFGR {
                 feature = "stm32f091",
                 feature = "stm32f098",
             ))]
-            match self.crs {
-                Some(crs) => {
-                    self.rcc.apb1enr.modify(|_, w| w.crsen().set_bit());
+            if let Some(crs) = self.crs {
+                self.rcc.apb1enr.modify(|_, w| w.crsen().set_bit());
 
-                    // Initialize clock recovery
-                    // Set autotrim enabled.
-                    crs.cr.modify(|_, w| w.autotrimen().set_bit());
-                    // Enable CR
-                    crs.cr.modify(|_, w| w.cen().set_bit());
-                }
-                _ => {}
+                // Initialize clock recovery
+                // Set autotrim enabled.
+                crs.cr.modify(|_, w| w.autotrimen().set_bit());
+                // Enable CR
+                crs.cr.modify(|_, w| w.cen().set_bit());
             }
 
             // use HSI as source

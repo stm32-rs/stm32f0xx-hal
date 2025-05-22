@@ -42,7 +42,7 @@ const VTEMPCAL30: *const u16 = 0x1FFF_F7B8 as *const u16;
 const VTEMPCAL110: *const u16 = 0x1FFF_F7C2 as *const u16;
 const VDD_CALIB: u16 = 3300;
 
-use core::ptr;
+use core::{ptr, default};
 
 use embedded_hal::{
     adc::{Channel, OneShot},
@@ -93,9 +93,9 @@ pub enum AdcSampleTime {
     T_239,
 }
 
-impl AdcSampleTime {
+impl default::Default for AdcSampleTime {
     /// Get the default sample time (currently 239.5 cycles)
-    pub fn default() -> Self {
+    fn default() -> Self {
         AdcSampleTime::T_239
     }
 }
@@ -138,9 +138,9 @@ pub enum AdcAlign {
     LeftAsRM,
 }
 
-impl AdcAlign {
+impl default::Default for AdcAlign {
     /// Get the default alignment (currently right aligned)
-    pub fn default() -> Self {
+    fn default() -> Self {
         AdcAlign::Right
     }
 }
@@ -168,9 +168,9 @@ pub enum AdcPrecision {
     B_6,
 }
 
-impl AdcPrecision {
+impl default::Default for AdcPrecision {
     /// Get the default precision (currently 12 bit precision)
-    pub fn default() -> Self {
+    fn default() -> Self {
         AdcPrecision::B_12
     }
 }
@@ -247,7 +247,7 @@ adc_pins!(
 impl VTemp {
     /// Init a new VTemp
     pub fn new() -> Self {
-        VTemp::default()
+        Self {}
     }
 
     /// Enable the internal temperature sense, this has a wake up time
@@ -316,7 +316,7 @@ impl VTemp {
 impl VRef {
     /// Init a new VRef
     pub fn new() -> Self {
-        VRef::default()
+        Self {}
     }
 
     /// Enable the internal voltage reference, remember to disable when not in use.
@@ -408,7 +408,7 @@ adc_pins!(
 impl VBat {
     /// Init a new VBat
     pub fn new() -> Self {
-        VBat::default()
+        Self {}
     }
 
     /// Enable the internal VBat sense, remember to disable when not in use
@@ -514,10 +514,10 @@ impl Adc {
     /// Returns the largest possible sample value for the current settings
     pub fn max_sample(&self) -> u16 {
         match self.align {
-            AdcAlign::Left => u16::max_value(),
+            AdcAlign::Left => u16::MAX,
             AdcAlign::LeftAsRM => match self.precision {
-                AdcPrecision::B_6 => u16::from(u8::max_value()),
-                _ => u16::max_value(),
+                AdcPrecision::B_6 => u16::from(u8::MAX),
+                _ => u16::MAX,
             },
             AdcAlign::Right => match self.precision {
                 AdcPrecision::B_12 => (1 << 12) - 1,

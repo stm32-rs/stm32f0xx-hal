@@ -29,6 +29,9 @@ version = "0.18.0"
 features = ["stm32f042", "rt", "stm32-usbd"]
 targets = ["thumbv6m-none-eabi"]
 
+[profile.dev.package."*"]
+opt-level = 's'
+
 [dependencies]
 bare-metal = { version = "1.0.0" }
 cast = "0.3"

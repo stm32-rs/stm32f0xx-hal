@@ -389,12 +389,12 @@ impl Tsc {
     /// Reads the tsc group count register
     pub fn read_unchecked(&self, group: u8) -> u16 {
         match group {
-            1 => self.tsc.iog1cr.read().cnt().bits(),
-            2 => self.tsc.iog2cr.read().cnt().bits(),
-            3 => self.tsc.iog3cr.read().cnt().bits(),
-            4 => self.tsc.iog4cr.read().cnt().bits(),
-            5 => self.tsc.iog5cr.read().cnt().bits(),
-            6 => self.tsc.iog6cr.read().cnt().bits(),
+            1 => self.tsc.iog1cr().read().cnt().bits(),
+            2 => self.tsc.iog2cr().read().cnt().bits(),
+            3 => self.tsc.iog3cr().read().cnt().bits(),
+            4 => self.tsc.iog4cr().read().cnt().bits(),
+            5 => self.tsc.iog5cr().read().cnt().bits(),
+            6 => self.tsc.iog6cr().read().cnt().bits(),
             _ => 0,
         }
     }

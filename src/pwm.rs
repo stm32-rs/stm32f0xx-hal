@@ -906,6 +906,7 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
 
 use crate::pac::*;
 
+pwm_4_channels!(TIM2: (tim2, tim2en, tim2rst, apb1enr, apb1rstr),);
 pwm_4_channels!(TIM3: (tim3, tim3en, tim3rst, apb1enr, apb1rstr),);
 
 pwm_4_channels_with_3_complementary_outputs!(TIM1: (tim1, tim1en, tim1rst, apb2enr, apb2rstr),);

@@ -47,7 +47,7 @@ embedded-storage = "0.3.0"
 
 [dev-dependencies]
 cortex-m-rt = "0.7"
-panic-halt = "0.2"
+panic-halt = "1"
 usb-device = "0.2.7"
 usbd-serial = "0.1.1"
 

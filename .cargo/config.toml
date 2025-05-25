@@ -2,6 +2,8 @@
 runner = 'probe-rs run --protocol=swd --chip STM32F042K6'
 rustflags = [
   "-C", "link-arg=-Tlink.x",
+  "-C", "link-arg=--nmagic",
+  "-C", "link-arg=-Tdefmt.x",
 ]
 
 [build]

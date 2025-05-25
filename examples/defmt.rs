@@ -3,7 +3,6 @@
 
 use panic_halt as _;
 use defmt_rtt as _;
-use defmt as _;
 
 use stm32f0xx_hal as _;
 
@@ -12,7 +11,6 @@ use cortex_m_rt::entry;
 #[entry]
 fn main() -> ! {
     defmt::println!("Hello, world!");
-    defmt::timestamp!("Hello, world!");
 
     loop { }
 }

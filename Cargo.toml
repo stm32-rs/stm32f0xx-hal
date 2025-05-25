@@ -35,7 +35,7 @@ opt-level = 's'
 [dependencies]
 bare-metal = { version = "1.0.0" }
 cast = "0.3"
-cortex-m = "0.7"
+cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
 embedded-hal = { version = "0.2", features = ["unproven"] }
 embedded-hal-1 = { package = "embedded-hal", version = "1.0" }
 stm32f0 = "0.15"
@@ -50,6 +50,8 @@ cortex-m-rt = "0.7"
 panic-halt = "1"
 usb-device = "0.2.7"
 usbd-serial = "0.1.1"
+defmt = "1.0.1"
+defmt-rtt = "1.0.0"
 
 [features]
 device-selected = []

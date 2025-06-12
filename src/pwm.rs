@@ -906,7 +906,21 @@ macro_rules! pwm_1_channel_with_complementary_outputs {
 
 use crate::pac::*;
 
+#[cfg(any(
+    feature = "stm32f031",
+    feature = "stm32f038",
+    feature = "stm32f042",
+    feature = "stm32f048",
+    feature = "stm32f051",
+    feature = "stm32f058",
+    feature = "stm32f071",
+    feature = "stm32f072",
+    feature = "stm32f078",
+    feature = "stm32f091",
+    feature = "stm32f098",
+))]
 pwm_4_channels!(TIM2: (tim2, tim2en, tim2rst, apb1enr, apb1rstr),);
+
 pwm_4_channels!(TIM3: (tim3, tim3en, tim3rst, apb1enr, apb1rstr),);
 
 pwm_4_channels_with_3_complementary_outputs!(TIM1: (tim1, tim1en, tim1rst, apb2enr, apb2rstr),);

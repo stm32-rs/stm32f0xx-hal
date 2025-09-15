@@ -1,5 +1,6 @@
 use crate::pac::RCC;
 use crate::time::Hertz;
+use core::ops::{Deref, DerefMut};
 
 /// Extension trait that sets up the `RCC` peripheral
 pub trait RccExt {
@@ -43,6 +44,20 @@ impl RccExt for RCC {
 pub struct Rcc {
     pub clocks: Clocks,
     pub(crate) regs: RCC,
+}
+
+impl Deref for Rcc {
+    type Target = RCC;
+
+    fn deref(&self) -> &Self::Target {
+        &self.regs
+    }
+}
+
+impl DerefMut for Rcc {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.regs
+    }
 }
 
 pub enum HSEBypassMode {

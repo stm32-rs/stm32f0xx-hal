@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - PWM output on complementary channels only for single channel timers (TIM16 + TIM17)
 - impl embedded_hal_1::spi::SpiBus for SPI
 - impl embedded_hal_1::digital traits for Pins
+- impl core::{Deref, DerefMut} for Rcc
 
 ### Fixed
 

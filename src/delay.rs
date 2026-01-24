@@ -31,7 +31,8 @@ use cortex_m::peripheral::SYST;
 
 use crate::rcc::Rcc;
 
-use embedded_hal::blocking::delay::{DelayMs, DelayUs};
+use embedded_hal::blocking::delay as delay_eh0;
+use embedded_hal_1::delay as delay_eh1;
 
 /// System timer (SysTick) as a delay provider
 #[derive(Clone)]
@@ -58,13 +59,10 @@ impl Delay {
         // just drop it
     }
 
-    // At 48MHz (the maximum frequency), this overflows at approx. 2^32 = ~71 minutes
-    fn delay_us_internal(&mut self, us: u32) {
+    fn delay_ticks(&mut self, mut total_ticks: u64) {
         // The SysTick Reload Value register supports values between 1 and 0x00FFFFFF.
         // Here less than maximum is used so we have some play if there's a long running interrupt.
         const MAX_TICKS: u32 = 0x007F_FFFF;
-
-        let mut total_ticks = (us as u64) * self.scale as u64;
 
         while total_ticks != 0 {
             let current_ticks = if total_ticks <= MAX_TICKS as u64 {
@@ -82,6 +80,20 @@ impl Delay {
         }
     }
 
+    // At 48MHz (the maximum frequency), this overflows at approx. 2^32 = 4.294 seconds
+    fn delay_ns_internal(&mut self, ns: u32) {
+        // Our clock can theoretically be at most accurate to 1/48MHz=20ns, but the busy loop adds
+        // up to ~3us of overhead.
+        let total_ticks = (ns as u64) * self.scale as u64 / 1000;
+        self.delay_ticks(total_ticks);
+    }
+
+    // At 48MHz (the maximum frequency), this overflows at approx. 2^32 = ~71 minutes
+    fn delay_us_internal(&mut self, us: u32) {
+        let total_ticks = (us as u64) * self.scale as u64;
+        self.delay_ticks(total_ticks);
+    }
+
     fn delay_ms_internal(&mut self, mut ms: u32) {
         const MAX_MS: u32 = 0x0000_FFFF;
         while ms != 0 {
@@ -92,7 +104,7 @@ impl Delay {
     }
 }
 
-impl DelayMs<u32> for Delay {
+impl delay_eh0::DelayMs<u32> for Delay {
     // At 48 MHz (the maximum frequency), calling delay_us_internal with ms * 1_000 directly overflows at 0x15D86 (just over the max u16 value)
     // So we implement a separate, higher level, delay loop
     fn delay_ms(&mut self, ms: u32) {
@@ -100,7 +112,7 @@ impl DelayMs<u32> for Delay {
     }
 }
 
-impl DelayMs<u16> for Delay {
+impl delay_eh0::DelayMs<u16> for Delay {
     fn delay_ms(&mut self, ms: u16) {
         // Call delay_us directly, so we don't have to use the additional
         // delay loop the u32 variant uses
@@ -108,7 +120,7 @@ impl DelayMs<u16> for Delay {
     }
 }
 
-impl DelayMs<u8> for Delay {
+impl delay_eh0::DelayMs<u8> for Delay {
     fn delay_ms(&mut self, ms: u8) {
         // Call delay_us directly, so we don't have to use the additional
         // delay loop the u32 variant uses
@@ -116,20 +128,34 @@ impl DelayMs<u8> for Delay {
     }
 }
 
-impl DelayUs<u32> for Delay {
+impl delay_eh0::DelayUs<u32> for Delay {
     fn delay_us(&mut self, us: u32) {
         self.delay_us_internal(us);
     }
 }
 
-impl DelayUs<u16> for Delay {
+impl delay_eh0::DelayUs<u16> for Delay {
     fn delay_us(&mut self, us: u16) {
         self.delay_us_internal(u32(us))
     }
 }
 
-impl DelayUs<u8> for Delay {
+impl delay_eh0::DelayUs<u8> for Delay {
     fn delay_us(&mut self, us: u8) {
         self.delay_us_internal(u32(us))
+    }
+}
+
+impl delay_eh1::DelayNs for Delay {
+    fn delay_ns(&mut self, ns: u32) {
+        self.delay_ns_internal(ns);
+    }
+
+    fn delay_us(&mut self, us: u32) {
+        self.delay_us_internal(us);
+    }
+
+    fn delay_ms(&mut self, ms: u32) {
+        self.delay_ms_internal(ms);
     }
 }

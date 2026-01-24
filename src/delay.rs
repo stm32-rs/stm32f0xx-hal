@@ -58,23 +58,23 @@ impl Delay {
         // just drop it
     }
 
-    // At 48MHz (the maximum frequency), this overflows at approx. 2^32 / 48 = 89 seconds
+    // At 48MHz (the maximum frequency), this overflows at approx. 2^32 = ~71 minutes
     fn delay_us_internal(&mut self, us: u32) {
         // The SysTick Reload Value register supports values between 1 and 0x00FFFFFF.
         // Here less than maximum is used so we have some play if there's a long running interrupt.
         const MAX_TICKS: u32 = 0x007F_FFFF;
 
-        let mut total_ticks = us * self.scale;
+        let mut total_ticks = (us as u64) * self.scale as u64;
 
         while total_ticks != 0 {
-            let current_ticks = if total_ticks <= MAX_TICKS {
-                total_ticks
+            let current_ticks = if total_ticks <= MAX_TICKS as u64 {
+                total_ticks as u32
             } else {
                 MAX_TICKS
             };
 
             let start_count = SYST::get_current();
-            total_ticks -= current_ticks;
+            total_ticks -= current_ticks as u64;
 
             // Use the wrapping substraction and the modulo to deal with the systick wrapping around
             // from 0 to 0xFFFF

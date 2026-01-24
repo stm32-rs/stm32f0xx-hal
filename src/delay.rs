@@ -25,7 +25,7 @@
 //! }
 //! ```
 
-use cast::{u16, u32};
+use cast::u32;
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::SYST;
 
@@ -57,38 +57,9 @@ impl Delay {
         // As access to the count register is possible without a reference to the systick, we can
         // just drop it
     }
-}
 
-impl DelayMs<u32> for Delay {
-    // At 48 MHz (the maximum frequency), calling delay_us with ms * 1_000 directly overflows at 0x15D86 (just over the max u16 value)
-    // So we implement a separate, higher level, delay loop
-    fn delay_ms(&mut self, mut ms: u32) {
-        const MAX_MS: u32 = 0x0000_FFFF;
-        while ms != 0 {
-            let current_ms = if ms <= MAX_MS { ms } else { MAX_MS };
-            self.delay_us(current_ms * 1_000);
-            ms -= current_ms;
-        }
-    }
-}
-
-impl DelayMs<u16> for Delay {
-    fn delay_ms(&mut self, ms: u16) {
-        // Call delay_us directly, so we don't have to use the additional
-        // delay loop the u32 variant uses
-        self.delay_us(u32(ms) * 1_000);
-    }
-}
-
-impl DelayMs<u8> for Delay {
-    fn delay_ms(&mut self, ms: u8) {
-        self.delay_ms(u16(ms));
-    }
-}
-
-// At 48MHz (the maximum frequency), this overflows at approx. 2^32 / 48 = 89 seconds
-impl DelayUs<u32> for Delay {
-    fn delay_us(&mut self, us: u32) {
+    // At 48MHz (the maximum frequency), this overflows at approx. 2^32 / 48 = 89 seconds
+    fn delay_us_internal(&mut self, us: u32) {
         // The SysTick Reload Value register supports values between 1 and 0x00FFFFFF.
         // Here less than maximum is used so we have some play if there's a long running interrupt.
         const MAX_TICKS: u32 = 0x007F_FFFF;
@@ -110,16 +81,55 @@ impl DelayUs<u32> for Delay {
             while (start_count.wrapping_sub(SYST::get_current()) % SYSTICK_RANGE) < current_ticks {}
         }
     }
+
+    fn delay_ms_internal(&mut self, mut ms: u32) {
+        const MAX_MS: u32 = 0x0000_FFFF;
+        while ms != 0 {
+            let current_ms = if ms <= MAX_MS { ms } else { MAX_MS };
+            self.delay_us_internal(current_ms * 1_000);
+            ms -= current_ms;
+        }
+    }
+}
+
+impl DelayMs<u32> for Delay {
+    // At 48 MHz (the maximum frequency), calling delay_us_internal with ms * 1_000 directly overflows at 0x15D86 (just over the max u16 value)
+    // So we implement a separate, higher level, delay loop
+    fn delay_ms(&mut self, ms: u32) {
+        self.delay_ms_internal(ms);
+    }
+}
+
+impl DelayMs<u16> for Delay {
+    fn delay_ms(&mut self, ms: u16) {
+        // Call delay_us directly, so we don't have to use the additional
+        // delay loop the u32 variant uses
+        self.delay_us_internal(u32(ms) * 1_000);
+    }
+}
+
+impl DelayMs<u8> for Delay {
+    fn delay_ms(&mut self, ms: u8) {
+        // Call delay_us directly, so we don't have to use the additional
+        // delay loop the u32 variant uses
+        self.delay_us_internal(u32(ms) * 1_000);
+    }
+}
+
+impl DelayUs<u32> for Delay {
+    fn delay_us(&mut self, us: u32) {
+        self.delay_us_internal(us);
+    }
 }
 
 impl DelayUs<u16> for Delay {
     fn delay_us(&mut self, us: u16) {
-        self.delay_us(u32(us))
+        self.delay_us_internal(u32(us))
     }
 }
 
 impl DelayUs<u8> for Delay {
     fn delay_us(&mut self, us: u8) {
-        self.delay_us(u32(us))
+        self.delay_us_internal(u32(us))
     }
 }

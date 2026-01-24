@@ -450,6 +450,46 @@ macro_rules! gpio {
                             $PXi { _mode: PhantomData }
                         }
 
+                        /// Configures the pin to operate as a pulled up open drain output pin
+                        pub fn into_pullup_open_drain_output(
+                            self, _cs: &CriticalSection
+                        ) -> $PXi<Output<OpenDrain>> {
+                            let offset = 2 * $i;
+                            unsafe {
+                                let reg = &(*$GPIOX::ptr());
+                                reg.pupdr.modify(|r, w| {
+                                    w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
+                                });
+                                reg.otyper.modify(|r, w| {
+                                    w.bits(r.bits() | (0b1 << $i))
+                                });
+                                reg.moder.modify(|r, w| {
+                                    w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
+                                });
+                            }
+                            $PXi { _mode: PhantomData }
+                        }
+
+                        /// Configures the pin to operate as a pulled down open drain output pin
+                        pub fn into_pulldown_open_drain_output(
+                            self, _cs: &CriticalSection
+                        ) -> $PXi<Output<OpenDrain>> {
+                            let offset = 2 * $i;
+                            unsafe {
+                                let reg = &(*$GPIOX::ptr());
+                                reg.pupdr.modify(|r, w| {
+                                    w.bits((r.bits() & !(0b11 << offset)) | (0b10 << offset))
+                                });
+                                reg.otyper.modify(|r, w| {
+                                    w.bits(r.bits() | (0b1 << $i))
+                                });
+                                reg.moder.modify(|r, w| {
+                                    w.bits((r.bits() & !(0b11 << offset)) | (0b01 << offset))
+                                });
+                            }
+                            $PXi { _mode: PhantomData }
+                        }
+
                         /// Configures the pin to operate as an push pull output pin
                         pub fn into_push_pull_output(
                             self, _cs: &CriticalSection

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Implement interface for reading and writing to the internal flash memory and an example for demonstration.
 - PWM output on complementary channels only for single channel timers (TIM16 + TIM17)
 - impl embedded_hal_1::spi::SpiBus for SPI
+- impl embedded_hal_1::i2c::I2c for I2c
 - impl embedded_hal_1::digital traits for Pins
 - Enable AF1 on GPIOE for pins [13, 14, 15] to support SPI communication
 

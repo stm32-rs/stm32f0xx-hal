@@ -456,3 +456,54 @@ where
         Ok(())
     }
 }
+
+impl embedded_hal_1::i2c::Error for Error {
+    fn kind(&self) -> embedded_hal_1::i2c::ErrorKind {
+        use embedded_hal_1::i2c::{ErrorKind, NoAcknowledgeSource};
+        match self {
+            Error::OVERRUN => ErrorKind::Overrun,
+            Error::NACK => ErrorKind::NoAcknowledge(NoAcknowledgeSource::Unknown),
+            Error::BUS => ErrorKind::Bus,
+        }
+    }
+}
+
+impl<I2C, SCLPIN, SDAPIN> embedded_hal_1::i2c::ErrorType for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    type Error = Error;
+}
+
+impl<I2C, SCLPIN, SDAPIN> embedded_hal_1::i2c::I2c<embedded_hal_1::i2c::SevenBitAddress>
+    for I2c<I2C, SCLPIN, SDAPIN>
+where
+    I2C: Deref<Target = I2cRegisterBlock>,
+{
+    fn read(&mut self, addr: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+        Read::read(self, addr, buffer)
+    }
+
+    fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+        Write::write(self, addr, bytes)
+    }
+
+    fn write_read(&mut self, addr: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Self::Error> {
+        WriteRead::write_read(self, addr, bytes, buffer)
+    }
+
+    fn transaction(
+        &mut self,
+        addr: u8,
+        operations: &mut [embedded_hal_1::i2c::Operation<'_>],
+    ) -> Result<(), Self::Error> {
+        use embedded_hal_1::i2c::Operation;
+        for op in operations {
+            match op {
+                Operation::Read(buffer) => Read::read(self, addr, buffer)?,
+                Operation::Write(bytes) => Write::write(self, addr, bytes)?,
+            }
+        }
+        Ok(())
+    }
+}

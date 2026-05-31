@@ -201,6 +201,9 @@ macro_rules! timers {
                     self.tim.psc.write(|w| w.psc().bits(psc));
 
                     let arr = cast::u16(ticks / cast::u32(psc + 1)).unwrap();
+                    // `unsafe` is required for all the 16-bit timers
+                    // but redundant only for the 32-bit TIM2 that shares this macro body
+                    #[allow(unused_unsafe)]
                     self.tim.arr.write(|w| unsafe { w.bits(cast::u32(arr)) });
 
                     // start counter

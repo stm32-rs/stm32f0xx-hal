@@ -91,7 +91,7 @@ pub trait FlashExt {
     }
     /// Unlock flash for erasing/programming until this method's
     /// result is dropped
-    fn unlocked(&mut self) -> UnlockedFlash;
+    fn unlocked(&mut self) -> UnlockedFlash<'_>;
 }
 
 impl FlashExt for FLASH {
@@ -103,7 +103,7 @@ impl FlashExt for FLASH {
         FlashSize::get().bytes()
     }
 
-    fn unlocked(&mut self) -> UnlockedFlash {
+    fn unlocked(&mut self) -> UnlockedFlash<'_> {
         unlock(self);
         UnlockedFlash { flash: self }
     }
@@ -145,7 +145,7 @@ impl FlashExt for LockedFlash {
         self.flash.len()
     }
 
-    fn unlocked(&mut self) -> UnlockedFlash {
+    fn unlocked(&mut self) -> UnlockedFlash<'_> {
         self.flash.unlocked()
     }
 }

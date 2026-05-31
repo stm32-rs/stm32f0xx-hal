@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `invalid_reference_casting` Compilation error in spi.rs for Rust version 1.73+ (
   See [PR#112431](https://github.com/rust-lang/rust/pull/112431) for more info)
 - `unused_doc_comments` Warning in rcc.rs
+- `unused_unsafe` Warning in timers.rs (32-bit TIM2 shares the 16-bit timer macro)
+- `mismatched_lifetime_syntaxes` Warnings in flash.rs (`FlashExt::unlocked` returns `UnlockedFlash<'_>`)
 - Fixed incorrect OSPEEDR assignment for high-speed push-pull output
 - Fixed some warnings #177
 

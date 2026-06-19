@@ -17,12 +17,12 @@ fn main() -> ! {
 
         let gpioa = p.GPIOA.split(&mut rcc);
 
-        let (mut led, mut an_in) = cortex_m::interrupt::free(move |cs| {
+        let (mut led, mut an_in) = critical_section::with(move |cs| {
             (
                 // (Re-)configure PA1 as output
-                gpioa.pa1.into_push_pull_output(cs),
+                gpioa.pa1.into_push_pull_output(&cs),
                 // (Re-)configure PA0 as analog input
-                gpioa.pa0.into_analog(cs),
+                gpioa.pa0.into_analog(&cs),
             )
         });
 

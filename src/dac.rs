@@ -29,11 +29,11 @@
 //!#[entry]
 //!fn main() -> ! {
 //!    if let (Some(mut dp), Some(_cp)) = (pac::Peripherals::take(), cortex_m::Peripherals::take()) {
-//!        cortex_m::interrupt::free(move |cs| {
+//!        critical_section::with(move |cs| {
 //!            let mut rcc = dp.RCC.configure().sysclk(8.mhz()).freeze(&mut dp.FLASH);
 //!
 //!            let gpioa = dp.GPIOA.split(&mut rcc);
-//!            let mut dac = dac(dp.DAC, gpioa.pa4.into_analog(cs), &mut rcc);
+//!            let mut dac = dac(dp.DAC, gpioa.pa4.into_analog(&cs), &mut rcc);
 //!
 //!            dac.enable();
 //!

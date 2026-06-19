@@ -16,13 +16,13 @@
 //!
 //! use nb::block;
 //!
-//! cortex_m::interrupt::free(|cs| {
+//! critical_section::with(|cs| {
 //!     let rcc = p.RCC.configure().sysclk(48.mhz()).freeze();
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);
 //!
-//!     let tx = gpioa.pa9.into_alternate_af1(cs);
-//!     let rx = gpioa.pa10.into_alternate_af1(cs);
+//!     let tx = gpioa.pa9.into_alternate_af1(&cs);
+//!     let rx = gpioa.pa10.into_alternate_af1(&cs);
 //!
 //!     let mut serial = Serial::usart1(p.USART1, (tx, rx), 115_200.bps(), &mut rcc);
 //!
@@ -43,12 +43,12 @@
 //!
 //! use nb::block;
 //!
-//! cortex_m::interrupt::free(|cs| {
+//! critical_section::with(|cs| {
 //!     let rcc = p.RCC.configure().sysclk(48.mhz()).freeze();
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);
 //!
-//!     let tx = gpioa.pa9.into_alternate_af1(cs);
+//!     let tx = gpioa.pa9.into_alternate_af1(&cs);
 //!
 //!     let mut serial = Serial::usart1tx(p.USART1, tx, 115_200.bps(), &mut rcc);
 //!

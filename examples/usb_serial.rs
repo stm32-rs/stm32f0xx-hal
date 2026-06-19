@@ -35,7 +35,7 @@ fn main() -> ! {
 
     // Configure the on-board LED (LD3, green)
     let gpiob = dp.GPIOB.split(&mut rcc);
-    let mut led = cortex_m::interrupt::free(|cs| gpiob.pb3.into_push_pull_output(cs));
+    let mut led = critical_section::with(|cs| gpiob.pb3.into_push_pull_output(&cs));
     led.set_low().ok(); // Turn off
 
     let gpioa = dp.GPIOA.split(&mut rcc);

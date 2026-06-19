@@ -36,6 +36,7 @@ opt-level = 's'
 bare-metal = { version = "1.0.0" }
 cast = "0.3"
 cortex-m = { version = "0.7", features = ["critical-section-single-core"]}
+critical-section = "1.0"
 embedded-hal = { version = "0.2", features = ["unproven"] }
 embedded-hal-1 = { package = "embedded-hal", version = "1.0" }
 stm32f0 = "0.15"

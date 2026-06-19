@@ -28,11 +28,11 @@ fn main() -> ! {
         let gpioa = p.GPIOA.split(&mut rcc);
 
         // Configure pins for SPI
-        let (sck, miso, mosi) = cortex_m::interrupt::free(move |cs| {
+        let (sck, miso, mosi) = critical_section::with(move |cs| {
             (
-                gpioa.pa5.into_alternate_af0(cs),
-                gpioa.pa6.into_alternate_af0(cs),
-                gpioa.pa7.into_alternate_af0(cs),
+                gpioa.pa5.into_alternate_af0(&cs),
+                gpioa.pa6.into_alternate_af0(&cs),
+                gpioa.pa7.into_alternate_af0(&cs),
             )
         });
 

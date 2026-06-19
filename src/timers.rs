@@ -13,13 +13,13 @@
 //! use crate::hal::timers::*;
 //! use nb::block;
 //!
-//! cortex_m::interrupt::free(|cs| {
+//! critical_section::with(|cs| {
 //!     let mut p = pac::Peripherals::take().unwrap();
 //!     let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);
 //!
-//!     let mut led = gpioa.pa1.into_push_pull_pull_output(cs);
+//!     let mut led = gpioa.pa1.into_push_pull_pull_output(&cs);
 //!
 //!     let mut timer = Timer::tim1(p.TIM1, Hertz(1), &mut rcc);
 //!     loop {

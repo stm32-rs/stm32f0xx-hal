@@ -7,8 +7,9 @@ use stm32f0xx_hal as hal;
 
 use crate::hal::{gpio::*, pac, prelude::*};
 
-use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core, Peripherals};
+use cortex_m::{peripheral::syst::SystClkSource::Core, Peripherals};
 use cortex_m_rt::{entry, exception};
+use critical_section::Mutex;
 
 use core::cell::RefCell;
 use core::ops::DerefMut;
@@ -19,13 +20,13 @@ static GPIO: Mutex<RefCell<Option<gpioa::PA1<Output<PushPull>>>>> = Mutex::new(R
 #[entry]
 fn main() -> ! {
     if let (Some(mut p), Some(cp)) = (pac::Peripherals::take(), Peripherals::take()) {
-        cortex_m::interrupt::free(move |cs| {
+        critical_section::with(move |cs| {
             let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut p.FLASH);
 
             let gpioa = p.GPIOA.split(&mut rcc);
 
             // (Re-)configure PA1 as output
-            let led = gpioa.pa1.into_push_pull_output(cs);
+            let led = gpioa.pa1.into_push_pull_output(&cs);
 
             // Transfer GPIO into a shared structure
             *GPIO.borrow(cs).borrow_mut() = Some(led);
@@ -62,7 +63,7 @@ fn SysTick() {
     static mut STATE: u8 = 1;
 
     // Enter critical section
-    cortex_m::interrupt::free(|cs| {
+    critical_section::with(|cs| {
         // Borrow access to our GPIO pin from the shared structure
         if let Some(ref mut led) = *GPIO.borrow(cs).borrow_mut().deref_mut() {
             // Check state variable, keep LED off most of the time and turn it on every 10th tick

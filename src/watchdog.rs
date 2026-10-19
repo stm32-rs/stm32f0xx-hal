@@ -95,7 +95,7 @@ pub struct MilliHertz(pub u32);
 impl From<MilliHertz> for IwdgTimeout {
     /// This converts the value so it's usable by the IWDG
     /// Due to conversion losses, the specified frequency is a maximum
-    /// It can also only represent values > 39 MilliHertz
+    /// It can also only represent values >= 39 MilliHertz
     fn from(mut mhz: MilliHertz) -> Self {
         if mhz.0 < 39 {
             mhz.0 = 39;

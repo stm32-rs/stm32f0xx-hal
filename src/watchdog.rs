@@ -89,6 +89,37 @@ impl From<Hertz> for IwdgTimeout {
     }
 }
 
+#[derive(PartialEq, PartialOrd, Clone, Copy, Debug)]
+pub struct MilliHertz(pub u32);
+
+impl From<MilliHertz> for IwdgTimeout {
+    /// This converts the value so it's usable by the IWDG
+    /// Due to conversion losses, the specified frequency is a maximum
+    /// It can also only represent values >= 39 MilliHertz
+    fn from(mut mhz: MilliHertz) -> Self {
+        if mhz.0 < 39 {
+            mhz.0 = 39;
+        }
+
+        let mut time = 40_000_000 / 4 / mhz.0;
+        let mut psc = 0;
+        let mut reload = 0;
+
+        while psc < 7 {
+            reload = time;
+            if reload < 0x1000 {
+                break;
+            }
+            psc += 1;
+            time /= 2;
+        }
+
+        // As we get an integer value, reload is always below 0xFFF
+        let reload = reload as u16;
+        IwdgTimeout { psc, reload }
+    }
+}
+
 impl Watchdog {
     pub fn new(iwdg: IWDG) -> Self {
         Self { iwdg }

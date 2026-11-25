@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - impl embedded_hal_1::spi::SpiBus for SPI
 - impl embedded_hal_1::digital traits for Pins
 - Enable AF1 on GPIOE for pins [13, 14, 15] to support SPI communication
+- Implement quadrature encoder interface to allow configuring timers to monitor quadrature encoders
 
 ### Fixed
 

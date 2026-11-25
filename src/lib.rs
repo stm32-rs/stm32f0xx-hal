@@ -51,6 +51,8 @@ pub mod prelude;
 #[cfg(feature = "device-selected")]
 pub mod pwm;
 #[cfg(feature = "device-selected")]
+pub mod qei;
+#[cfg(feature = "device-selected")]
 pub mod rcc;
 #[cfg(feature = "device-selected")]
 pub mod serial;

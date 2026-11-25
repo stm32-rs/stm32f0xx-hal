@@ -12,14 +12,14 @@
 //! use crate::hal::prelude::*;
 //! use crate::hal::adc::Adc;
 //!
-//! cortex_m::interrupt::free(|cs| {
+//! critical_section::with(|cs| {
 //!     let mut p = pac::Peripherals::take().unwrap();
 //!     let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);
 //!
-//!     let mut led = gpioa.pa1.into_push_pull_pull_output(cs);
-//!     let mut an_in = gpioa.pa0.into_analog(cs);
+//!     let mut led = gpioa.pa1.into_push_pull_pull_output(&cs);
+//!     let mut an_in = gpioa.pa0.into_analog(&cs);
 //!
 //!     let mut delay = Delay::new(cp.SYST, &rcc);
 //!

@@ -13,16 +13,16 @@
 //! use crate::hal::prelude::*;
 //! use crate::hal::spi::{Spi, Mode, Phase, Polarity};
 //!
-//! cortex_m::interrupt::free(|cs| {
+//! critical_section::with(|cs| {
 //!     let mut p = pac::Peripherals::take().unwrap();
 //!     let mut rcc = p.RCC.constrain().freeze(&mut p.FLASH);
 //!
 //!     let gpioa = p.GPIOA.split(&mut rcc);
 //!
 //!     // Configure pins for SPI
-//!     let sck = gpioa.pa5.into_alternate_af0(cs);
-//!     let miso = gpioa.pa6.into_alternate_af0(cs);
-//!     let mosi = gpioa.pa7.into_alternate_af0(cs);
+//!     let sck = gpioa.pa5.into_alternate_af0(&cs);
+//!     let miso = gpioa.pa6.into_alternate_af0(&cs);
+//!     let mosi = gpioa.pa7.into_alternate_af0(&cs);
 //!
 //!     // Configure SPI with 1MHz rate
 //!     let mut spi = Spi::spi1(p.SPI1, (sck, miso, mosi), Mode {

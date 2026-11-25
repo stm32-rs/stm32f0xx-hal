@@ -16,7 +16,8 @@ use crate::hal::{
 use cortex_m_rt::entry;
 
 use core::cell::RefCell;
-use cortex_m::{interrupt::Mutex, peripheral::Peripherals as c_m_Peripherals};
+use cortex_m::peripheral::Peripherals as c_m_Peripherals;
+use critical_section::Mutex;
 
 // A type definition for the GPIO pin to be used for our LED
 type LEDPIN = gpioa::PA5<Output<PushPull>>;
@@ -35,14 +36,14 @@ fn TIM7() {
     static mut INT: Option<Timer<TIM7>> = None;
 
     let led = LED.get_or_insert_with(|| {
-        cortex_m::interrupt::free(|cs| {
+        critical_section::with(|cs| {
             // Move LED pin here, leaving a None in its place
             GLED.borrow(cs).replace(None).unwrap()
         })
     });
 
     let int = INT.get_or_insert_with(|| {
-        cortex_m::interrupt::free(|cs| {
+        critical_section::with(|cs| {
             // Move LED pin here, leaving a None in its place
             GINT.borrow(cs).replace(None).unwrap()
         })
@@ -55,7 +56,7 @@ fn TIM7() {
 #[entry]
 fn main() -> ! {
     if let (Some(mut p), Some(cp)) = (Peripherals::take(), c_m_Peripherals::take()) {
-        cortex_m::interrupt::free(move |cs| {
+        critical_section::with(move |cs| {
             let mut rcc = p
                 .RCC
                 .configure()
@@ -68,7 +69,7 @@ fn main() -> ! {
             let gpioa = p.GPIOA.split(&mut rcc);
 
             // (Re-)configure PA5 as output
-            let led = gpioa.pa5.into_push_pull_output(cs);
+            let led = gpioa.pa5.into_push_pull_output(&cs);
 
             // Move the pin into our global storage
             *GLED.borrow(cs).borrow_mut() = Some(led);

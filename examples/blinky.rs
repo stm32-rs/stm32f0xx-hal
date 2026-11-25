@@ -17,7 +17,7 @@ fn main() -> ! {
         let gpioa = p.GPIOA.split(&mut rcc);
 
         // (Re-)configure PA1 as output
-        let mut led = cortex_m::interrupt::free(|cs| gpioa.pa1.into_push_pull_output(cs));
+        let mut led = critical_section::with(|cs| gpioa.pa1.into_push_pull_output(&cs));
 
         loop {
             // Turn PA1 on a million times in a row

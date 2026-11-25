@@ -36,15 +36,15 @@ fn main() -> ! {
 
         let gpioa = p.GPIOA.split(&mut rcc);
 
-        let (sck, miso, mosi, tx, rx) = cortex_m::interrupt::free(move |cs| {
+        let (sck, miso, mosi, tx, rx) = critical_section::with(move |cs| {
             (
                 // SPI pins
-                gpioa.pa5.into_alternate_af0(cs),
-                gpioa.pa6.into_alternate_af0(cs),
-                gpioa.pa7.into_alternate_af0(cs),
+                gpioa.pa5.into_alternate_af0(&cs),
+                gpioa.pa6.into_alternate_af0(&cs),
+                gpioa.pa7.into_alternate_af0(&cs),
                 // USART pins
-                gpioa.pa9.into_alternate_af1(cs),
-                gpioa.pa10.into_alternate_af1(cs),
+                gpioa.pa9.into_alternate_af1(&cs),
+                gpioa.pa10.into_alternate_af1(&cs),
             )
         });
 

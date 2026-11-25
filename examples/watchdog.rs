@@ -30,7 +30,7 @@ fn main() -> ! {
         let mut delay = Delay::new(cp.SYST, &rcc);
 
         // Configure serial TX pin
-        let tx = cortex_m::interrupt::free(move |cs| gpioa.pa9.into_alternate_af1(cs));
+        let tx = critical_section::with(move |cs| gpioa.pa9.into_alternate_af1(&cs));
 
         // Obtain a serial peripheral with for unidirectional communication
         let mut serial = Serial::usart1tx(p.USART1, tx, 115_200.bps(), &mut rcc);

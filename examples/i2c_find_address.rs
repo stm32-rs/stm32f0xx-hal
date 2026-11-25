@@ -14,15 +14,15 @@ use cortex_m_rt::entry;
 #[entry]
 fn main() -> ! {
     if let Some(p) = pac::Peripherals::take() {
-        cortex_m::interrupt::free(move |cs| {
+        critical_section::with(move |cs| {
             let mut flash = p.FLASH;
             let mut rcc = p.RCC.configure().freeze(&mut flash);
 
             let gpiob = p.GPIOB.split(&mut rcc);
 
             // Configure pins for I2C
-            let sda = gpiob.pb7.into_alternate_af1(cs);
-            let scl = gpiob.pb8.into_alternate_af1(cs);
+            let sda = gpiob.pb7.into_alternate_af1(&cs);
+            let scl = gpiob.pb8.into_alternate_af1(&cs);
 
             // Configure I2C with 100kHz rate
             let mut i2c = I2c::i2c1(p.I2C1, (scl, sda), 100.khz(), &mut rcc);

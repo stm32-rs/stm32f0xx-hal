@@ -17,10 +17,10 @@ fn main() -> ! {
 
         let gpioa = p.GPIOA.split(&mut rcc);
 
-        let (tx, rx) = cortex_m::interrupt::free(move |cs| {
+        let (tx, rx) = critical_section::with(move |cs| {
             (
-                gpioa.pa9.into_alternate_af1(cs),
-                gpioa.pa10.into_alternate_af1(cs),
+                gpioa.pa9.into_alternate_af1(&cs),
+                gpioa.pa10.into_alternate_af1(&cs),
             )
         });
 

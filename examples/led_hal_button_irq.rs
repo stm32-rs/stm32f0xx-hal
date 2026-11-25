@@ -12,8 +12,9 @@ use crate::hal::{
     prelude::*,
 };
 
-use cortex_m::{interrupt::Mutex, peripheral::Peripherals as c_m_Peripherals};
+use cortex_m::peripheral::Peripherals as c_m_Peripherals;
 use cortex_m_rt::entry;
+use critical_section::Mutex;
 
 use core::{cell::RefCell, ops::DerefMut};
 
@@ -29,7 +30,7 @@ static INT: Mutex<RefCell<Option<EXTI>>> = Mutex::new(RefCell::new(None));
 #[entry]
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (Peripherals::take(), c_m_Peripherals::take()) {
-        cortex_m::interrupt::free(move |cs| {
+        critical_section::with(move |cs| {
             // Enable clock for SYSCFG
             let rcc = p.RCC;
             rcc.apb2enr.modify(|_, w| w.syscfgen().set_bit());
@@ -43,10 +44,10 @@ fn main() -> ! {
             let exti = p.EXTI;
 
             // Configure PB1 as input (button)
-            let _ = gpiob.pb1.into_pull_down_input(cs);
+            let _ = gpiob.pb1.into_pull_down_input(&cs);
 
             // Configure PA1 as output (LED)
-            let mut led = gpioa.pa1.into_push_pull_output(cs);
+            let mut led = gpioa.pa1.into_push_pull_output(&cs);
 
             // Turn off LED
             led.set_low().ok();
@@ -88,7 +89,7 @@ fn main() -> ! {
 #[interrupt]
 fn EXTI0_1() {
     // Enter critical section
-    cortex_m::interrupt::free(|cs| {
+    critical_section::with(|cs| {
         // Obtain all Mutex protected resources
         if let (&mut Some(ref mut led), &mut Some(ref mut delay), &mut Some(ref mut exti)) = (
             LED.borrow(cs).borrow_mut().deref_mut(),

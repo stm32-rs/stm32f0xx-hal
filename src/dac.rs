@@ -87,25 +87,29 @@ pub trait DacPin {
     fn enable(&mut self);
 }
 
-pub trait Pins<DAC> {
-    type Output;
+mod sealed {
+    // This trait is unsafe and sealed because we use MaybeUninit to
+    // return an instance of the type, and should only be used on ZSTs.
+    pub unsafe trait Pins<DAC> {
+        type Output;
+    }
 }
 
-impl Pins<DAC> for PA4<Analog> {
+unsafe impl sealed::Pins<DAC> for PA4<Analog> {
     type Output = C1;
 }
 
-impl Pins<DAC> for PA5<Analog> {
+unsafe impl sealed::Pins<DAC> for PA5<Analog> {
     type Output = C2;
 }
 
-impl Pins<DAC> for (PA4<Analog>, PA5<Analog>) {
+unsafe impl sealed::Pins<DAC> for (PA4<Analog>, PA5<Analog>) {
     type Output = (C1, C2);
 }
 
 pub fn dac<PINS>(_dac: DAC, _pins: PINS, rcc: &mut Rcc) -> PINS::Output
 where
-    PINS: Pins<DAC>,
+    PINS: sealed::Pins<DAC>,
 {
     // Enable DAC clocks
     rcc.regs.apb1enr.modify(|_, w| w.dacen().set_bit());
@@ -143,13 +147,13 @@ macro_rules! dac {
 pub trait DacExt {
     fn constrain<PINS>(self, pins: PINS, rcc: &mut Rcc) -> PINS::Output
     where
-        PINS: Pins<DAC>;
+        PINS: sealed::Pins<DAC>;
 }
 
 impl DacExt for DAC {
     fn constrain<PINS>(self, pins: PINS, rcc: &mut Rcc) -> PINS::Output
     where
-        PINS: Pins<DAC>,
+        PINS: sealed::Pins<DAC>,
     {
         dac(self, pins, rcc)
     }

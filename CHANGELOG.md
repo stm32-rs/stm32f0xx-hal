@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- PWM output on TIM2 channels.
 - Provide getters to serial status flags idle/txe/rxne/tc.
 - Provide ability to reset timer UIF interrupt flag
 - PWM complementary output capability for TIM1 with new example to demonstrate
